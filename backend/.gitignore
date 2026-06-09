@@ -1,0 +1,8 @@
+dist/
+src/**/*.js
+src/**/*.d.ts
+src/**/*.map
+prisma.config.js
+prisma.config.d.ts
+prisma.config.js.map
+prisma.config.d.ts.map
