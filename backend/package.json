@@ -5,10 +5,10 @@
   "main": "dist/server.js",
   "scripts": {
   "dev": "tsx watch src/server.ts",
-  "build": "node node_modules/prisma/build/index.js generate && tsc",
+  "build": "npm run prisma:generate && tsc",
   "start": "node dist/server.js",
-  "prisma:generate": "node node_modules/prisma/build/index.js generate",
-  "prisma:push": "node node_modules/prisma/build/index.js db push"
+  "prisma:generate": "prisma generate",
+  "prisma:push": "prisma db push"
 },
   "keywords": [],
   "author": "",
