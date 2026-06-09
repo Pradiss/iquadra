@@ -4,12 +4,12 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "npm run prisma:generate && npx tsc",
-    "start": "node dist/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push"
-  },
+  "dev": "tsx watch src/server.ts",
+  "build": "node node_modules/prisma/build/index.js generate && tsc",
+  "start": "node dist/server.js",
+  "prisma:generate": "node node_modules/prisma/build/index.js generate",
+  "prisma:push": "node node_modules/prisma/build/index.js db push"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
