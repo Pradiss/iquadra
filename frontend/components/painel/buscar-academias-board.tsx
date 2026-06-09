@@ -89,38 +89,8 @@ export function BuscarAcademiasBoard() {
   const academiasComAgenda = marketplace.filter((academia) => academia.agendaPronta)
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
-      <section className="rounded-[32px] border border-black/5 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-green-700">
-              Buscar academias
-            </p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-zinc-950">
-              Escolha a academia e va direto para a quadra
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-              Clique em qualquer academia para abrir as quadras dela, ver horarios livres
-              e marcar um jogo. Sem etapa extra antes.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="inline-flex items-center gap-2 rounded-2xl bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-700">
-              <Search className="h-4 w-4 text-green-700" />
-              {academiasComAgenda.length} com agenda publicada
-            </div>
-
-            <Link
-              href="/painel"
-              className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-bold text-zinc-700 shadow-sm hover:bg-zinc-50"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para inicio
-            </Link>
-          </div>
-        </div>
-      </section>
+    <div className="">
+    
 
       {error ? (
         <section className="rounded-[26px] bg-red-50 px-5 py-4 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-red-200">

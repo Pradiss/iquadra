@@ -204,8 +204,8 @@ export function MeusJogosBoard() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
-      <section className="rounded-[34px] border border-black/5 bg-[linear-gradient(180deg,#fffdfa_0%,#f8f4ec_100%)] p-5 shadow-[0_28px_70px_rgba(15,23,42,0.07)] sm:p-6">
+    <div className="p-5 space-y-5">
+      <section className="rounded-[34px] bg-white border border-black/5 bg-[linear-gradient(180deg,#fffdfa_0%,#f8f4ec_100%)] p-5 shadow-[0_28px_70px_rgba(15,23,42,0.07)] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-green-700">
@@ -230,12 +230,7 @@ export function MeusJogosBoard() {
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard label="Futuras" value={String(jogosFuturos.length)} />
-          <SummaryCard label="Passadas" value={String(jogosPassados.length)} />
-          <SummaryCard label="Convites pendentes" value={String(convitesPendentes.length)} />
-          <SummaryCard label="Amigos aceitos" value={String(amigosAceitos.length)} />
-        </div>
+       
 
         <div className="mt-6 inline-flex w-full rounded-2xl bg-[#edf0f6] p-1 sm:w-auto">
           <TabButton
@@ -435,7 +430,7 @@ export function MeusJogosBoard() {
                   </div>
 
                   {!passado ? (
-                    <div className="mt-5 space-y-4">
+                    <div className="mt-5 space-y-4 ">
                       <div className="grid gap-3 sm:grid-cols-2">
                         <button
                           type="button"
@@ -466,11 +461,9 @@ export function MeusJogosBoard() {
                       {canInvite ? (
                         <div className="rounded-[22px] border border-zinc-200 bg-zinc-50 p-4">
                           <p className="text-sm font-black text-zinc-950">
-                            Convidar amigo aceito
+                            Convidar amigo 
                           </p>
-                          <p className="mt-1 text-sm text-zinc-500">
-                            A API so permite convidar amigos que voce ja tem aceitos.
-                          </p>
+                         
 
                           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                             <select

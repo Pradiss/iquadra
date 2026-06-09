@@ -1,45 +1,54 @@
 "use client"
 
-import { useEffect, useState, type ElementType, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import type { LucideIcon } from "lucide-react"
 import {
-  Check,
+  ChevronRight,
   Clock3,
   LogOut,
   Mail,
   MapPin,
+  PencilLine,
   Phone,
   ShieldCheck,
   Trophy,
-  User,
   UserRoundPlus,
-  X,
 } from "lucide-react"
+
 import { clearAuthStorage, getSession, getToken } from "../../../lib/auth-storage"
-import { getInitials, getErrorMessage, isUnauthorizedError } from "../../../lib/painel-format"
-import {
-  getOutroUsuarioDaAmizade,
-  isPendingIncoming,
-  isPendingOutgoing,
-} from "../../../lib/social"
+import { getErrorMessage, getInitials, isUnauthorizedError } from "../../../lib/painel-format"
 import { getPerfilLabel } from "../../../lib/perfis"
-import {
-  aceitarAmizade,
-  listarAmizades,
-  recusarAmizade,
-  removerAmizade,
-} from "../../../services/amizade.service"
+import { isPendingIncoming, isPendingOutgoing } from "../../../lib/social"
+import { listarAmizades } from "../../../services/amizade.service"
+
 import type { AuthSessionSnapshot } from "../../../types/auth"
 import type { Amizade } from "../../../types/social"
 
+type Message = {
+  tone: "error" | "info"
+  text: string
+}
+
+type Metric = {
+  label: string
+  value: string
+}
+
+type MenuItemData = {
+  icon: LucideIcon
+  label: string
+  badge?: number
+  onClick?: () => void
+}
+
 export default function PerfilPage() {
   const router = useRouter()
+
   const [session] = useState<AuthSessionSnapshot | null>(() => getSession())
   const [amizades, setAmizades] = useState<Amizade[]>([])
-  const [loadingSocial, setLoadingSocial] = useState(true)
-  const [error, setError] = useState("")
-  const [notice, setNotice] = useState("")
-  const [busyAmizadeId, setBusyAmizadeId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState<Message | null>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -50,12 +59,15 @@ export default function PerfilPage() {
       return
     }
 
-    async function loadSocial() {
-      setError("")
+    let active = true
 
+    async function carregarAmizades() {
       try {
         const response = await listarAmizades()
-        setAmizades(response.amizades)
+
+        if (active) {
+          setAmizades(response.amizades)
+        }
       } catch (requestError) {
         if (isUnauthorizedError(requestError)) {
           clearAuthStorage()
@@ -63,401 +75,304 @@ export default function PerfilPage() {
           return
         }
 
-        setError(getErrorMessage(requestError, "Nao foi possivel carregar suas amizades."))
+        if (active) {
+          setMessage({
+            tone: "error",
+            text: getErrorMessage(requestError, "Nao foi possivel carregar suas amizades."),
+          })
+        }
       } finally {
-        setLoadingSocial(false)
+        if (active) {
+          setLoading(false)
+        }
       }
     }
 
-    void loadSocial()
+    void carregarAmizades()
+
+    return () => {
+      active = false
+    }
   }, [router, session])
 
-  function handleLogout() {
+  const dados = useMemo(() => {
+    if (!session) {
+      return null
+    }
+
+    const { usuario } = session
+    const amigos = amizades.filter((amizade) => amizade.status === "ACEITA")
+    const pedidosRecebidos = amizades.filter((amizade) =>
+      isPendingIncoming(amizade, usuario.id)
+    )
+    const pedidosEnviados = amizades.filter((amizade) =>
+      isPendingOutgoing(amizade, usuario.id)
+    )
+
+    return {
+      usuario,
+      perfilAtual: getPerfilLabel(session.perfilAtual),
+      amigos,
+      pedidosRecebidos,
+      pedidosEnviados,
+    }
+  }, [amizades, session])
+
+  function sairDaConta() {
     clearAuthStorage()
     router.push("/login")
   }
 
-  async function handleSocialAction(
-    amizadeId: string,
-    action: "aceitar" | "recusar" | "remover"
-  ) {
-    setBusyAmizadeId(amizadeId)
-    setError("")
-    setNotice("")
-
-    try {
-      if (action === "aceitar") {
-        await aceitarAmizade(amizadeId)
-        setNotice("Pedido aceito com sucesso.")
-      } else if (action === "recusar") {
-        await recusarAmizade(amizadeId)
-        setNotice("Pedido recusado com sucesso.")
-      } else {
-        await removerAmizade(amizadeId)
-        setNotice("Amizade removida com sucesso.")
-      }
-
-      const response = await listarAmizades()
-      setAmizades(response.amizades)
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, "Nao foi possivel concluir essa acao agora."))
-    } finally {
-      setBusyAmizadeId(null)
-    }
+  function editarPerfil() {
+    setMessage({
+      tone: "info",
+      text: "Botao de editar perfil pronto para conectar ao formulario quando voce quiser.",
+    })
   }
 
-  if (!session) {
+  if (!dados) {
     return (
-      <div className="rounded-[32px] bg-white p-6 shadow-sm">
+      <main className="flex min-h-screen items-center justify-center px-4">
         <p className="text-sm font-bold text-zinc-500">Carregando perfil...</p>
-      </div>
+      </main>
     )
   }
 
-  const usuario = session.usuario
-  const perfilAtual = getPerfilLabel(session.perfilAtual)
-  const amizadesAceitas = amizades.filter((amizade) => amizade.status === "ACEITA")
-  const pedidosRecebidos = amizades.filter((amizade) =>
-    isPendingIncoming(amizade, session.usuario.id)
-  )
-  const pedidosEnviados = amizades.filter((amizade) =>
-    isPendingOutgoing(amizade, session.usuario.id)
-  )
+  const { usuario, perfilAtual, amigos, pedidosRecebidos, pedidosEnviados } = dados
+  const totalPendentes = pedidosRecebidos.length + pedidosEnviados.length
+
+  const metricas: Metric[] = [
+    { label: "Perfil", value: perfilAtual },
+    { label: "Nivel", value: usuario.categoria || "Nao informado" },
+    { label: "Amigos", value: String(amigos.length) },
+    { label: "Pendentes", value: String(totalPendentes) },
+  ]
+
+  const atalhos: MenuItemData[] = [
+    { icon: ShieldCheck, label: perfilAtual },
+    {
+      icon: Trophy,
+      label: "Meus jogos",
+      onClick: () => router.push("/painel/meus-jogos"),
+    },
+    {
+      icon: UserRoundPlus,
+      label: "Amigos",
+      badge: amigos.length,
+    },
+    {
+      icon: Clock3,
+      label: "Pedidos recebidos",
+      badge: pedidosRecebidos.length,
+    },
+    {
+      icon: Mail,
+      label: "Pedidos enviados",
+      badge: pedidosEnviados.length,
+    },
+  ]
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5">
-      <section className="overflow-hidden rounded-[36px] bg-white shadow-sm ring-1 ring-black/5">
-        <div className="relative h-40 bg-gradient-to-br from-green-800 via-green-600 to-lime-400">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.4),transparent_35%)]" />
-        </div>
+    <main className="px-4 py-6 sm:px-6">
+      <section className="mx-auto ">
+       
 
-        <div className="-mt-14 px-5 pb-6 sm:px-8">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full border-[6px] border-white bg-green-100 text-4xl font-black text-green-700 shadow-xl">
-                {getInitials(usuario?.nome)}
-              </div>
-
-              <div className="pb-1">
-                <h1 className="text-3xl font-black tracking-tight text-zinc-950">
-                  {usuario?.nome || "Usuario IQuadra"}
-                </h1>
-
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-xs font-black text-green-700">
-                  <ShieldCheck size={15} />
-                  {perfilAtual}
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 text-sm font-black text-red-600 transition hover:bg-red-100"
-            >
-              <LogOut size={18} />
-              Sair da conta
-            </button>
+        {message ? (
+          <div
+            className={[
+              "mt-4 rounded-2xl px-4 py-3 text-sm font-bold",
+              message.tone === "error"
+                ? "bg-red-50 text-red-600"
+                : "bg-green-50 text-green-700",
+            ].join(" ")}
+          >
+            {message.text}
           </div>
-        </div>
-      </section>
+        ) : null}
 
-      {(error || notice) && (
-        <section
-          className={[
-            "rounded-[24px] px-5 py-4 text-sm font-semibold shadow-sm ring-1",
-            error
-              ? "bg-red-50 text-red-700 ring-red-200"
-              : "bg-lime-50 text-lime-800 ring-lime-200",
-          ].join(" ")}
-        >
-          {error || notice}
-        </section>
-      )}
+        <div className="mt-5 grid gap-5 lg:grid-cols-[320px_1fr]">
+          <section className="rounded-[28px] bg-[linear-gradient(160deg,#0f5132_0%,#198754_55%,#d6f5b0_100%)] p-5 text-white">
+            <div className="flex items-start justify-between gap-3">
+              <Avatar nome={usuario.nome} size="lg" />
 
-      <section className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-5">
-          <div className="rounded-[36px] bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-8">
-            <div className="border-b border-zinc-100 pb-6">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-green-700">
-                Conta IQuadra
-              </p>
-
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-zinc-950">
-                Dados pessoais
-              </h2>
-
-              <p className="mt-1 text-sm text-zinc-500">
-                Informacoes carregadas da sessao autenticada.
-              </p>
+              <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                {usuario.status || "ATIVO"}
+              </span>
             </div>
 
-            <div className="mt-7 grid gap-4 md:grid-cols-2">
-              <Input icon={User} label="Nome" value={usuario?.nome || ""} />
-              <Input icon={Mail} label="E-mail" value={usuario?.email || ""} />
-              <Input icon={Phone} label="Telefone" value={usuario?.telefone || ""} />
-              <Input icon={MapPin} label="Cidade" value={usuario?.cidade || ""} />
-              <Input label="CEP" value={usuario?.cep || ""} />
-              <Input icon={Trophy} label="Categoria" value={usuario?.categoria || ""} />
-            </div>
+            <h1 className="mt-4 text-2xl font-black tracking-tight">
+              {usuario.nome || "Usuario IQuadra"}
+            </h1>
 
-            <div className="mt-8 border-t border-zinc-100 pt-6">
-              <h3 className="text-lg font-black text-zinc-950">Academias disponiveis para voce</h3>
+            <p className="mt-2 flex items-center gap-2 text-sm text-white/85">
+              <MapPin className="h-4 w-4 shrink-0" />
+              {usuario.cidade || "Cidade nao informada"}
+            </p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <PrimaryButton
+                icon={<PencilLine className="h-4 w-4" />}
+                label="Editar perfil"
+                onClick={editarPerfil}
+              />
+              <SecondaryButton
+                icon={<Trophy className="h-4 w-4" />}
+                label="Meus jogos"
+                onClick={() => router.push("/painel/meus-jogos")}
+              />
+            </div>
+          </section>
+
+          <div className="space-y-5">
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {metricas.map((item) => (
+                <MetricCard key={item.label} {...item} />
+              ))}
+            </section>
+
+            
+            <section className="rounded-[28px] border border-zinc-200 bg-slate-50 p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-black text-zinc-950">Atalhos</h2>
+                  <p className="text-sm text-zinc-500">
+                    Menos informacao e acesso rapido ao que importa.
+                  </p>
+                </div>
+
+                {loading ? (
+                  <span className="text-xs font-bold text-zinc-400">Carregando...</span>
+                ) : null}
+              </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {usuario?.academias.length ? (
-                  usuario.academias.map((academia) => (
-                    <article
-                      key={academia.id}
-                      className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4"
-                    >
-                      <p className="text-lg font-black text-zinc-950">
-                        {academia.academia.nome}
-                      </p>
-                      <p className="mt-1 text-sm text-zinc-500">
-                        {academia.academia.cidade || "Cidade nao informada"}
-                      </p>
-                      <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-green-700">
-                        {getPerfilLabel(academia.perfil)}
-                      </p>
-                    </article>
-                  ))
-                ) : (
-                  <div className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-sm text-zinc-500 md:col-span-2">
-                    Nenhuma academia disponivel na sua conta ainda.
-                  </div>
-                )}
+                {atalhos.map((item) => (
+                  <MenuItem key={item.label} {...item} />
+                ))}
               </div>
-            </div>
-          </div>
-
-          <div className="rounded-[36px] bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-100 text-green-700">
-                <UserRoundPlus className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black tracking-tight text-zinc-950">
-                  Central social
-                </h2>
-                <p className="text-sm text-zinc-500">
-                  Amizades aceitas, pedidos recebidos e convites enviados.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-5 xl:grid-cols-3">
-              <SocialColumn
-                title="Pedidos recebidos"
-                emptyText="Nenhum pedido aguardando sua resposta."
-                loading={loadingSocial}
-              >
-                {pedidosRecebidos.map((amizade) => {
-                  const outroUsuario = getOutroUsuarioDaAmizade(amizade, session.usuario.id)
-
-                  return (
-                    <SocialCard
-                      key={amizade.id}
-                      title={outroUsuario.nome}
-                      subtitle={outroUsuario.email}
-                      actions={
-                        <div className="flex gap-2">
-                          <ActionButton
-                            onClick={() => void handleSocialAction(amizade.id, "aceitar")}
-                            icon={<Check className="h-4 w-4" />}
-                            label="Aceitar"
-                            disabled={busyAmizadeId === amizade.id}
-                            variant="success"
-                          />
-                          <ActionButton
-                            onClick={() => void handleSocialAction(amizade.id, "recusar")}
-                            icon={<X className="h-4 w-4" />}
-                            label="Recusar"
-                            disabled={busyAmizadeId === amizade.id}
-                          />
-                        </div>
-                      }
-                    />
-                  )
-                })}
-              </SocialColumn>
-
-              <SocialColumn
-                title="Pedidos enviados"
-                emptyText="Voce ainda nao enviou pedidos visiveis no sistema."
-                loading={loadingSocial}
-              >
-                {pedidosEnviados.map((amizade) => {
-                  const outroUsuario = getOutroUsuarioDaAmizade(amizade, session.usuario.id)
-
-                  return (
-                    <SocialCard
-                      key={amizade.id}
-                      title={outroUsuario.nome}
-                      subtitle="Aguardando resposta"
-                    />
-                  )
-                })}
-              </SocialColumn>
-
-              <SocialColumn
-                title="Amizades aceitas"
-                emptyText="Quando alguem aceitar seu pedido, aparece aqui."
-                loading={loadingSocial}
-              >
-                {amizadesAceitas.map((amizade) => {
-                  const outroUsuario = getOutroUsuarioDaAmizade(amizade, session.usuario.id)
-
-                  return (
-                    <SocialCard
-                      key={amizade.id}
-                      title={outroUsuario.nome}
-                      subtitle={outroUsuario.email}
-                      actions={
-                        <ActionButton
-                          onClick={() => void handleSocialAction(amizade.id, "remover")}
-                          icon={<X className="h-4 w-4" />}
-                          label="Remover"
-                          disabled={busyAmizadeId === amizade.id}
-                        />
-                      }
-                    />
-                  )
-                })}
-              </SocialColumn>
-            </div>
+            </section>
           </div>
         </div>
-
-        <aside className="space-y-5">
-          <InfoCard title="Perfil atual" value={perfilAtual} />
-          <InfoCard title="Status da conta" value={usuario?.status || "ATIVO"} />
-          <InfoCard title="Acessos liberados" value={String(usuario?.academias.length ?? 0)} />
-          <InfoCard title="Amigos aceitos" value={String(amizadesAceitas.length)} />
-          <InfoCard title="Pedidos pendentes" value={String(pedidosRecebidos.length)} />
-        </aside>
       </section>
+    </main>
+  )
+}
+
+function Avatar({ nome, size }: { nome?: string; size: "lg" | "sm" }) {
+  const classes =
+    size === "lg"
+      ? "h-20 w-20 border-4 text-2xl shadow-lg"
+      : "h-10 w-10 border-2 text-sm"
+
+  return (
+    <div
+      className={[
+        "flex items-center justify-center rounded-full border-white/70 bg-white/15 font-black text-white",
+        classes,
+      ].join(" ")}
+    >
+      {getInitials(nome)}
     </div>
   )
 }
 
-function Input({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string
-  value: string
-  icon?: ElementType
-}) {
+function MetricCard({ label, value }: Metric) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-zinc-500">
+    <article className="rounded-[22px] border border-zinc-200 bg-slate-50 p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
         {label}
-      </span>
-
-      <div className="flex h-12 items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4">
-        {Icon && <Icon size={18} className="text-green-700" />}
-
-        <span className="w-full text-sm font-semibold text-zinc-900">
-          {value || "Nao informado"}
-        </span>
-      </div>
-    </label>
-  )
-}
-
-function InfoCard({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="rounded-[30px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400">
-        {title}
       </p>
-      <p className="mt-2 text-2xl font-black text-zinc-950">{value}</p>
-    </div>
-  )
-}
-
-function SocialColumn({
-  title,
-  loading,
-  emptyText,
-  children,
-}: {
-  title: string
-  loading: boolean
-  emptyText: string
-  children: ReactNode
-}) {
-  const count = Array.isArray(children) ? children.length : children ? 1 : 0
-
-  return (
-    <div className="rounded-[28px] border border-zinc-200 bg-zinc-50 p-4">
-      <div className="flex items-center gap-2">
-        <Clock3 className="h-4 w-4 text-green-700" />
-        <h3 className="text-sm font-black uppercase tracking-[0.18em] text-zinc-700">
-          {title}
-        </h3>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {loading ? (
-          <div className="text-sm font-semibold text-zinc-500">Carregando...</div>
-        ) : count > 0 ? (
-          children
-        ) : (
-          <div className="rounded-[20px] border border-dashed border-zinc-300 bg-white px-4 py-5 text-sm text-zinc-500">
-            {emptyText}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function SocialCard({
-  title,
-  subtitle,
-  actions,
-}: {
-  title: string
-  subtitle: string
-  actions?: ReactNode
-}) {
-  return (
-    <article className="rounded-[22px] bg-white p-4 shadow-sm">
-      <p className="font-black text-zinc-950">{title}</p>
-      <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
-
-      {actions ? <div className="mt-4">{actions}</div> : null}
+      <p className="mt-2 text-lg font-black text-zinc-950">{value}</p>
     </article>
   )
 }
 
-function ActionButton({
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon
+  label: string
+  value?: string | null
+}) {
+  return (
+    <article className="flex items-center gap-3 rounded-[22px] border border-zinc-200 bg-white px-4 py-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+        <Icon className="h-4 w-4" />
+      </span>
+
+      <div className="min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
+          {label}
+        </p>
+        <p className="truncate text-sm font-semibold text-zinc-900">
+          {value || "Nao informado"}
+        </p>
+      </div>
+    </article>
+  )
+}
+
+function MenuItem({ icon: Icon, label, badge, onClick }: MenuItemData) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-h-14 w-full items-center gap-3 rounded-[22px] border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-semibold text-zinc-800 transition hover:border-zinc-300 hover:bg-zinc-50"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+        <Icon className="h-5 w-5" />
+      </span>
+
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+
+      {badge !== undefined ? (
+        <span className="rounded-full bg-zinc-950 px-2.5 py-1 text-xs font-black text-white">
+          {badge}
+        </span>
+      ) : (
+        <ChevronRight className="h-4 w-4 text-zinc-400" />
+      )}
+    </button>
+  )
+}
+
+function PrimaryButton({
+  icon,
   label,
   onClick,
-  icon,
-  disabled,
-  variant = "neutral",
 }: {
+  icon: ReactNode
   label: string
   onClick: () => void
-  icon: React.ReactNode
-  disabled?: boolean
-  variant?: "neutral" | "success"
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
-      className={[
-        "inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold disabled:opacity-60",
-        variant === "success"
-          ? "bg-green-700 text-white hover:bg-green-800"
-          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200",
-      ].join(" ")}
+      className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-black text-green-800 transition hover:bg-white/90"
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+function SecondaryButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/15"
     >
       {icon}
       {label}

@@ -24,6 +24,7 @@ import {
   formatPeriodo,
   formatTipoPiso,
   getErrorMessage,
+  getInitials,
   getTodayDate,
   isUnauthorizedError,
 } from "../../lib/painel-format"
@@ -57,6 +58,29 @@ const DIA_SEMANA_LABEL: Record<number, string> = {
   4: "Quinta",
   5: "Sexta",
   6: "Sabado",
+}
+
+const DIA_SEMANA_CURTO = ["D", "S", "T", "Q", "Q", "S", "S"]
+
+type AgendaVisualTone = "available" | "pending" | "closed"
+
+type AgendaVisualPlayer = {
+  id: string
+  nome: string
+  foto?: string | null
+  categoria?: string | null
+}
+
+type AgendaVisualRow = {
+  id: string
+  start: string
+  end?: string
+  quadra: string
+  tone: AgendaVisualTone
+  status: string
+  tag: string
+  description: string
+  players: AgendaVisualPlayer[]
 }
 
 export function AcademiaBoard() {
@@ -195,6 +219,20 @@ export function AcademiaBoard() {
         .map((amizade) => getOutroUsuarioDaAmizade(amizade, session.usuario.id))
     : []
   const podeUsarHorarioManual = slotsLivres.length === 0
+  const diasAtivosDaQuadra = new Set(
+    horariosDaQuadra
+      .filter((horario) => horario.ativo)
+      .map((horario) => horario.dia_semana)
+  )
+  const diasDaSemana = getWeekDays(selectedDate, diasAtivosDaQuadra)
+  const agendaVisual = buildAgendaVisualRows({
+    disponibilidade: disponibilidadeSelecionada,
+    jogos: jogosDaQuadra,
+    aulas: aulasDaQuadra,
+    quadraLabel: getQuadraAgendaLabel(quadraSelecionada?.nome),
+    currentUserId: session?.usuario.id ?? "",
+    currentUserCategoria: session?.usuario.categoria ?? null,
+  })
 
   async function handleCreateGame(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -455,6 +493,59 @@ export function AcademiaBoard() {
           })}
         </div>
       </section>
+
+      {quadraSelecionada ? (
+        <PanelCard
+          title={`Agenda da ${quadraSelecionada.nome}`}
+          subtitle="Cinza para horarios livres, azul para partidas pendentes e verde para agendas fechadas."
+          icon={<CalendarDays className="h-5 w-5" />}
+        >
+          <div className="space-y-5">
+            <div className="flex flex-wrap gap-2">
+              {diasDaSemana.map((dia) => (
+                <button
+                  key={dia.date}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate(dia.date)
+                    setSlotKey("")
+                  }}
+                  className={[
+                    "flex min-w-[60px] flex-col items-center rounded-2xl px-3 py-3 text-center transition",
+                    dia.selected
+                      ? "bg-zinc-950 text-white shadow-sm"
+                      : dia.available
+                        ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                        : "border border-zinc-200 bg-white text-zinc-300 hover:text-zinc-400",
+                  ].join(" ")}
+                >
+                  <span className="text-[11px] font-black uppercase tracking-[0.16em]">
+                    {dia.short}
+                  </span>
+                  <span className="mt-1 text-lg font-black">{dia.day}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="hidden grid-cols-[92px_72px_1fr] gap-3 px-1 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400 md:grid">
+              <span>Hora</span>
+              <span>Quadra</span>
+              <span>Jogadores</span>
+            </div>
+
+            <div className="space-y-3">
+              {agendaVisual.length > 0 ? (
+                agendaVisual.map((item) => <AgendaVisualRowCard key={item.id} item={item} />)
+              ) : (
+                <EmptyState
+                  title="Sem agenda publicada para esse dia"
+                  text="Selecione outro dia acima ou use os horarios da quadra para abrir uma nova partida."
+                />
+              )}
+            </div>
+          </div>
+        </PanelCard>
+      ) : null}
 
       <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <PanelCard
@@ -867,6 +958,136 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   )
 }
 
+function AgendaVisualRowCard({ item }: { item: AgendaVisualRow }) {
+  const toneClasses: Record<AgendaVisualTone, string> = {
+    available: "bg-zinc-200 text-zinc-900",
+    pending: "bg-sky-300 text-slate-950",
+    closed: "bg-lime-300 text-slate-950",
+  }
+
+  const pillClasses: Record<AgendaVisualTone, string> = {
+    available: "bg-white text-zinc-600",
+    pending: "bg-white/85 text-sky-700",
+    closed: "bg-white/85 text-green-700",
+  }
+
+  const players = item.players.slice(0, 2)
+  const remainingPlayers = Math.max(item.players.length - players.length, 0)
+
+  return (
+    <article className="grid gap-3 md:grid-cols-[92px_72px_1fr]">
+      <div className="rounded-[20px] bg-zinc-100 px-4 py-4 text-center">
+        <p className="text-lg font-black text-zinc-950">{item.start}</p>
+        {item.end ? <p className="mt-1 text-xs font-bold text-zinc-500">{item.end}</p> : null}
+      </div>
+
+      <div className="rounded-[20px] bg-zinc-100 px-4 py-4 text-center">
+        <p className="text-lg font-black text-zinc-950">{item.quadra}</p>
+      </div>
+
+      <div className={["rounded-[22px] px-4 py-4 shadow-sm", toneClasses[item.tone]].join(" ")}>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            {players.length > 0 ? (
+              players.map((player, index) => (
+                <div key={player.id} className="flex items-center gap-3">
+                  {index > 0 ? <span className="text-sm font-black">x</span> : null}
+                  <AgendaPlayerChip player={player} />
+                </div>
+              ))
+            ) : (
+              <>
+                <AgendaPlayerChip placeholder label="Livre" />
+                <span className="text-sm font-black">x</span>
+                <AgendaPlayerChip placeholder label="Livre" />
+              </>
+            )}
+
+            {remainingPlayers > 0 ? (
+              <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-black text-zinc-700">
+                +{remainingPlayers}
+              </span>
+            ) : null}
+          </div>
+
+          <span
+            className={[
+              "inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em]",
+              pillClasses[item.tone],
+            ].join(" ")}
+          >
+            {item.tag}
+          </span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
+          <span>{item.status}</span>
+          <span className="opacity-50">•</span>
+          <span>{item.description}</span>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function AgendaPlayerChip({
+  player,
+  placeholder = false,
+  label,
+}: {
+  player?: AgendaVisualPlayer
+  placeholder?: boolean
+  label?: string
+}) {
+  const category = player?.categoria?.trim() || null
+
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <PlayerAvatar nome={player?.nome} foto={player?.foto} placeholder={placeholder} />
+
+      <div className="min-w-0">
+        <p className="truncate text-sm font-black text-current">
+          {label || player?.nome || "Jogador"}
+        </p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-current/70">
+          {category || "Sem categoria"}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function PlayerAvatar({
+  nome,
+  foto,
+  placeholder = false,
+}: {
+  nome?: string
+  foto?: string | null
+  placeholder?: boolean
+}) {
+  if (foto && !placeholder) {
+    return (
+      <div
+        aria-label={nome || "Jogador"}
+        className="h-12 w-12 rounded-full border-2 border-white/70 bg-white shadow-sm"
+        role="img"
+        style={{
+          backgroundImage: `url("${foto}")`,
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+        }}
+      />
+    )
+  }
+
+  return (
+    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/70 bg-white/85 text-sm font-black text-zinc-700 shadow-sm">
+      {placeholder ? <Plus className="h-5 w-5" /> : getInitials(nome)}
+    </div>
+  )
+}
+
 function PanelCard({
   title,
   subtitle,
@@ -966,4 +1187,192 @@ function EmptyState({ title, text }: { title: string; text: string }) {
 
 function getSlotKey(quadraId: string, slot: Pick<AgendaSlot, "inicio" | "fim">) {
   return `${quadraId}:${slot.inicio}:${slot.fim}`
+}
+
+function buildAgendaVisualRows({
+  disponibilidade,
+  jogos,
+  aulas,
+  quadraLabel,
+  currentUserId,
+  currentUserCategoria,
+}: {
+  disponibilidade: AgendaDisponibilidade | null
+  jogos: JogoDetalhado[]
+  aulas: AulaAgenda[]
+  quadraLabel: string
+  currentUserId: string
+  currentUserCategoria?: string | null
+}) {
+  const rows: AgendaVisualRow[] = [
+    ...jogos.map((jogo) =>
+      buildGameAgendaRow(jogo, quadraLabel, currentUserId, currentUserCategoria)
+    ),
+    ...aulas.map((aula) =>
+      buildLessonAgendaRow(aula, quadraLabel, currentUserId, currentUserCategoria)
+    ),
+    ...((disponibilidade?.slots ?? [])
+      .filter((slot) => slot.disponivel)
+      .map((slot) => buildAvailableAgendaRow(slot, quadraLabel))),
+  ]
+
+  return rows.sort((first, second) => {
+    const timeDiff = first.start.localeCompare(second.start)
+
+    if (timeDiff !== 0) {
+      return timeDiff
+    }
+
+    return getAgendaToneOrder(first.tone) - getAgendaToneOrder(second.tone)
+  })
+}
+
+function buildGameAgendaRow(
+  jogo: JogoDetalhado,
+  quadraLabel: string,
+  currentUserId: string,
+  currentUserCategoria?: string | null
+): AgendaVisualRow {
+  const players: AgendaVisualPlayer[] = jogo.participantes.map((participante) => ({
+    id: participante.usuario.id,
+    nome: participante.usuario.nome,
+    foto: participante.usuario.foto_perfil,
+    categoria:
+      participante.usuario.id === currentUserId ? currentUserCategoria || null : null,
+  }))
+
+  return {
+    id: `jogo-${jogo.id}`,
+    start: toHourMinute(jogo.inicio_em),
+    end: toHourMinute(jogo.fim_em),
+    quadra: quadraLabel,
+    tone:
+      jogo.status === "COMPLETO"
+        ? "closed"
+        : jogo.status === "ABERTO"
+          ? "pending"
+          : "available",
+    status:
+      jogo.status === "COMPLETO"
+        ? "Fechado"
+        : jogo.status === "ABERTO"
+          ? "Pendente"
+          : "Disponivel",
+    tag: getAgendaGameTag(jogo),
+    description: `${jogo.participantes.length}/${jogo.maximo_participantes} jogador(es) · ${formatAgendaGameType(jogo.tipo_jogo)}`,
+    players,
+  }
+}
+
+function buildLessonAgendaRow(
+  aula: AulaAgenda,
+  quadraLabel: string,
+  currentUserId: string,
+  currentUserCategoria?: string | null
+): AgendaVisualRow {
+  const usuariosAula = [aula.professor, aula.cliente].filter(
+    (usuario): usuario is NonNullable<AulaAgenda["professor"]> => Boolean(usuario)
+  )
+  const players: AgendaVisualPlayer[] = [aula.professor, aula.cliente]
+    .filter((usuario): usuario is NonNullable<AulaAgenda["professor"]> => Boolean(usuario))
+    .map((usuario) => ({
+      id: usuario.id,
+      nome: usuario.nome,
+      foto: usuario.foto_perfil,
+      categoria: usuario.id === currentUserId ? currentUserCategoria || null : null,
+    }))
+
+  return {
+    id: `aula-${aula.id}`,
+    start: toHourMinute(aula.inicio_em),
+    end: toHourMinute(aula.fim_em),
+    quadra: quadraLabel,
+    tone: "closed",
+    status: "Fechado",
+    tag: aula.recorrente ? "Aula recorrente" : "Aula",
+    description: usuariosAula.length > 0 ? "Horario reservado na agenda" : "Aula confirmada",
+    players,
+  }
+}
+
+function buildAvailableAgendaRow(slot: AgendaSlot, quadraLabel: string): AgendaVisualRow {
+  return {
+    id: `slot-${quadraLabel}-${slot.inicio}-${slot.fim}`,
+    start: slot.inicio,
+    end: slot.fim,
+    quadra: quadraLabel,
+    tone: "available",
+    status: "Disponivel",
+    tag: "Livre",
+    description: "Horario disponivel para criar jogo",
+    players: [],
+  }
+}
+
+function getAgendaToneOrder(tone: AgendaVisualTone) {
+  return tone === "closed" ? 0 : tone === "pending" ? 1 : 2
+}
+
+function getAgendaGameTag(jogo: JogoDetalhado) {
+  const observacoes = jogo.observacoes?.toLowerCase() ?? ""
+
+  if (observacoes.includes("ranking")) {
+    return "Ranking"
+  }
+
+  if (observacoes.includes("amist")) {
+    return "Amistoso"
+  }
+
+  return formatAgendaGameType(jogo.tipo_jogo)
+}
+
+function formatAgendaGameType(tipo: JogoDetalhado["tipo_jogo"]) {
+  return tipo === "DUPLA" ? "Dupla" : "Simples"
+}
+
+function toHourMinute(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value))
+}
+
+function getWeekDays(selectedDate: string, diasAtivos: Set<number>) {
+  const selected = new Date(`${selectedDate}T12:00:00`)
+  const start = new Date(selected)
+  start.setDate(selected.getDate() - selected.getDay())
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    const iso = toDateInputValue(date)
+
+    return {
+      date: iso,
+      short: DIA_SEMANA_CURTO[date.getDay()],
+      day: String(date.getDate()).padStart(2, "0"),
+      available: diasAtivos.has(date.getDay()),
+      selected: iso === selectedDate,
+    }
+  })
+}
+
+function toDateInputValue(value: Date) {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, "0")
+  const day = String(value.getDate()).padStart(2, "0")
+
+  return `${year}-${month}-${day}`
+}
+
+function getQuadraAgendaLabel(nome?: string) {
+  if (!nome) {
+    return "-"
+  }
+
+  const match = nome.match(/\d+/)
+  const fallbackLabel = nome.replace(/quadra/i, "").trim()
+
+  return match?.[0] ?? (fallbackLabel || nome)
 }

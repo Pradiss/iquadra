@@ -5,17 +5,7 @@ import { useMemo, useState } from "react"
 import { ArrowRight, Building2, MapPin, Search, Sparkles } from "lucide-react"
 import type { EmpresaMarketplace } from "../../types/empresa"
 
-function formatTipoPiso(tipo?: string) {
-  const labels: Record<string, string> = {
-    SAIBRO: "Saibro",
-    HARD: "Hard",
-    GRAMA: "Grama",
-    SINTETICA: "Sintetica",
-    OUTRO: "Outro piso",
-  }
 
-  return labels[tipo ?? ""] ?? tipo ?? "Piso nao informado"
-}
 
 function formatLocation(empresa: Pick<EmpresaMarketplace, "cidade" | "estado">) {
   const parts = [empresa.cidade, empresa.estado].filter(Boolean)
@@ -71,8 +61,9 @@ export function AcademiasExplorer({
   }, [academias, limit, query])
 
   return (
-    <section id={sectionId} className="space-y-6">
-      <div className="rounded-[32px] bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
+    
+    <section id={sectionId} className="space-y-6 sm:space-y-0 ">
+      <div className="">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-green-700">
@@ -113,7 +104,7 @@ export function AcademiasExplorer({
       </div>
 
       {filtered.length > 0 ? (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 sm:py-7 ">
           {filtered.map((empresa) => {
             return (
               <Link
@@ -149,16 +140,6 @@ export function AcademiasExplorer({
                     />
                   </div>
 
-                  <p className="mt-4 text-sm leading-6 text-zinc-500">
-                    {empresa.tiposPiso.length > 0
-                      ? `Piso em destaque: ${formatTipoPiso(empresa.tiposPiso[0])}.`
-                      : "Entre para ver as quadras e horarios dessa academia."}
-                  </p>
-
-                  <div className="mt-5 inline-flex items-center gap-2 text-sm font-black text-green-700 transition group-hover:text-green-800">
-                    Escolher quadra
-                    <ArrowRight className="h-4 w-4" />
-                  </div>
                 </div>
               </Link>
             )

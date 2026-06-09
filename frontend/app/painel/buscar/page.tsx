@@ -1,5 +1,9 @@
-import { BuscarAcademiasBoard } from "../../../components/painel/buscar-academias-board"
+import { BuscarAcademiasBoard } from "../../../components/painel/buscar-academias-board";
 
 export default function PainelBuscarPage() {
-  return <BuscarAcademiasBoard />
+  return (
+    <section class="p-5">
+      <BuscarAcademiasBoard />
+    </section>
+  );
 }

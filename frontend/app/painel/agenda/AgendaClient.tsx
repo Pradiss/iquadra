@@ -327,7 +327,7 @@ export default function AgendaClient() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="p-5 space-y-5">
       <section className="rounded-[34px] bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
