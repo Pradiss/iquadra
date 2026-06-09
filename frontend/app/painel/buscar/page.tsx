@@ -2,7 +2,7 @@ import { BuscarAcademiasBoard } from "../../../components/painel/buscar-academia
 
 export default function PainelBuscarPage() {
   return (
-    <section class="p-5">
+    <section className="p-5">
       <BuscarAcademiasBoard />
     </section>
   );
