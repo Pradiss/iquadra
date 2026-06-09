@@ -2,17 +2,17 @@
   "name": "backend",
   "version": "1.0.0",
   "engines": {
-  "node": "20.x"
-},
+    "node": "20.x"
+  },
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "build": "npx prisma generate && tsc",
-  "start": "node dist/server.js",
-  "prisma:generate": "npx prisma generate",
-  "prisma:push": "npx prisma db push"
-},
+    "dev": "tsx watch src/server.ts",
+    "build": "npx prisma generate && tsc",
+    "start": "node dist/server.js",
+    "prisma:generate": "npx prisma generate",
+    "prisma:push": "npx prisma db push"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
