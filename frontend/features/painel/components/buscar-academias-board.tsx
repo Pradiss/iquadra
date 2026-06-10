@@ -1,13 +1,12 @@
 "use client"
 
 import axios from "axios"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { AlertCircle, ArrowLeft, LoaderCircle, Search } from "lucide-react"
-import { clearAuthStorage, getSession, getToken } from "../../lib/auth-storage"
-import { listarEmpresas } from "../../services/empresa.service"
-import type { EmpresaMarketplace } from "../../types/empresa"
+import { AlertCircle, LoaderCircle } from "lucide-react"
+import { clearAuthStorage, getSession, getToken } from "@/shared/lib/auth-storage"
+import { listarEmpresas } from "@/shared/services/empresa.service"
+import type { EmpresaMarketplace } from "@/shared/types/empresa"
 import { AcademiasExplorer } from "./academias-explorer"
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -85,13 +84,8 @@ export function BuscarAcademiasBoard() {
 
     return primeira.nome.localeCompare(segunda.nome, "pt-BR")
   })
-
-  const academiasComAgenda = marketplace.filter((academia) => academia.agendaPronta)
-
   return (
-    <div className="">
-    
-
+    <div>
       {error ? (
         <section className="rounded-[26px] bg-red-50 px-5 py-4 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-red-200">
           <div className="flex items-start gap-3">

@@ -1,12 +1,13 @@
-import { SiteHeader } from "../components/layout/header"
-import { SiteFooter } from "../components/layout/footer"
-import { HeroSection } from "../components/landing/hero"
-import { SocialProofSection } from "../components/landing/social-proof"
-import { CourtReservationSection } from "../components/landing/court-reservation"
-import { PlayerAppSection } from "../components/landing/player-app"
-import { LessonsSection } from "../components/landing/lessons"
-import { BenefitsSection } from "../components/landing/benefits"
-import { FinalCtaSection } from "../components/landing/cta"
+import { SiteFooter, SiteHeader } from "@/shared/layout"
+import {
+  BenefitsSection,
+  CourtReservationSection,
+  FinalCtaSection,
+  HeroSection,
+  LessonsSection,
+  PlayerAppSection,
+  SocialProofSection,
+} from "@/features/landing/components"
 
 export default function HomePage() {
   return (

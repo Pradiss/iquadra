@@ -1,6 +1,4 @@
-import { PainelHeader } from "../../components/painel/header"
-import { PainelSidebar } from "../../components/painel/sidebar"
-import { PainelBottomNav } from "../../components/painel/bottom-nav"
+import { PainelBottomNav, PainelHeader, PainelSidebar } from "@/features/painel/components"
 
 export default function PainelLayout({
   children,

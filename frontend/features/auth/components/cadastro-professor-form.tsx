@@ -4,8 +4,8 @@ import axios from "axios"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { registerProfessor } from "../../services/auth.service"
-import { maskPhone, onlyNumbers } from "../../lib/masks"
+import { registerProfessor } from "@/shared/services/auth.service"
+import { maskPhone, onlyNumbers } from "@/shared/lib/masks"
 
 type ProfessorData = {
   nome: string

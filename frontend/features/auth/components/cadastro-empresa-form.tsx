@@ -4,8 +4,8 @@ import axios from "axios"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { registerEmpresa } from "../../services/auth.service"
-import { maskCep, maskPhone, onlyNumbers } from "../../lib/masks"
+import { registerEmpresa } from "@/shared/services/auth.service"
+import { maskCep, maskPhone, onlyNumbers } from "@/shared/lib/masks"
 
 type FormData = {
   nomeDono: string

@@ -1,4 +1,4 @@
-import { CadastroProfessorForm } from "../../components/forms/cadastro-professor-form"
+import { CadastroProfessorForm } from "@/features/auth/components"
 
 export default function CadastroProfessorPage() {
   return (

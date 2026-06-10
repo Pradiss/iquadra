@@ -8,9 +8,9 @@ import {
   CATEGORIAS_USUARIO,
   isCategoriaUsuario,
   type CategoriaUsuario,
-} from "../../lib/categoria-usuario"
-import { maskCep, maskPhone, onlyNumbers } from "../../lib/masks"
-import { register, type RegisterData } from "../../services/auth.service"
+} from "@/shared/lib/categoria-usuario"
+import { maskCep, maskPhone, onlyNumbers } from "@/shared/lib/masks"
+import { register, type RegisterData } from "@/shared/services/auth.service"
 
 type CadastroData = {
   nome: string

@@ -1,4 +1,4 @@
-import { MeusJogosBoard } from "../../../components/painel/meus-jogos-board"
+import { MeusJogosBoard } from "@/features/painel/components"
 
 export default function MeusJogosPage() {
   return <MeusJogosBoard />

@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { AUTH_CHANGE_EVENT, getSession } from "../../lib/auth-storage"
-import type { AuthSessionSnapshot } from "../../types/auth"
+import { AUTH_CHANGE_EVENT, getSession } from "@/shared/lib/auth-storage"
+import type { AuthSessionSnapshot } from "@/shared/types/auth"
 import { LogoutButton } from "./logout-button"
 import { getPainelSidebarNavItems, isPainelLinkActive } from "./nav-items"
 

@@ -2,10 +2,8 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { ArrowRight, Building2, MapPin, Search, Sparkles } from "lucide-react"
-import type { EmpresaMarketplace } from "../../types/empresa"
-
-
+import { Building2, MapPin, Search, Sparkles } from "lucide-react"
+import type { EmpresaMarketplace } from "@/shared/types/empresa"
 
 function formatLocation(empresa: Pick<EmpresaMarketplace, "cidade" | "estado">) {
   const parts = [empresa.cidade, empresa.estado].filter(Boolean)
@@ -61,9 +59,8 @@ export function AcademiasExplorer({
   }, [academias, limit, query])
 
   return (
-    
-    <section id={sectionId} className="space-y-6 sm:space-y-0 ">
-      <div className="">
+    <section id={sectionId} className="space-y-6 sm:space-y-0">
+      <div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-green-700">
@@ -104,7 +101,7 @@ export function AcademiasExplorer({
       </div>
 
       {filtered.length > 0 ? (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 sm:py-7 ">
+        <div className="grid gap-5 sm:grid-cols-2 sm:py-5 xl:grid-cols-3">
           {filtered.map((empresa) => {
             return (
               <Link
@@ -139,7 +136,6 @@ export function AcademiasExplorer({
                       value={empresa.agendaPronta ? "Aberta" : "Em breve"}
                     />
                   </div>
-
                 </div>
               </Link>
             )

@@ -1,4 +1,4 @@
-import { CadastroEmpresaForm } from "../../components/forms/cadastro-empresa-form"
+import { CadastroEmpresaForm } from "@/features/auth/components"
 
 export default function CadastroEmpresaPage() {
   return (

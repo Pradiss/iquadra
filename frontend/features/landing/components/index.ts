@@ -1,0 +1,7 @@
+export { BenefitsSection } from "./benefits"
+export { CourtReservationSection } from "./court-reservation"
+export { FinalCtaSection } from "./cta"
+export { HeroSection } from "./hero"
+export { LessonsSection } from "./lessons"
+export { PlayerAppSection } from "./player-app"
+export { SocialProofSection } from "./social-proof"

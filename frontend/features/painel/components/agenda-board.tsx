@@ -13,13 +13,13 @@ import {
   Trophy,
   Users,
 } from "lucide-react"
-import { clearAuthStorage, getSession, getToken } from "../../../lib/auth-storage"
+import { clearAuthStorage, getSession, getToken } from "@/shared/lib/auth-storage"
 import {
   canManageAcademia,
   canOperateAcademia,
   getPerfilParaAcademia,
   listActiveAcademiaContexts,
-} from "../../../lib/painel-context"
+} from "@/shared/lib/painel-context"
 import {
   buildIsoDateTime,
   formatDateTime,
@@ -27,7 +27,7 @@ import {
   getErrorMessage,
   getTodayDate,
   isUnauthorizedError,
-} from "../../../lib/painel-format"
+} from "@/shared/lib/painel-format"
 import {
   cancelarAula,
   cancelarRecorrenciaAula,
@@ -35,17 +35,17 @@ import {
   criarRecorrenciaAula,
   listarAulas,
   listarRecorrenciasAula,
-} from "../../../services/aula.service"
-import { listarConvitesJogo } from "../../../services/convite-jogo.service"
-import { buscarAgendaAcademia } from "../../../services/dashboard.service"
-import { listarMeusJogos } from "../../../services/jogo.service"
-import { listarQuadrasAcademia } from "../../../services/quadra.service"
-import type { AulaAgenda, RecorrenciaAula } from "../../../types/aula"
-import type { AuthSessionSnapshot } from "../../../types/auth"
-import type { AgendaEventoAcademia } from "../../../types/dashboard"
-import type { JogoDetalhado } from "../../../types/agenda"
-import type { QuadraResumo } from "../../../types/quadra"
-import type { ConviteJogo } from "../../../types/social"
+} from "@/shared/services/aula.service"
+import { listarConvitesJogo } from "@/shared/services/convite-jogo.service"
+import { buscarAgendaAcademia } from "@/shared/services/dashboard.service"
+import { listarMeusJogos } from "@/shared/services/jogo.service"
+import { listarQuadrasAcademia } from "@/shared/services/quadra.service"
+import type { AulaAgenda, RecorrenciaAula } from "@/shared/types/aula"
+import type { AuthSessionSnapshot } from "@/shared/types/auth"
+import type { AgendaEventoAcademia } from "@/shared/types/dashboard"
+import type { JogoDetalhado } from "@/shared/types/agenda"
+import type { QuadraResumo } from "@/shared/types/quadra"
+import type { ConviteJogo } from "@/shared/types/social"
 
 const DIA_SEMANA_OPTIONS = [
   { value: 0, label: "Domingo" },
@@ -57,7 +57,7 @@ const DIA_SEMANA_OPTIONS = [
   { value: 6, label: "Sabado" },
 ] as const
 
-export default function AgendaClient() {
+export function AgendaBoard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const academiaIdFromQuery = searchParams.get("academia") ?? ""

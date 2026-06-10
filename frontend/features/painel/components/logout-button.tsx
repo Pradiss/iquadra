@@ -2,7 +2,7 @@
 
 import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { clearAuthStorage } from "../../lib/auth-storage"
+import { clearAuthStorage } from "@/shared/lib/auth-storage"
 
 type LogoutButtonProps = {
   className?: string

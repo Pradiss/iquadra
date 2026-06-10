@@ -3,27 +3,25 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle, Search, Trophy, UserRoundPlus } from "lucide-react";
+import { LoaderCircle, Search, Trophy, Users } from "lucide-react";
 
-import { clearAuthStorage, getSession, getToken } from "../../lib/auth-storage";
+import { clearAuthStorage, getSession, getToken } from "@/shared/lib/auth-storage";
 import {
-  formatDateTime,
-  formatPeriodo,
   getErrorMessage,
   getFirstName,
   isUnauthorizedError,
   sortAcademiasByPreference,
-} from "../../lib/painel-format";
-import { getPerfilLabel, getUserExperience } from "../../lib/perfis";
-import { listarAmizades } from "../../services/amizade.service";
-import { listarConvitesJogo } from "../../services/convite-jogo.service";
-import { listarEmpresas } from "../../services/empresa.service";
-import { listarMeusJogos } from "../../services/jogo.service";
+} from "@/shared/lib/painel-format";
+import { getPerfilLabel } from "@/shared/lib/perfis";
+import { listarAmizades } from "@/shared/services/amizade.service";
+import { listarConvitesJogo } from "@/shared/services/convite-jogo.service";
+import { listarEmpresas } from "@/shared/services/empresa.service";
+import { listarMeusJogos } from "@/shared/services/jogo.service";
 
-import type { AuthSessionSnapshot } from "../../types/auth";
-import type { EmpresaMarketplace } from "../../types/empresa";
-import type { JogoDetalhado } from "../../types/agenda";
-import type { Amizade, ConviteJogo } from "../../types/social";
+import type { AuthSessionSnapshot } from "@/shared/types/auth";
+import type { EmpresaMarketplace } from "@/shared/types/empresa";
+import type { JogoDetalhado } from "@/shared/types/agenda";
+import type { Amizade, ConviteJogo } from "@/shared/types/social";
 
 import { AcademiasExplorer } from "./academias-explorer";
 
@@ -105,8 +103,6 @@ export function PainelHomeBoard() {
   const amigosAceitos = amizades.filter(
     (amizade) => amizade.status === "ACEITA",
   );
-  const experience = getUserExperience(session?.perfilAtual);
-
   if (loading) {
     return (
       <div className="flex items-center gap-3 rounded-3xl bg-white p-5 text-sm font-bold text-zinc-500">
@@ -137,6 +133,24 @@ export function PainelHomeBoard() {
           </div>
         )}
 
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <SummaryCard
+            icon={<Trophy className="h-4 w-4" />}
+            label="Jogos futuros"
+            value={String(jogosFuturos.length)}
+          />
+          <SummaryCard
+            icon={<Search className="h-4 w-4" />}
+            label="Convites pendentes"
+            value={String(convitesPendentes.length)}
+          />
+          <SummaryCard
+            icon={<Users className="h-4 w-4" />}
+            label="Amigos ativos"
+            value={String(amigosAceitos.length)}
+          />
+        </div>
+
         <div className="mt-5 grid gap-4 sm:grid-cols-4">
           <Link
             href="/painel/buscar"
@@ -166,5 +180,25 @@ export function PainelHomeBoard() {
         showSearch={false}
       />
     </main>
+  );
+}
+
+function SummaryCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <article className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 shadow-sm">
+      <div className="flex items-center gap-2 text-zinc-500">
+        {icon}
+        <p className="text-xs font-black uppercase tracking-[0.18em]">{label}</p>
+      </div>
+      <p className="mt-3 text-2xl font-black text-zinc-950">{value}</p>
+    </article>
   );
 }

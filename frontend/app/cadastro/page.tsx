@@ -1,4 +1,4 @@
-import { CadastroForm } from "../../components/forms/cadastro-form"
+import { CadastroForm } from "@/features/auth/components"
 
 export default function CadastroPage() {
   return (

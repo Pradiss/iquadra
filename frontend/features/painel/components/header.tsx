@@ -10,9 +10,9 @@ import {
   clearAuthStorage,
   getSession,
   getToken,
-} from "../../lib/auth-storage"
-import { getPerfilLabel } from "../../lib/perfis"
-import type { AuthSessionSnapshot, Usuario } from "../../types/auth"
+} from "@/shared/lib/auth-storage"
+import { getPerfilLabel } from "@/shared/lib/perfis"
+import type { AuthSessionSnapshot, Usuario } from "@/shared/types/auth"
 import { getPainelSidebarNavItems, isPainelLinkActive } from "./nav-items"
 
 function getInitials(nome?: string) {

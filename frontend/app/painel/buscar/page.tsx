@@ -1,4 +1,4 @@
-import { BuscarAcademiasBoard } from "../../../components/painel/buscar-academias-board";
+import { BuscarAcademiasBoard } from "@/features/painel/components"
 
 export default function PainelBuscarPage() {
   return (

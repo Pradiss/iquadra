@@ -7,8 +7,8 @@ import {
   Search,
   Trophy,
 } from "lucide-react"
-import type { AuthSessionSnapshot } from "../../types/auth"
-import { getUserExperience } from "../../lib/perfis"
+import type { AuthSessionSnapshot } from "@/shared/types/auth"
+import { getUserExperience } from "@/shared/lib/perfis"
 
 export type PainelNavItem = {
   href: string

@@ -14,12 +14,12 @@ import {
   ShieldCheck,
   Trash2,
 } from "lucide-react"
-import { clearAuthStorage, getSession, getToken } from "../../lib/auth-storage"
+import { clearAuthStorage, getSession, getToken } from "@/shared/lib/auth-storage"
 import {
   canManageAcademia,
   getPerfilParaAcademia,
   listManagedAcademiaContexts,
-} from "../../lib/painel-context"
+} from "@/shared/lib/painel-context"
 import {
   buildIsoDateTime,
   formatDateTime,
@@ -28,7 +28,7 @@ import {
   getErrorMessage,
   getTodayDate,
   isUnauthorizedError,
-} from "../../lib/painel-format"
+} from "@/shared/lib/painel-format"
 import {
   cancelarAula,
   cancelarRecorrenciaAula,
@@ -36,17 +36,17 @@ import {
   criarRecorrenciaAula,
   listarAulas,
   listarRecorrenciasAula,
-} from "../../services/aula.service"
+} from "@/shared/services/aula.service"
 import {
   criarBloqueioQuadra,
   listarBloqueiosQuadra,
   removerBloqueioQuadra,
-} from "../../services/bloqueio.service"
+} from "@/shared/services/bloqueio.service"
 import {
   buscarAgendaAcademia,
   buscarDashboardAcademia,
-} from "../../services/dashboard.service"
-import { buscarEmpresaDetalhes } from "../../services/empresa.service"
+} from "@/shared/services/dashboard.service"
+import { buscarEmpresaDetalhes } from "@/shared/services/empresa.service"
 import {
   atualizarHorarioQuadra,
   atualizarQuadra,
@@ -56,17 +56,17 @@ import {
   listarHorariosQuadra,
   listarQuadrasAcademia,
   removerHorarioQuadra,
-} from "../../services/quadra.service"
-import type { AulaAgenda, RecorrenciaAula } from "../../types/aula"
-import type { AuthSessionSnapshot } from "../../types/auth"
-import type { BloqueioQuadra, TipoBloqueioQuadra } from "../../types/bloqueio"
-import type { DashboardResumoAcademia, AgendaEventoAcademia } from "../../types/dashboard"
-import type { EmpresaDetalhe } from "../../types/empresa"
+} from "@/shared/services/quadra.service"
+import type { AulaAgenda, RecorrenciaAula } from "@/shared/types/aula"
+import type { AuthSessionSnapshot } from "@/shared/types/auth"
+import type { BloqueioQuadra, TipoBloqueioQuadra } from "@/shared/types/bloqueio"
+import type { DashboardResumoAcademia, AgendaEventoAcademia } from "@/shared/types/dashboard"
+import type { EmpresaDetalhe } from "@/shared/types/empresa"
 import type {
   HorarioQuadraDetalhe,
   QuadraResumo,
   TipoPisoQuadra,
-} from "../../types/quadra"
+} from "@/shared/types/quadra"
 
 const TIPO_PISO_OPTIONS: TipoPisoQuadra[] = [
   "SAIBRO",

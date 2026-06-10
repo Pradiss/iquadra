@@ -1,5 +1,5 @@
 import Image from "next/image"
-import { LoginForm } from "../../components/forms/login-form"
+import { LoginForm } from "@/features/auth/components"
 
 export default async function LoginPage({
   searchParams,

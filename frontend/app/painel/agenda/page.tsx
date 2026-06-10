@@ -1,16 +1,12 @@
 import { Suspense } from "react"
-import AgendaClient from "./AgendaClient"
-
-
+import { AgendaBoard } from "@/features/painel/components"
 
 export const dynamic = "force-dynamic"
 
 export default function AgendaPage() {
   return (
     <Suspense fallback={<div>Carregando agenda...</div>}>
-      <AgendaClient />
-      
+      <AgendaBoard />
     </Suspense>
-    
   )
 }

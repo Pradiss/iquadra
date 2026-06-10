@@ -13,30 +13,30 @@ import {
   Send,
   Users,
 } from "lucide-react"
-import { clearAuthStorage, getSession, getToken } from "../../lib/auth-storage"
+import { clearAuthStorage, getSession, getToken } from "@/shared/lib/auth-storage"
 import {
   formatDate,
   formatPeriodo,
   formatTipoPiso,
   getErrorMessage,
   isUnauthorizedError,
-} from "../../lib/painel-format"
-import { getOutroUsuarioDaAmizade } from "../../lib/social"
-import { listarAmizades } from "../../services/amizade.service"
+} from "@/shared/lib/painel-format"
+import { getOutroUsuarioDaAmizade } from "@/shared/lib/social"
+import { listarAmizades } from "@/shared/services/amizade.service"
 import {
   aceitarConviteJogo,
   convidarJogadorParaJogo,
   listarConvitesJogo,
   recusarConviteJogo,
-} from "../../services/convite-jogo.service"
+} from "@/shared/services/convite-jogo.service"
 import {
   cancelarJogo,
   listarMeusJogos,
   sairDoJogo,
-} from "../../services/jogo.service"
-import type { AuthSessionSnapshot } from "../../types/auth"
-import type { JogoDetalhado } from "../../types/agenda"
-import type { Amizade, ConviteJogo, UsuarioSocial } from "../../types/social"
+} from "@/shared/services/jogo.service"
+import type { AuthSessionSnapshot } from "@/shared/types/auth"
+import type { JogoDetalhado } from "@/shared/types/agenda"
+import type { Amizade, ConviteJogo, UsuarioSocial } from "@/shared/types/social"
 
 type AbaAtiva = "FUTURAS" | "PASSADAS" | "CONVITES"
 
@@ -205,7 +205,7 @@ export function MeusJogosBoard() {
 
   return (
     <div className="p-5 space-y-5">
-      <section className="rounded-[34px] bg-white border border-black/5 bg-[linear-gradient(180deg,#fffdfa_0%,#f8f4ec_100%)] p-5 shadow-[0_28px_70px_rgba(15,23,42,0.07)] sm:p-6">
+      <section className="rounded-[34px] bg-whiteborder border-black/5 bg-[linear-gradient(180deg,#fffdfa_0%,#f8f4ec_100%)] p-5 shadow-[0_28px_70px_rgba(15,23,42,0.07)] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-green-700">
@@ -365,7 +365,7 @@ export function MeusJogosBoard() {
                 <article
                   key={jogo.id}
                   className={[
-                    "rounded-[26px] border p-5 shadow-sm transition",
+                    "rounded-[26px] border p-5 shadow-sm transition ",
                     passado
                       ? "border-zinc-200 bg-[#f8f9fc]"
                       : "border-zinc-200 bg-white hover:shadow-[0_18px_40px_rgba(15,23,42,0.06)]",
@@ -552,17 +552,6 @@ export function MeusJogosBoard() {
         </section>
       )}
     </div>
-  )
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <article className="rounded-[24px] bg-white p-4 shadow-sm">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-black text-zinc-950">{value}</p>
-    </article>
   )
 }
 

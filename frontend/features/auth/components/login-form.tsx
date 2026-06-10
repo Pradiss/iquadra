@@ -4,8 +4,8 @@ import axios from "axios"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { login } from "../../services/auth.service"
-import { completeAuthFlow } from "../../lib/auth-session"
+import { login } from "@/shared/services/auth.service"
+import { completeAuthFlow } from "@/shared/lib/auth-session"
 
 function getSuccessMessage(created?: string | null) {
   if (created === "jogador") {
