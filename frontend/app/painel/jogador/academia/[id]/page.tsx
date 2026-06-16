@@ -1,23 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { ChevronLeft, MapPin } from "lucide-react";
 
-import {
-  listarQuadrasDaAcademia,
-  obterDisponibilidadeQuadra,
-} from "@/services/jogador.service";
-
-import api from "@/services/api";
-
+import { Button } from "@/components/ui/button";
 import { LayoutPainel } from "@/components/painel/layout-painel";
 import { QuadraSelector } from "@/components/jogador/painel/quadra-selector";
 import { AgendaList } from "@/components/jogador/painel/agenda-list";
 import { AgendarJogoDialog } from "@/components/jogador/painel/agendar-jogo-dialog";
 import { AgendaCalendar } from "@/components/jogador/painel/agenda-calendar";
+
+import {
+  listarQuadrasDaAcademia,
+  obterDisponibilidadeQuadra,
+} from "@/services/jogador.service";
+import api from "@/services/api";
 
 type Academia = {
   id: string;
@@ -108,21 +107,88 @@ type DisponibilidadeResponse = {
   slots?: SlotDisponibilidade[];
 };
 
+function montarHorariosDaQuadra(
+  quadra: Quadra,
+  response: DisponibilidadeResponse
+): HorarioAgenda[] {
+  const slots = Array.isArray(response.slots) ? response.slots : [];
+
+  return slots.map((slot): HorarioAgenda => {
+    const participantes = slot.jogo?.participantes ?? [];
+
+    const capacidadeMinima = Number(
+      slot.capacidade_minima ??
+        response.quadra?.capacidade_minima ??
+        quadra.capacidade_minima ??
+        2
+    );
+
+    const capacidadeMaxima = Number(
+      slot.capacidade_maxima ??
+        response.quadra?.capacidade_maxima ??
+        quadra.capacidade_maxima ??
+        4
+    );
+
+    const jogadoresConfirmados = Number(
+      slot.jogadores_confirmados ?? participantes.length
+    );
+
+    return {
+      id: `${quadra.id}-${slot.inicio}`,
+      hora: slot.inicio,
+      horaFim: slot.fim,
+      quadraId: quadra.id,
+      quadraNome: quadra.nome,
+      disponivel: slot.disponivel,
+      motivo: slot.motivo,
+      capacidadeMinima,
+      capacidadeMaxima,
+      permiteSimples: Boolean(
+        slot.permite_simples ??
+          response.quadra?.permite_simples ??
+          quadra.permite_simples ??
+          true
+      ),
+      permiteDupla: Boolean(
+        slot.permite_dupla ??
+          response.quadra?.permite_dupla ??
+          quadra.permite_dupla ??
+          true
+      ),
+      jogadoresConfirmados,
+      vagasDisponiveis: Number(
+        slot.vagas_disponiveis ?? Math.max(capacidadeMaxima - jogadoresConfirmados, 0)
+      ),
+      jogo: slot.jogo
+        ? {
+            ...slot.jogo,
+            participantes,
+          }
+        : null,
+    };
+  });
+}
+
 export default function AcademiaAgendaPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
   const academiaId = params.id;
 
+  const carregandoRef = useRef(false);
+
   const [academia, setAcademia] = useState<Academia | null>(null);
   const [quadras, setQuadras] = useState<Quadra[]>([]);
   const [horarios, setHorarios] = useState<HorarioAgenda[]>([]);
   const [quadraSelecionadaId, setQuadraSelecionadaId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
 
   const [dataSelecionada, setDataSelecionada] = useState(
-    format(new Date(), "yyyy-MM-dd"),
+    format(new Date(), "yyyy-MM-dd")
   );
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [horarioSelecionado, setHorarioSelecionado] =
     useState<HorarioSelecionado | null>(null);
@@ -130,15 +196,15 @@ export default function AcademiaAgendaPage() {
   const horariosFiltrados = useMemo(() => {
     if (!quadraSelecionadaId) return horarios;
 
-    return horarios.filter(
-      (horario) => horario.quadraId === quadraSelecionadaId,
-    );
+    return horarios.filter((horario) => horario.quadraId === quadraSelecionadaId);
   }, [horarios, quadraSelecionadaId]);
 
   const carregarAgenda = useCallback(async () => {
-    if (!academiaId) return;
+    if (!academiaId || !dataSelecionada || carregandoRef.current) return;
 
+    carregandoRef.current = true;
     setLoading(true);
+    setErro("");
 
     try {
       const [academiaResponse, quadrasResponse] = await Promise.all([
@@ -154,93 +220,53 @@ export default function AcademiaAgendaPage() {
       setAcademia(academiaApi);
       setQuadras(quadrasApi);
 
-      const horariosPorQuadra = await Promise.all(
+      if (quadrasApi.length === 0) {
+        setHorarios([]);
+        return;
+      }
+
+      const resultados = await Promise.allSettled(
         quadrasApi.map(async (quadra) => {
           const response = (await obterDisponibilidadeQuadra(
             quadra.id,
-            dataSelecionada,
+            dataSelecionada
           )) as DisponibilidadeResponse;
 
-          const slots = Array.isArray(response.slots) ? response.slots : [];
-
-          return slots.map((slot): HorarioAgenda => {
-            const participantes = slot.jogo?.participantes ?? [];
-
-            const capacidadeMinima = Number(
-              slot.capacidade_minima ??
-                response.quadra?.capacidade_minima ??
-                quadra.capacidade_minima ??
-                2,
-            );
-
-            const capacidadeMaxima = Number(
-              slot.capacidade_maxima ??
-                response.quadra?.capacidade_maxima ??
-                quadra.capacidade_maxima ??
-                4,
-            );
-
-            const jogadoresConfirmados = Number(
-              slot.jogadores_confirmados ?? participantes.length,
-            );
-
-            return {
-              id: `${quadra.id}-${slot.inicio}`,
-              hora: slot.inicio,
-              horaFim: slot.fim,
-              quadraId: quadra.id,
-              quadraNome: quadra.nome,
-              disponivel: slot.disponivel,
-              motivo: slot.motivo,
-              capacidadeMinima,
-              capacidadeMaxima,
-              permiteSimples: Boolean(
-                slot.permite_simples ??
-                response.quadra?.permite_simples ??
-                quadra.permite_simples ??
-                true,
-              ),
-              permiteDupla: Boolean(
-                slot.permite_dupla ??
-                response.quadra?.permite_dupla ??
-                quadra.permite_dupla ??
-                true,
-              ),
-              jogadoresConfirmados,
-              vagasDisponiveis: Number(
-                slot.vagas_disponiveis ??
-                  Math.max(capacidadeMaxima - jogadoresConfirmados, 0),
-              ),
-              jogo: slot.jogo
-                ? {
-                    ...slot.jogo,
-                    participantes,
-                  }
-                : null,
-            };
-          });
-        }),
+          return montarHorariosDaQuadra(quadra, response);
+        })
       );
 
-      const agenda = horariosPorQuadra.flat().sort((a, b) => {
-        const porHora = a.hora.localeCompare(b.hora);
-        if (porHora !== 0) return porHora;
+      const agenda = resultados
+        .filter((resultado) => resultado.status === "fulfilled")
+        .flatMap((resultado) => resultado.value)
+        .sort((a, b) => {
+          const porHora = a.hora.localeCompare(b.hora);
+          if (porHora !== 0) return porHora;
 
-        return a.quadraNome.localeCompare(b.quadraNome);
-      });
+          return a.quadraNome.localeCompare(b.quadraNome);
+        });
+
+      const teveErro = resultados.some(
+        (resultado) => resultado.status === "rejected"
+      );
+
+      if (teveErro) {
+        setErro("Alguns horários não puderam ser carregados.");
+      }
 
       setHorarios(agenda);
     } catch {
       setAcademia(null);
       setQuadras([]);
       setHorarios([]);
+      setErro("Não foi possível carregar a agenda.");
     } finally {
+      carregandoRef.current = false;
       setLoading(false);
     }
   }, [academiaId, dataSelecionada]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void carregarAgenda();
   }, [carregarAgenda]);
 
@@ -270,10 +296,10 @@ export default function AcademiaAgendaPage() {
   return (
     <LayoutPainel>
       <section className="max-w-5xl">
-        <div className="mb-6 ">
+        <div className="mb-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-             <h1 className="text-2xl font-black tracking-[-0.03em] text-black">
+              <h1 className="text-2xl font-black tracking-[-0.03em] text-black">
                 {academia?.nome ?? "Agenda da academia"}
               </h1>
 
@@ -313,6 +339,13 @@ export default function AcademiaAgendaPage() {
             dataSelecionada={dataSelecionada}
             onSelectData={setDataSelecionada}
           />
+
+          {erro && (
+            <p className="mb-3 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+              {erro}
+            </p>
+          )}
+
           {loading ? (
             <p className="text-sm text-zinc-500">Carregando agenda...</p>
           ) : horariosFiltrados.length === 0 ? (
@@ -320,10 +353,7 @@ export default function AcademiaAgendaPage() {
               Nenhum horário encontrado.
             </p>
           ) : (
-            <AgendaList
-              horarios={horariosFiltrados}
-              onSelect={selecionarHorario}
-            />
+            <AgendaList horarios={horariosFiltrados} onSelect={selecionarHorario} />
           )}
         </section>
       </section>

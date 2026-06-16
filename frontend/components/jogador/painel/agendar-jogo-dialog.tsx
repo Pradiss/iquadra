@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  CalendarDays,
-  Clock,
-  MapPin,
-  Plus,
-  UsersRound,
-  X,
-} from "lucide-react";
+import { CalendarDays, Clock, MapPin, Plus, UsersRound, X } from "lucide-react";
 
 import {
   criarJogo,
@@ -105,7 +98,9 @@ function getErrorMessage(error: unknown) {
     message?: string;
   };
 
-  return maybeApiError.response?.data?.message || maybeApiError.message || fallback;
+  return (
+    maybeApiError.response?.data?.message || maybeApiError.message || fallback
+  );
 }
 
 export function AgendarJogoDialog({
@@ -140,7 +135,7 @@ export function AgendarJogoDialog({
         const nome = nomeUsuario(usuario).toLowerCase();
         const email = usuario.email?.toLowerCase() || "";
         const jaSelecionado = jogadores.some(
-          (jogador) => jogador?.id === usuario.id
+          (jogador) => jogador?.id === usuario.id,
         );
 
         if (jaSelecionado) return false;
@@ -154,7 +149,6 @@ export function AgendarJogoDialog({
   useEffect(() => {
     if (!open || !horario) return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setErro("");
     setBusca("");
     setBuscandoIndex(null);
@@ -169,7 +163,6 @@ export function AgendarJogoDialog({
         setUsuarios([]);
       });
   }, [open, horario]);
-
   function abrirBusca(index: number) {
     setBuscandoIndex(index);
     setBusca("");
@@ -179,7 +172,7 @@ export function AgendarJogoDialog({
     if (buscandoIndex === null) return;
 
     setJogadores((atual) =>
-      atual.map((item, index) => (index === buscandoIndex ? usuario : item))
+      atual.map((item, index) => (index === buscandoIndex ? usuario : item)),
     );
 
     setBuscandoIndex(null);
@@ -188,7 +181,7 @@ export function AgendarJogoDialog({
 
   function removerJogador(index: number) {
     setJogadores((atual) =>
-      atual.map((item, i) => (i === index ? null : item))
+      atual.map((item, i) => (i === index ? null : item)),
     );
   }
 
@@ -207,7 +200,7 @@ export function AgendarJogoDialog({
       } else {
         const inicio_em = new Date(`${data}T${horario.hora}:00`).toISOString();
         const fim_em = new Date(
-          `${data}T${horario.fim || horario.hora}:00`
+          `${data}T${horario.fim || horario.hora}:00`,
         ).toISOString();
 
         const jogo = await criarJogo({
@@ -221,7 +214,7 @@ export function AgendarJogoDialog({
         const convidados = jogadoresExibidos.filter(Boolean) as Usuario[];
 
         await Promise.all(
-          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id))
+          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id)),
         );
       }
 

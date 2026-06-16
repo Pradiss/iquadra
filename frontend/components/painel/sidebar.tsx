@@ -4,16 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { LogoutButton } from "./logoutButton";
-import { isPainelLinkActive, painelJogadorNavItems } from "./nav-items";
+import {
+  isPainelLinkActive,
+  painelAdminNavItems,
+  painelJogadorNavItems,
+} from "./nav-items";
 
 export function PainelSidebar() {
   const pathname = usePathname();
 
+  const navItems = pathname.startsWith("/painel/admin")
+    ? painelAdminNavItems
+    : painelJogadorNavItems;
+
   return (
     <aside className="fixed left-0 top-20 hidden h-[calc(100vh-80px)] w-[300px] flex-col border-r border-black/5 bg-[#f4f1e8] px-8 py-8 lg:flex">
-      {" "}
       <nav className="flex-1 space-y-1 overflow-y-auto">
-        {painelJogadorNavItems.map((item) => {
+        {navItems.map((item) => {
           const active = isPainelLinkActive(pathname, item.href);
           const Icon = item.icon;
 
@@ -46,6 +53,7 @@ export function PainelSidebar() {
           );
         })}
       </nav>
+
       <div className="pt-4">
         <LogoutButton />
       </div>

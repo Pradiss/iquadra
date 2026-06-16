@@ -68,19 +68,33 @@ export default function FormLogin() {
 
     try {
       const response = await api.post<LoginResponse>("/auth/login", dados);
-
       const { token, usuario } = response.data.data;
 
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
 
-      if (usuario.academias && usuario.academias.length > 0) {
-        router.push("/painel/admin");
-      } else if (usuario.perfil_professor) {
-        router.push("/painel/professor");
-      } else {
-        router.push("/painel/jogador");
+      const isAdmin =
+        Array.isArray(usuario.academias) && usuario.academias.length > 0;
+
+      const isProfessor = Boolean(usuario.perfil_professor);
+      const isJogador = Boolean(usuario.perfil_cliente);
+
+      if (isAdmin) {
+        router.replace("/painel/admin");
+        return;
       }
+
+      if (isProfessor) {
+        router.replace("/painel/professor");
+        return;
+      }
+
+      if (isJogador) {
+        router.replace("/painel/jogador");
+        return;
+      }
+
+      router.replace("/login");
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(
@@ -163,7 +177,8 @@ export default function FormLogin() {
         onClick={() => router.push("/cadastro/academia")}
         className="mt-5 w-full rounded-2xl border border-lime-200 bg-lime-50 px-4 py-3 text-sm font-semibold text-lime-900 hover:bg-lime-100"
       >
-        Administra uma academia? <br/>Criar acesso de proprietário
+        Administra uma academia? <br />
+        Criar acesso de proprietário
       </button>
     </AuthCard>
   );
