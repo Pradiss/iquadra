@@ -130,16 +130,19 @@ export function AgendarJogoDialog({
   const usuariosFiltrados = useMemo(() => {
     const termo = busca.toLowerCase().trim();
 
+    if (termo.length < 2) {
+      return [];
+    }
+
     return usuarios
       .filter((usuario) => {
         const nome = nomeUsuario(usuario).toLowerCase();
         const email = usuario.email?.toLowerCase() || "";
         const jaSelecionado = jogadores.some(
-          (jogador) => jogador?.id === usuario.id,
+          (jogador) => jogador?.id === usuario.id
         );
 
         if (jaSelecionado) return false;
-        if (!termo) return true;
 
         return nome.includes(termo) || email.includes(termo);
       })
@@ -162,7 +165,8 @@ export function AgendarJogoDialog({
       .catch(() => {
         setUsuarios([]);
       });
-  }, [open, horario]);
+  }, [open, horario?.id]);
+
   function abrirBusca(index: number) {
     setBuscandoIndex(index);
     setBusca("");
@@ -172,7 +176,7 @@ export function AgendarJogoDialog({
     if (buscandoIndex === null) return;
 
     setJogadores((atual) =>
-      atual.map((item, index) => (index === buscandoIndex ? usuario : item)),
+      atual.map((item, index) => (index === buscandoIndex ? usuario : item))
     );
 
     setBuscandoIndex(null);
@@ -181,7 +185,7 @@ export function AgendarJogoDialog({
 
   function removerJogador(index: number) {
     setJogadores((atual) =>
-      atual.map((item, i) => (i === index ? null : item)),
+      atual.map((item, i) => (i === index ? null : item))
     );
   }
 
@@ -200,7 +204,7 @@ export function AgendarJogoDialog({
       } else {
         const inicio_em = new Date(`${data}T${horario.hora}:00`).toISOString();
         const fim_em = new Date(
-          `${data}T${horario.fim || horario.hora}:00`,
+          `${data}T${horario.fim || horario.hora}:00`
         ).toISOString();
 
         const jogo = await criarJogo({
@@ -214,7 +218,7 @@ export function AgendarJogoDialog({
         const convidados = jogadoresExibidos.filter(Boolean) as Usuario[];
 
         await Promise.all(
-          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id)),
+          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id))
         );
       }
 
@@ -366,7 +370,11 @@ export function AgendarJogoDialog({
 
                   {buscandoIndex === index && (
                     <div className="max-h-40 overflow-y-auto rounded-xl border border-zinc-200 p-2">
-                      {usuariosFiltrados.length === 0 ? (
+                      {busca.trim().length < 2 ? (
+                        <p className="px-2 py-2 text-sm text-zinc-500">
+                          Digite pelo menos 2 letras para buscar jogadores.
+                        </p>
+                      ) : usuariosFiltrados.length === 0 ? (
                         <p className="px-2 py-2 text-sm text-zinc-500">
                           Nenhum jogador encontrado.
                         </p>
