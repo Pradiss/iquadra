@@ -90,3 +90,13 @@ export async function bloquearHorario(
   const response = await api.post(`/quadras/${quadraId}/bloqueios`, data);
   return getData(response);
 }
+
+export type HorarioQuadraAdmin = {
+  id: string;
+  quadra_id?: string;
+  dia_semana: number;
+  abre_as: string;
+  fecha_as: string;
+  duracao_slot_minutos?: number;
+};
+

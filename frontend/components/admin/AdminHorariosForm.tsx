@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   bloquearHorario,
- gerarHorarioQuadra,
+  gerarHorarioQuadra,
   listarHorariosQuadra,
   listarQuadras,
   type HorarioQuadraAdmin,
@@ -72,7 +72,10 @@ export function AdminHorariosForm() {
     } catch (error) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(error, "Não foi possível carregar as quadras."),
+        message: getErrorMessage(
+          error,
+          "Não foi possível carregar as quadras.",
+        ),
       });
     } finally {
       setLoading(false);
@@ -91,7 +94,10 @@ export function AdminHorariosForm() {
     } catch (error) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(error, "Não foi possível carregar os horários."),
+        message: getErrorMessage(
+          error,
+          "Não foi possível carregar os horários.",
+        ),
       });
     }
   }, [selectedQuadra]);
@@ -145,14 +151,16 @@ export function AdminHorariosForm() {
     try {
       setSaving(true);
 
-      await gerarHorarios({
-        quadra_id: selectedQuadra,
-        dias_semana: form.dias_semana,
-        hora_inicio: form.hora_inicio,
-        hora_fim: form.hora_fim,
-        duracao_minutos: 90,
-      });
-
+      await Promise.all(
+        form.dias_semana.map((dia) =>
+          gerarHorarioQuadra(selectedQuadra, {
+            dia_semana: dia,
+            abre_as: form.hora_inicio,
+            fecha_as: form.hora_fim,
+            duracao_slot_minutos: 90,
+          }),
+        ),
+      );
       setFeedback({
         type: "success",
         message: "Horários de 90 minutos gerados com sucesso.",
@@ -189,8 +197,7 @@ export function AdminHorariosForm() {
     try {
       setSaving(true);
 
-      await bloquearHorario({
-        quadra_id: selectedQuadra,
+      await bloquearHorario(selectedQuadra, {
         data: bloqueio.data,
         hora_inicio: bloqueio.hora_inicio,
         hora_fim: bloqueio.hora_fim,
@@ -238,7 +245,9 @@ export function AdminHorariosForm() {
             className="h-[50px] w-full rounded-xl border border-input bg-gray-50 px-3 text-sm"
           >
             <option value="">
-              {quadras.length === 0 ? "Cadastre uma quadra primeiro" : "Selecione"}
+              {quadras.length === 0
+                ? "Cadastre uma quadra primeiro"
+                : "Selecione"}
             </option>
 
             {quadras.map((quadra) => (
