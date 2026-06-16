@@ -6,6 +6,10 @@ export const createQuadraSchema = z.object({
   tipo_piso: z.enum(["SAIBRO", "HARD", "GRAMA", "SINTETICA", "AREIA", "OUTRO"]),
   coberta: z.boolean().optional(),
   ordem_exibicao: z.number().optional(),
+  capacidade_minima: z.number().int().min(1).optional(),
+  capacidade_maxima: z.number().int().min(1).optional(),
+  permite_simples: z.boolean().optional(),
+  permite_dupla: z.boolean().optional(),
 });
 
 export const updateQuadraSchema = createQuadraSchema.partial();

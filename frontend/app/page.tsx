@@ -1,26 +1,7 @@
-import { SiteFooter, SiteHeader } from "@/shared/layout"
-import {
-  BenefitsSection,
-  CourtReservationSection,
-  FinalCtaSection,
-  HeroSection,
-  LessonsSection,
-  PlayerAppSection,
-  SocialProofSection,
-} from "@/features/landing/components"
+import LoginPage from "./login/page";
 
-export default function HomePage() {
+export default function Home() {
   return (
-    <main className="min-h-screen bg-[#f4f1e8] text-zinc-950">
-      <SiteHeader />
-      <HeroSection />
-      <SocialProofSection />
-      <CourtReservationSection />
-      <PlayerAppSection />
-      <LessonsSection />
-      <BenefitsSection />
-      <FinalCtaSection />
-      <SiteFooter />
-    </main>
-  )
+    <LoginPage />
+  );
 }

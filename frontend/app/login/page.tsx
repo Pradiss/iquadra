@@ -1,18 +1,10 @@
-import Image from "next/image"
-import { LoginForm } from "@/features/auth/components"
+import Image from "next/image";
+import FormLogin from "@/components/auth/FormLogin";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ created?: string }>
-}) {
-  const params = await searchParams
-
+export default async function LoginPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f4f1e8] px-4 py-10">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#c7f9cc_0,transparent_32%),radial-gradient(circle_at_bottom_right,#d9f99d_0,transparent_28%)]" />
-
-      
 
       <section className="relative z-10 grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1fr_440px]">
         <div className="hidden lg:block">
@@ -28,7 +20,7 @@ export default async function LoginPage({
             IQuadra
           </span>
 
-          <h1 className="mt-6 max-w-xl text-5xl font-black leading-tight tracking-tight text-zinc-950">
+          <h1 className="mt-6 max-w-xl text-5xl font-bold leading-[1.12] tracking-[-0.035em] text-zinc-950">
             Reserve quadras, entre em jogos e acompanhe sua academia.
           </h1>
 
@@ -38,8 +30,8 @@ export default async function LoginPage({
           </p>
         </div>
 
-        <LoginForm created={params.created} />
+        <FormLogin />
       </section>
     </main>
-  )
+  );
 }

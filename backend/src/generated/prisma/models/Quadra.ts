@@ -28,10 +28,14 @@ export type AggregateQuadra = {
 
 export type QuadraAvgAggregateOutputType = {
   ordem_exibicao: number | null
+  capacidade_minima: number | null
+  capacidade_maxima: number | null
 }
 
 export type QuadraSumAggregateOutputType = {
   ordem_exibicao: number | null
+  capacidade_minima: number | null
+  capacidade_maxima: number | null
 }
 
 export type QuadraMinAggregateOutputType = {
@@ -43,6 +47,10 @@ export type QuadraMinAggregateOutputType = {
   coberta: boolean | null
   ativa: boolean | null
   ordem_exibicao: number | null
+  capacidade_minima: number | null
+  capacidade_maxima: number | null
+  permite_simples: boolean | null
+  permite_dupla: boolean | null
   criado_em: Date | null
   atualizado_em: Date | null
 }
@@ -56,6 +64,10 @@ export type QuadraMaxAggregateOutputType = {
   coberta: boolean | null
   ativa: boolean | null
   ordem_exibicao: number | null
+  capacidade_minima: number | null
+  capacidade_maxima: number | null
+  permite_simples: boolean | null
+  permite_dupla: boolean | null
   criado_em: Date | null
   atualizado_em: Date | null
 }
@@ -69,6 +81,10 @@ export type QuadraCountAggregateOutputType = {
   coberta: number
   ativa: number
   ordem_exibicao: number
+  capacidade_minima: number
+  capacidade_maxima: number
+  permite_simples: number
+  permite_dupla: number
   criado_em: number
   atualizado_em: number
   _all: number
@@ -77,10 +93,14 @@ export type QuadraCountAggregateOutputType = {
 
 export type QuadraAvgAggregateInputType = {
   ordem_exibicao?: true
+  capacidade_minima?: true
+  capacidade_maxima?: true
 }
 
 export type QuadraSumAggregateInputType = {
   ordem_exibicao?: true
+  capacidade_minima?: true
+  capacidade_maxima?: true
 }
 
 export type QuadraMinAggregateInputType = {
@@ -92,6 +112,10 @@ export type QuadraMinAggregateInputType = {
   coberta?: true
   ativa?: true
   ordem_exibicao?: true
+  capacidade_minima?: true
+  capacidade_maxima?: true
+  permite_simples?: true
+  permite_dupla?: true
   criado_em?: true
   atualizado_em?: true
 }
@@ -105,6 +129,10 @@ export type QuadraMaxAggregateInputType = {
   coberta?: true
   ativa?: true
   ordem_exibicao?: true
+  capacidade_minima?: true
+  capacidade_maxima?: true
+  permite_simples?: true
+  permite_dupla?: true
   criado_em?: true
   atualizado_em?: true
 }
@@ -118,6 +146,10 @@ export type QuadraCountAggregateInputType = {
   coberta?: true
   ativa?: true
   ordem_exibicao?: true
+  capacidade_minima?: true
+  capacidade_maxima?: true
+  permite_simples?: true
+  permite_dupla?: true
   criado_em?: true
   atualizado_em?: true
   _all?: true
@@ -218,6 +250,10 @@ export type QuadraGroupByOutputType = {
   coberta: boolean
   ativa: boolean
   ordem_exibicao: number
+  capacidade_minima: number
+  capacidade_maxima: number
+  permite_simples: boolean
+  permite_dupla: boolean
   criado_em: Date
   atualizado_em: Date
   _count: QuadraCountAggregateOutputType | null
@@ -254,6 +290,10 @@ export type QuadraWhereInput = {
   coberta?: Prisma.BoolFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntFilter<"Quadra"> | number
+  capacidade_minima?: Prisma.IntFilter<"Quadra"> | number
+  capacidade_maxima?: Prisma.IntFilter<"Quadra"> | number
+  permite_simples?: Prisma.BoolFilter<"Quadra"> | boolean
+  permite_dupla?: Prisma.BoolFilter<"Quadra"> | boolean
   criado_em?: Prisma.DateTimeFilter<"Quadra"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Quadra"> | Date | string
   academia?: Prisma.XOR<Prisma.AcademiaScalarRelationFilter, Prisma.AcademiaWhereInput>
@@ -274,6 +314,10 @@ export type QuadraOrderByWithRelationInput = {
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
+  permite_simples?: Prisma.SortOrder
+  permite_dupla?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
   academia?: Prisma.AcademiaOrderByWithRelationInput
@@ -297,6 +341,10 @@ export type QuadraWhereUniqueInput = Prisma.AtLeast<{
   coberta?: Prisma.BoolFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntFilter<"Quadra"> | number
+  capacidade_minima?: Prisma.IntFilter<"Quadra"> | number
+  capacidade_maxima?: Prisma.IntFilter<"Quadra"> | number
+  permite_simples?: Prisma.BoolFilter<"Quadra"> | boolean
+  permite_dupla?: Prisma.BoolFilter<"Quadra"> | boolean
   criado_em?: Prisma.DateTimeFilter<"Quadra"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Quadra"> | Date | string
   academia?: Prisma.XOR<Prisma.AcademiaScalarRelationFilter, Prisma.AcademiaWhereInput>
@@ -317,6 +365,10 @@ export type QuadraOrderByWithAggregationInput = {
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
+  permite_simples?: Prisma.SortOrder
+  permite_dupla?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
   _count?: Prisma.QuadraCountOrderByAggregateInput
@@ -338,6 +390,10 @@ export type QuadraScalarWhereWithAggregatesInput = {
   coberta?: Prisma.BoolWithAggregatesFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolWithAggregatesFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntWithAggregatesFilter<"Quadra"> | number
+  capacidade_minima?: Prisma.IntWithAggregatesFilter<"Quadra"> | number
+  capacidade_maxima?: Prisma.IntWithAggregatesFilter<"Quadra"> | number
+  permite_simples?: Prisma.BoolWithAggregatesFilter<"Quadra"> | boolean
+  permite_dupla?: Prisma.BoolWithAggregatesFilter<"Quadra"> | boolean
   criado_em?: Prisma.DateTimeWithAggregatesFilter<"Quadra"> | Date | string
   atualizado_em?: Prisma.DateTimeWithAggregatesFilter<"Quadra"> | Date | string
 }
@@ -350,6 +406,10 @@ export type QuadraCreateInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -370,6 +430,10 @@ export type QuadraUncheckedCreateInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -388,6 +452,10 @@ export type QuadraUpdateInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -408,6 +476,10 @@ export type QuadraUncheckedUpdateInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -427,6 +499,10 @@ export type QuadraCreateManyInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
 }
@@ -439,6 +515,10 @@ export type QuadraUpdateManyMutationInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -452,6 +532,10 @@ export type QuadraUncheckedUpdateManyInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -475,12 +559,18 @@ export type QuadraCountOrderByAggregateInput = {
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
+  permite_simples?: Prisma.SortOrder
+  permite_dupla?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
 }
 
 export type QuadraAvgOrderByAggregateInput = {
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
 }
 
 export type QuadraMaxOrderByAggregateInput = {
@@ -492,6 +582,10 @@ export type QuadraMaxOrderByAggregateInput = {
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
+  permite_simples?: Prisma.SortOrder
+  permite_dupla?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
 }
@@ -505,12 +599,18 @@ export type QuadraMinOrderByAggregateInput = {
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
+  permite_simples?: Prisma.SortOrder
+  permite_dupla?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
 }
 
 export type QuadraSumOrderByAggregateInput = {
   ordem_exibicao?: Prisma.SortOrder
+  capacidade_minima?: Prisma.SortOrder
+  capacidade_maxima?: Prisma.SortOrder
 }
 
 export type QuadraScalarRelationFilter = {
@@ -660,6 +760,10 @@ export type QuadraCreateWithoutAcademiaInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraCreateNestedManyWithoutQuadraInput
@@ -678,6 +782,10 @@ export type QuadraUncheckedCreateWithoutAcademiaInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -726,6 +834,10 @@ export type QuadraScalarWhereInput = {
   coberta?: Prisma.BoolFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntFilter<"Quadra"> | number
+  capacidade_minima?: Prisma.IntFilter<"Quadra"> | number
+  capacidade_maxima?: Prisma.IntFilter<"Quadra"> | number
+  permite_simples?: Prisma.BoolFilter<"Quadra"> | boolean
+  permite_dupla?: Prisma.BoolFilter<"Quadra"> | boolean
   criado_em?: Prisma.DateTimeFilter<"Quadra"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Quadra"> | Date | string
 }
@@ -738,6 +850,10 @@ export type QuadraCreateWithoutHorariosInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -757,6 +873,10 @@ export type QuadraUncheckedCreateWithoutHorariosInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios_especiais?: Prisma.HorarioEspecialQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -790,6 +910,10 @@ export type QuadraUpdateWithoutHorariosInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -809,6 +933,10 @@ export type QuadraUncheckedUpdateWithoutHorariosInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios_especiais?: Prisma.HorarioEspecialQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -826,6 +954,10 @@ export type QuadraCreateWithoutHorarios_especiaisInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -845,6 +977,10 @@ export type QuadraUncheckedCreateWithoutHorarios_especiaisInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -878,6 +1014,10 @@ export type QuadraUpdateWithoutHorarios_especiaisInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -897,6 +1037,10 @@ export type QuadraUncheckedUpdateWithoutHorarios_especiaisInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -914,6 +1058,10 @@ export type QuadraCreateWithoutBloqueiosInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -933,6 +1081,10 @@ export type QuadraUncheckedCreateWithoutBloqueiosInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -966,6 +1118,10 @@ export type QuadraUpdateWithoutBloqueiosInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -985,6 +1141,10 @@ export type QuadraUncheckedUpdateWithoutBloqueiosInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -1002,6 +1162,10 @@ export type QuadraCreateWithoutJogosInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -1021,6 +1185,10 @@ export type QuadraUncheckedCreateWithoutJogosInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -1054,6 +1222,10 @@ export type QuadraUpdateWithoutJogosInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -1073,6 +1245,10 @@ export type QuadraUncheckedUpdateWithoutJogosInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -1090,6 +1266,10 @@ export type QuadraCreateWithoutAulasInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -1109,6 +1289,10 @@ export type QuadraUncheckedCreateWithoutAulasInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -1142,6 +1326,10 @@ export type QuadraUpdateWithoutAulasInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -1161,6 +1349,10 @@ export type QuadraUncheckedUpdateWithoutAulasInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -1178,6 +1370,10 @@ export type QuadraCreateWithoutRecorrencias_aulasInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   academia: Prisma.AcademiaCreateNestedOneWithoutQuadrasInput
@@ -1197,6 +1393,10 @@ export type QuadraUncheckedCreateWithoutRecorrencias_aulasInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
   horarios?: Prisma.HorarioQuadraUncheckedCreateNestedManyWithoutQuadraInput
@@ -1230,6 +1430,10 @@ export type QuadraUpdateWithoutRecorrencias_aulasInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   academia?: Prisma.AcademiaUpdateOneRequiredWithoutQuadrasNestedInput
@@ -1249,6 +1453,10 @@ export type QuadraUncheckedUpdateWithoutRecorrencias_aulasInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -1266,6 +1474,10 @@ export type QuadraCreateManyAcademiaInput = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
+  capacidade_minima?: number
+  capacidade_maxima?: number
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: Date | string
   atualizado_em?: Date | string
 }
@@ -1278,6 +1490,10 @@ export type QuadraUpdateWithoutAcademiaInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUpdateManyWithoutQuadraNestedInput
@@ -1296,6 +1512,10 @@ export type QuadraUncheckedUpdateWithoutAcademiaInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   horarios?: Prisma.HorarioQuadraUncheckedUpdateManyWithoutQuadraNestedInput
@@ -1314,6 +1534,10 @@ export type QuadraUncheckedUpdateManyWithoutAcademiaInput = {
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_minima?: Prisma.IntFieldUpdateOperationsInput | number
+  capacidade_maxima?: Prisma.IntFieldUpdateOperationsInput | number
+  permite_simples?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permite_dupla?: Prisma.BoolFieldUpdateOperationsInput | boolean
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1403,6 +1627,10 @@ export type QuadraSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
+  capacidade_minima?: boolean
+  capacidade_maxima?: boolean
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
   academia?: boolean | Prisma.AcademiaDefaultArgs<ExtArgs>
@@ -1424,6 +1652,10 @@ export type QuadraSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
+  capacidade_minima?: boolean
+  capacidade_maxima?: boolean
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
   academia?: boolean | Prisma.AcademiaDefaultArgs<ExtArgs>
@@ -1438,6 +1670,10 @@ export type QuadraSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
+  capacidade_minima?: boolean
+  capacidade_maxima?: boolean
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
   academia?: boolean | Prisma.AcademiaDefaultArgs<ExtArgs>
@@ -1452,11 +1688,15 @@ export type QuadraSelectScalar = {
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
+  capacidade_minima?: boolean
+  capacidade_maxima?: boolean
+  permite_simples?: boolean
+  permite_dupla?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
 }
 
-export type QuadraOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "academia_id" | "nome" | "descricao" | "tipo_piso" | "coberta" | "ativa" | "ordem_exibicao" | "criado_em" | "atualizado_em", ExtArgs["result"]["quadra"]>
+export type QuadraOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "academia_id" | "nome" | "descricao" | "tipo_piso" | "coberta" | "ativa" | "ordem_exibicao" | "capacidade_minima" | "capacidade_maxima" | "permite_simples" | "permite_dupla" | "criado_em" | "atualizado_em", ExtArgs["result"]["quadra"]>
 export type QuadraInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   academia?: boolean | Prisma.AcademiaDefaultArgs<ExtArgs>
   horarios?: boolean | Prisma.Quadra$horariosArgs<ExtArgs>
@@ -1494,6 +1734,10 @@ export type $QuadraPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     coberta: boolean
     ativa: boolean
     ordem_exibicao: number
+    capacidade_minima: number
+    capacidade_maxima: number
+    permite_simples: boolean
+    permite_dupla: boolean
     criado_em: Date
     atualizado_em: Date
   }, ExtArgs["result"]["quadra"]>
@@ -1934,6 +2178,10 @@ export interface QuadraFieldRefs {
   readonly coberta: Prisma.FieldRef<"Quadra", 'Boolean'>
   readonly ativa: Prisma.FieldRef<"Quadra", 'Boolean'>
   readonly ordem_exibicao: Prisma.FieldRef<"Quadra", 'Int'>
+  readonly capacidade_minima: Prisma.FieldRef<"Quadra", 'Int'>
+  readonly capacidade_maxima: Prisma.FieldRef<"Quadra", 'Int'>
+  readonly permite_simples: Prisma.FieldRef<"Quadra", 'Boolean'>
+  readonly permite_dupla: Prisma.FieldRef<"Quadra", 'Boolean'>
   readonly criado_em: Prisma.FieldRef<"Quadra", 'DateTime'>
   readonly atualizado_em: Prisma.FieldRef<"Quadra", 'DateTime'>
 }

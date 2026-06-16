@@ -1,6 +1,5 @@
 import { Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { convidarJogadorSchema } from "../schemas/convite-jogo.schema";
 import {
@@ -15,7 +14,7 @@ export async function convidarJogadorController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
     const data = convidarJogadorSchema.parse(req.body);
 
     const convite = await convidarJogadorParaJogo(req.user!.id, id, data);
@@ -58,7 +57,7 @@ export async function aceitarConviteJogoController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const convite = await aceitarConviteJogo(req.user!.id, id);
 
@@ -80,7 +79,7 @@ export async function recusarConviteJogoController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const convite = await recusarConviteJogo(req.user!.id, id);
 

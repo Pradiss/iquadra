@@ -1,6 +1,5 @@
 import { Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import {
   createQuadraSchema,
@@ -17,7 +16,7 @@ import {
 
 export async function createQuadraController(req: AuthRequest, res: Response) {
   try {
-    const academiaId = getRouteParam(req.params.academiaId, "academiaId");
+    const { academiaId } = req.params;
     const data = createQuadraSchema.parse(req.body);
 
     const quadra = await createQuadra(req.user!.id, academiaId, data);
@@ -37,7 +36,7 @@ export async function createQuadraController(req: AuthRequest, res: Response) {
 
 export async function listQuadrasController(req: AuthRequest, res: Response) {
   try {
-    const academiaId = getRouteParam(req.params.academiaId, "academiaId");
+    const { academiaId } = req.params;
 
     const quadras = await listQuadrasByAcademia(academiaId);
 
@@ -56,7 +55,7 @@ export async function listQuadrasController(req: AuthRequest, res: Response) {
 
 export async function getQuadraController(req: AuthRequest, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const quadra = await getQuadraById(id);
 
@@ -74,7 +73,7 @@ export async function getQuadraController(req: AuthRequest, res: Response) {
 
 export async function updateQuadraController(req: AuthRequest, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
     const data = updateQuadraSchema.parse(req.body);
 
     const quadra = await updateQuadra(req.user!.id, id, data);
@@ -97,7 +96,7 @@ export async function updateStatusQuadraController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
     const { ativa } = updateStatusQuadraSchema.parse(req.body);
 
     const quadra = await updateStatusQuadra(req.user!.id, id, ativa);

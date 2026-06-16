@@ -186,6 +186,10 @@ export const QuadraScalarFieldEnum = {
   coberta: 'coberta',
   ativa: 'ativa',
   ordem_exibicao: 'ordem_exibicao',
+  capacidade_minima: 'capacidade_minima',
+  capacidade_maxima: 'capacidade_maxima',
+  permite_simples: 'permite_simples',
+  permite_dupla: 'permite_dupla',
   criado_em: 'criado_em',
   atualizado_em: 'atualizado_em'
 } as const

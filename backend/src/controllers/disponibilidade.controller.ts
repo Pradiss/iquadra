@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { getOptionalQueryString, getRouteParam } from "../lib/http";
 import { getDisponibilidadeQuadra } from "../services/disponibilidade.service";
 
 export async function getDisponibilidadeQuadraController(
@@ -7,10 +6,10 @@ export async function getDisponibilidadeQuadraController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
-    const data = getOptionalQueryString(req.query.data);
+    const { id } = req.params;
+    const { data } = req.query;
 
-    if (!data) {
+    if (!data || typeof data !== "string") {
       return res.status(400).json({
         success: false,
         message: "Informe a data no formato YYYY-MM-DD",

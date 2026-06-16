@@ -1,6 +1,5 @@
 import { Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { createBloqueioSchema } from "../schemas/bloqueio.schema";
 import {
@@ -14,7 +13,7 @@ export async function createBloqueioController(
   res: Response
 ) {
   try {
-    const quadraId = getRouteParam(req.params.quadraId, "quadraId");
+    const { quadraId } = req.params;
     const data = createBloqueioSchema.parse(req.body);
 
     const bloqueio = await createBloqueio(req.user!.id, quadraId, data);
@@ -34,7 +33,7 @@ export async function createBloqueioController(
 
 export async function listBloqueiosController(req: AuthRequest, res: Response) {
   try {
-    const quadraId = getRouteParam(req.params.quadraId, "quadraId");
+    const { quadraId } = req.params;
 
     const bloqueios = await listBloqueiosByQuadra(quadraId);
 
@@ -56,7 +55,7 @@ export async function deleteBloqueioController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     await deleteBloqueio(req.user!.id, id);
 

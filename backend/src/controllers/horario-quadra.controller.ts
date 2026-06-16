@@ -1,6 +1,5 @@
 import { Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import {
   createHorarioQuadraSchema,
@@ -18,7 +17,7 @@ export async function createHorarioQuadraController(
   res: Response
 ) {
   try {
-    const quadraId = getRouteParam(req.params.quadraId, "quadraId");
+    const { quadraId } = req.params;
     const data = createHorarioQuadraSchema.parse(req.body);
 
     const horario = await createHorarioQuadra(req.user!.id, quadraId, data);
@@ -41,7 +40,7 @@ export async function listHorariosQuadraController(
   res: Response
 ) {
   try {
-    const quadraId = getRouteParam(req.params.quadraId, "quadraId");
+    const { quadraId } = req.params;
 
     const horarios = await listHorariosQuadra(quadraId);
 
@@ -63,7 +62,7 @@ export async function updateHorarioQuadraController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
     const data = updateHorarioQuadraSchema.parse(req.body);
 
     const horario = await updateHorarioQuadra(req.user!.id, id, data);
@@ -86,7 +85,7 @@ export async function deleteHorarioQuadraController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     await deleteHorarioQuadra(req.user!.id, id);
 

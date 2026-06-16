@@ -7,8 +7,36 @@ function validarPeriodo(inicio: Date, fim: Date) {
   }
 }
 
-function getMaximoParticipantes(tipo: "SIMPLES" | "DUPLA") {
-  return tipo === "SIMPLES" ? 2 : 4;
+function getMaximoParticipantes(
+  tipo: "SIMPLES" | "DUPLA",
+  quadra: {
+    capacidade_minima: number;
+    capacidade_maxima: number;
+    permite_simples: boolean;
+    permite_dupla: boolean;
+  }
+) {
+  if (tipo === "SIMPLES") {
+    if (!quadra.permite_simples) {
+      throw new Error("Esta quadra nao permite jogo simples");
+    }
+
+    if (quadra.capacidade_minima > 2 || quadra.capacidade_maxima < 2) {
+      throw new Error("Esta quadra nao comporta jogo simples");
+    }
+
+    return 2;
+  }
+
+  if (!quadra.permite_dupla) {
+    throw new Error("Esta quadra nao permite jogo em dupla");
+  }
+
+  if (quadra.capacidade_maxima < 4) {
+    throw new Error("Esta quadra nao comporta jogo em dupla");
+  }
+
+  return 4;
 }
 
 async function validarConflitoAgenda(
@@ -95,7 +123,7 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
 
   await validarConflitoAgenda(data.quadra_id, inicio, fim);
 
-  const maximoParticipantes = getMaximoParticipantes(data.tipo_jogo);
+  const maximoParticipantes = getMaximoParticipantes(data.tipo_jogo, quadra);
 
   const jogo = await prisma.$transaction(async (tx) => {
     const novoJogo = await tx.jogo.create({
@@ -108,7 +136,9 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
         inicio_em: inicio,
         fim_em: fim,
         maximo_participantes: maximoParticipantes,
-        observacoes: data.observacoes,
+        ...(data.observacoes !== undefined
+          ? { observacoes: data.observacoes }
+          : {}),
       },
     });
 

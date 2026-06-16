@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { createRecorrenciaAulaSchema } from "../schemas/recorrencia-aula.schema";
 import {
@@ -62,7 +61,7 @@ export async function cancelarRecorrenciaAulaController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const recorrencia = await cancelarRecorrenciaAula(req.user!.id, id);
 

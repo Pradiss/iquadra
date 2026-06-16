@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { createAcademiaSchema } from "../schemas/academia.schema";
 import {
   createAcademia,
@@ -39,7 +38,7 @@ export async function listAcademiasController(req: Request, res: Response) {
 
 export async function getAcademiaController(req: Request, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const academia = await getAcademiaById(id);
 

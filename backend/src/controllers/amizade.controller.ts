@@ -1,6 +1,5 @@
 import { Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { createAmizadeSchema } from "../schemas/amizade.schema";
 import {
@@ -58,7 +57,7 @@ export async function aceitarAmizadeController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const amizade = await aceitarAmizade(req.user!.id, id);
 
@@ -80,7 +79,7 @@ export async function recusarAmizadeController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const amizade = await recusarAmizade(req.user!.id, id);
 
@@ -102,7 +101,7 @@ export async function removerAmizadeController(
   res: Response
 ) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     await removerAmizade(req.user!.id, id);
 

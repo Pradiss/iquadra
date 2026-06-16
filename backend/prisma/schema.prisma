@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -267,6 +268,11 @@ model Quadra {
   coberta        Boolean  @default(false)
   ativa          Boolean  @default(true)
   ordem_exibicao Int      @default(0)
+
+  capacidade_minima Int     @default(2)
+  capacidade_maxima Int     @default(4)
+  permite_simples   Boolean @default(true)
+  permite_dupla     Boolean @default(true)
 
   academia Academia @relation(fields: [academia_id], references: [id])
 

@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import { getRequiredEnv } from "../lib/env";
 import { prisma } from "../lib/prisma";
 import {
   LoginData,
@@ -9,8 +8,6 @@ import {
   RegisterClienteData,
   RegisterProfessorData,
 } from "../schemas/auth.schema";
-
-const jwtSecret = getRequiredEnv("JWT_SECRET");
 
 async function validarEmailDisponivel(email: string) {
   const usuario = await prisma.usuario.findUnique({
@@ -28,7 +25,7 @@ function gerarToken(usuario: { id: string; email: string }) {
       sub: usuario.id,
       email: usuario.email,
     },
-    jwtSecret,
+    process.env.JWT_SECRET as string,
     {
       expiresIn: "7d",
     }

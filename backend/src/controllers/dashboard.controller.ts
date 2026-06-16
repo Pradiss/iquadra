@@ -1,6 +1,5 @@
 import { Response } from "express";
 
-import { getOptionalQueryString, getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import {
   getAgendaAcademia,
@@ -12,7 +11,7 @@ export async function getDashboardAcademiaController(
   res: Response
 ) {
   try {
-    const academiaId = getRouteParam(req.params.academiaId, "academiaId");
+    const { academiaId } = req.params;
 
     const dashboard = await getDashboardAcademia(req.user!.id, academiaId);
 
@@ -33,10 +32,10 @@ export async function getAgendaAcademiaController(
   res: Response
 ) {
   try {
-    const academiaId = getRouteParam(req.params.academiaId, "academiaId");
-    const data = getOptionalQueryString(req.query.data);
+    const { academiaId } = req.params;
+    const { data } = req.query;
 
-    if (!data) {
+    if (!data || typeof data !== "string") {
       return res.status(400).json({
         success: false,
         message: "Informe a data no formato YYYY-MM-DD",

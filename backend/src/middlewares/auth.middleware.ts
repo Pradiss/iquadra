@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { getRequiredEnv } from "../lib/env";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -8,8 +7,6 @@ export interface AuthRequest extends Request {
     email: string;
   };
 }
-
-const jwtSecret = getRequiredEnv("JWT_SECRET");
 
 export function authMiddleware(
   req: AuthRequest,
@@ -30,7 +27,7 @@ export function authMiddleware(
   try {
     const decoded = jwt.verify(
       token,
-      jwtSecret
+      process.env.JWT_SECRET as string
     ) as {
       sub: string;
       email: string;

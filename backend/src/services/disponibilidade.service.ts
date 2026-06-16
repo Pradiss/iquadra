@@ -6,7 +6,7 @@ function getDiaSemana(data: string) {
 }
 
 function timeToMinutes(time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
@@ -18,6 +18,28 @@ function minutesToTime(minutes: number) {
 
 function buildDateTime(data: string, time: string) {
   return new Date(`${data}T${time}:00`);
+}
+
+function montarResumoQuadra(quadra: {
+  id: string;
+  nome: string;
+  capacidade_minima: number;
+  capacidade_maxima: number;
+  permite_simples: boolean;
+  permite_dupla: boolean;
+  academia?: {
+    nome: string;
+  } | null;
+}) {
+  return {
+    id: quadra.id,
+    nome: quadra.nome,
+    academia: quadra.academia?.nome,
+    capacidade_minima: quadra.capacidade_minima,
+    capacidade_maxima: quadra.capacidade_maxima,
+    permite_simples: quadra.permite_simples,
+    permite_dupla: quadra.permite_dupla,
+  };
 }
 
 function hasConflict(
@@ -57,10 +79,7 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
 
   if (!horarioPadrao) {
     return {
-      quadra: {
-        id: quadra.id,
-        nome: quadra.nome,
-      },
+      quadra: montarResumoQuadra(quadra),
       data,
       aberta: false,
       motivo: "Quadra sem horário configurado para esta data",
@@ -83,10 +102,7 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
 
   if (horarioEspecial?.fechada) {
     return {
-      quadra: {
-        id: quadra.id,
-        nome: quadra.nome,
-      },
+      quadra: montarResumoQuadra(quadra),
       data,
       aberta: false,
       motivo: horarioEspecial.motivo || "Quadra fechada nesta data",
@@ -123,6 +139,27 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
         gt: inicioDia,
       },
     },
+    include: {
+      participantes: {
+        where: {
+          status: "CONFIRMADO",
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+              foto_perfil: true,
+              perfil_cliente: {
+                select: {
+                  categoria: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   const aulas = await prisma.aula.findMany({
@@ -134,6 +171,20 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
       },
       fim_em: {
         gt: inicioDia,
+      },
+    },
+    include: {
+      cliente: {
+        select: {
+          id: true,
+          nome: true,
+        },
+      },
+      professor: {
+        select: {
+          id: true,
+          nome: true,
+        },
       },
     },
   });
@@ -150,42 +201,82 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
     const slotInicio = buildDateTime(data, inicio);
     const slotFim = buildDateTime(data, fimSlot);
 
-    const conflitoBloqueio = bloqueios.some((bloqueio) =>
+    const conflitoBloqueio = bloqueios.find((bloqueio) =>
       hasConflict(slotInicio, slotFim, bloqueio.inicio_em, bloqueio.fim_em)
     );
 
-    const conflitoJogo = jogos.some((jogo) =>
+    const jogoConflitante = jogos.find((jogo) =>
       hasConflict(slotInicio, slotFim, jogo.inicio_em, jogo.fim_em)
     );
 
-    const conflitoAula = aulas.some((aula) =>
+    const aulaConflitante = aulas.find((aula) =>
       hasConflict(slotInicio, slotFim, aula.inicio_em, aula.fim_em)
     );
 
-    const disponivel = !conflitoBloqueio && !conflitoJogo && !conflitoAula;
+    const disponivel = !conflitoBloqueio && !jogoConflitante && !aulaConflitante;
+    const participantes = jogoConflitante
+      ? jogoConflitante.participantes.map((p) => ({
+          id: p.usuario.id,
+          nome: p.usuario.nome,
+          foto_perfil: p.usuario.foto_perfil,
+          categoria: p.usuario.perfil_cliente?.categoria || "Sem ranking",
+        }))
+      : [];
+    const jogadoresConfirmados = participantes.length;
+    const permiteMostrarVagas = !conflitoBloqueio && !aulaConflitante;
+    const vagasDisponiveis = permiteMostrarVagas
+      ? Math.max(quadra.capacidade_maxima - jogadoresConfirmados, 0)
+      : 0;
 
     slots.push({
       inicio,
       fim: fimSlot,
       disponivel,
+      capacidade_minima: quadra.capacidade_minima,
+      capacidade_maxima: quadra.capacidade_maxima,
+      permite_simples: quadra.permite_simples,
+      permite_dupla: quadra.permite_dupla,
+      jogadores_confirmados: jogadoresConfirmados,
+      vagas_disponiveis: vagasDisponiveis,
       motivo: disponivel
         ? null
         : conflitoBloqueio
           ? "BLOQUEADO"
-          : conflitoJogo
+          : jogoConflitante
             ? "JOGO"
             : "AULA",
+      jogo: jogoConflitante
+        ? {
+            id: jogoConflitante.id,
+            tipo_jogo: jogoConflitante.tipo_jogo,
+            status: jogoConflitante.status,
+            maximo_participantes: jogoConflitante.maximo_participantes,
+            observacoes: jogoConflitante.observacoes,
+            participantes,
+          }
+        : null,
+      bloqueio: conflitoBloqueio
+        ? {
+            id: conflitoBloqueio.id,
+            motivo: conflitoBloqueio.motivo,
+            tipo_bloqueio: conflitoBloqueio.tipo_bloqueio,
+          }
+        : null,
+      aula: aulaConflitante
+        ? {
+            id: aulaConflitante.id,
+            observacoes: aulaConflitante.observacoes,
+            cliente: aulaConflitante.cliente,
+            professor: aulaConflitante.professor,
+          }
+        : null,
     });
 
     atual += duracao;
   }
 
   return {
-    quadra: {
-      id: quadra.id,
-      nome: quadra.nome,
-      academia: quadra.academia.nome,
-    },
+    quadra: montarResumoQuadra(quadra),
     data,
     aberta: true,
     abre_as: abreAs,

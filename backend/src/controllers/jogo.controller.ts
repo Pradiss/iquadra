@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { createJogoSchema } from "../schemas/jogo.schema";
 import {
@@ -56,7 +55,7 @@ export async function listJogosController(req: Request, res: Response) {
 
 export async function getJogoController(req: Request, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const jogo = await getJogoById(id);
 
@@ -74,7 +73,7 @@ export async function getJogoController(req: Request, res: Response) {
 
 export async function participarJogoController(req: AuthRequest, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const jogo = await participarJogo(req.user!.id, id);
 
@@ -93,7 +92,7 @@ export async function participarJogoController(req: AuthRequest, res: Response) 
 
 export async function sairJogoController(req: AuthRequest, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const jogo = await sairJogo(req.user!.id, id);
 
@@ -112,7 +111,7 @@ export async function sairJogoController(req: AuthRequest, res: Response) {
 
 export async function cancelarJogoController(req: AuthRequest, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const jogo = await cancelarJogo(req.user!.id, id);
 

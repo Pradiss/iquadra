@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 
-import { getRouteParam } from "../lib/http";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { createAulaSchema } from "../schemas/aula.schema";
 import {
@@ -56,7 +55,7 @@ export async function listAulasController(req: Request, res: Response) {
 
 export async function getAulaController(req: Request, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const aula = await getAulaById(id);
 
@@ -74,7 +73,7 @@ export async function getAulaController(req: Request, res: Response) {
 
 export async function cancelarAulaController(req: AuthRequest, res: Response) {
   try {
-    const id = getRouteParam(req.params.id, "id");
+    const { id } = req.params;
 
     const aula = await cancelarAula(req.user!.id, id);
 

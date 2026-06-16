@@ -1,0 +1,53 @@
+import { CreateAcademiaData } from "../schemas/academia.schema";
+export declare function createAcademia(data: CreateAcademiaData): Promise<{
+    nome: string;
+    email: string | null;
+    telefone: string | null;
+    cidade: string | null;
+    cep: string | null;
+    slug: string;
+    cnpj: string | null;
+    endereco: string | null;
+    estado: string | null;
+    id: string;
+    status: import("../generated/prisma/enums").StatusUsuario;
+    criado_em: Date;
+    atualizado_em: Date;
+    limite_jogos_padrao: number;
+    periodo_limite_jogos: import("../generated/prisma/enums").PeriodoLimiteJogos;
+}>;
+export declare function listAcademias(): Promise<{
+    nome: string;
+    email: string | null;
+    telefone: string | null;
+    cidade: string | null;
+    cep: string | null;
+    slug: string;
+    cnpj: string | null;
+    endereco: string | null;
+    estado: string | null;
+    id: string;
+    status: import("../generated/prisma/enums").StatusUsuario;
+    criado_em: Date;
+    atualizado_em: Date;
+    limite_jogos_padrao: number;
+    periodo_limite_jogos: import("../generated/prisma/enums").PeriodoLimiteJogos;
+}[]>;
+export declare function getAcademiaById(id: string): Promise<{
+    nome: string;
+    email: string | null;
+    telefone: string | null;
+    cidade: string | null;
+    cep: string | null;
+    slug: string;
+    cnpj: string | null;
+    endereco: string | null;
+    estado: string | null;
+    id: string;
+    status: import("../generated/prisma/enums").StatusUsuario;
+    criado_em: Date;
+    atualizado_em: Date;
+    limite_jogos_padrao: number;
+    periodo_limite_jogos: import("../generated/prisma/enums").PeriodoLimiteJogos;
+}>;
+//# sourceMappingURL=academia.service.d.ts.map
