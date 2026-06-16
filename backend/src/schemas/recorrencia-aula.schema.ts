@@ -1,21 +1,40 @@
 import { z } from "zod";
+import {
+  dateOnlySchema,
+  optionalMediumTextSchema,
+  timeSchema,
+  uuidSchema,
+} from "./common";
 
-export const createRecorrenciaAulaSchema = z.object({
-  academia_id: z.string().uuid(),
-  quadra_id: z.string().uuid(),
-  professor_id: z.string().uuid().optional(),
+export const createRecorrenciaAulaSchema = z
+  .object({
+    academia_id: uuidSchema,
+    quadra_id: uuidSchema,
+    professor_id: uuidSchema.optional(),
 
-  dias_semana: z.array(z.number().min(0).max(6)).min(1),
+    dias_semana: z.array(z.number().int().min(0).max(6)).min(1).max(7),
 
-  data_inicio: z.string(),
-  data_fim: z.string().optional(),
+    data_inicio: dateOnlySchema,
+    data_fim: dateOnlySchema.optional(),
 
-  horario_inicio: z.string().min(5),
-  horario_fim: z.string().min(5),
+    horario_inicio: timeSchema,
+    horario_fim: timeSchema,
 
-  observacoes: z.string().optional(),
-});
+    observacoes: optionalMediumTextSchema,
+  })
+  .strict();
+
+export const listRecorrenciasAulaQuerySchema = z
+  .object({
+    academia_id: uuidSchema.optional(),
+    quadra_id: uuidSchema.optional(),
+    professor_id: uuidSchema.optional(),
+  })
+  .strict();
 
 export type CreateRecorrenciaAulaData = z.infer<
   typeof createRecorrenciaAulaSchema
+>;
+export type ListRecorrenciasAulaQuery = z.infer<
+  typeof listRecorrenciasAulaQuerySchema
 >;

@@ -1,5 +1,8 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+import { unauthorized } from "../errors/app-error";
+import { prisma } from "../lib/prisma";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -8,41 +11,62 @@ export interface AuthRequest extends Request {
   };
 }
 
+type JwtPayload = {
+  sub: string;
+  email: string;
+};
+
 export function authMiddleware(
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    return res.status(401).json({
-      success: false,
-      message: "Token não informado",
-    });
+    return next(unauthorized("Token nao informado"));
   }
 
-  const [, token] = authHeader.split(" ");
+  const [scheme, token] = authHeader.split(" ");
+
+  if (scheme !== "Bearer" || !token) {
+    return next(unauthorized("Formato de token invalido"));
+  }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as {
-      sub: string;
-      email: string;
-    };
+    const decoded = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    }) as JwtPayload;
 
-    req.user = {
-      id: decoded.sub,
-      email: decoded.email,
-    };
+    if (!decoded.sub || !decoded.email) {
+      return next(unauthorized("Token invalido"));
+    }
 
-    next();
+    prisma.usuario
+      .findUnique({
+        where: {
+          id: decoded.sub,
+        },
+        select: {
+          id: true,
+          email: true,
+          status: true,
+        },
+      })
+      .then((usuario) => {
+        if (!usuario || usuario.status !== "ATIVO") {
+          return next(unauthorized("Usuario inativo ou nao encontrado"));
+        }
+
+        req.user = {
+          id: usuario.id,
+          email: usuario.email,
+        };
+
+        return next();
+      })
+      .catch(next);
   } catch {
-    return res.status(401).json({
-      success: false,
-      message: "Token inválido",
-    });
+    return next(unauthorized("Token invalido"));
   }
 }

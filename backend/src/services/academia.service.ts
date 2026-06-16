@@ -24,6 +24,14 @@ export async function listAcademias() {
     where: {
       status: "ATIVO",
     },
+    select: {
+      id: true,
+      nome: true,
+      slug: true,
+      cidade: true,
+      estado: true,
+      status: true,
+    },
     orderBy: {
       nome: "asc",
     },
@@ -34,6 +42,15 @@ export async function getAcademiaById(id: string) {
   const academia = await prisma.academia.findUnique({
     where: {
       id,
+    },
+    select: {
+      id: true,
+      nome: true,
+      slug: true,
+      cidade: true,
+      estado: true,
+      status: true,
+      criado_em: true,
     },
   });
 

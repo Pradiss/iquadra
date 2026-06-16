@@ -12,8 +12,8 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/jogos", listJogosController);
-router.get("/jogos/:id", getJogoController);
+router.get("/jogos", authMiddleware, listJogosController);
+router.get("/jogos/:id", authMiddleware, getJogoController);
 
 router.post("/jogos", authMiddleware, createJogoController);
 router.post("/jogos/:id/participar", authMiddleware, participarJogoController);

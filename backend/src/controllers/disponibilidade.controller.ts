@@ -1,31 +1,24 @@
-import { Request, Response } from "express";
+import type { Response } from "express";
+import { z } from "zod";
+import { AuthRequest } from "../middlewares/auth.middleware";
 import { getDisponibilidadeQuadra } from "../services/disponibilidade.service";
+import { dateOnlySchema } from "../schemas/common";
+import { getRouteParam } from "../utils/request";
+
+const disponibilidadeQuerySchema = z.object({
+  data: dateOnlySchema,
+}).strict();
 
 export async function getDisponibilidadeQuadraController(
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) {
-  try {
-    const { id } = req.params;
-    const { data } = req.query;
+  const id = getRouteParam(req, "id");
+  const { data } = disponibilidadeQuerySchema.parse(req.query);
+  const disponibilidade = await getDisponibilidadeQuadra(id, data);
 
-    if (!data || typeof data !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Informe a data no formato YYYY-MM-DD",
-      });
-    }
-
-    const disponibilidade = await getDisponibilidadeQuadra(id, data);
-
-    return res.json({
-      success: true,
-      data: disponibilidade,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao consultar disponibilidade",
-    });
-  }
+  return res.json({
+    success: true,
+    data: disponibilidade,
+  });
 }

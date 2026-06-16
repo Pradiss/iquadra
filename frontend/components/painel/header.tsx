@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getToken, getUsuario, type UsuarioLogado } from "@/lib/auth-storage";
+import { getUsuario, type UsuarioLogado } from "@/lib/auth-storage";
 
 type PainelHeaderProps = {
   onOpenMenu: () => void;
@@ -29,11 +29,7 @@ function getFirstName(nome?: string) {
 }
 
 export function PainelHeader({ onOpenMenu }: PainelHeaderProps) {
-  const [usuario, setUsuario] = useState<UsuarioLogado | null>(null);
-
-  useEffect(() => {
-    setUsuario(getUsuario());
-  }, []);
+  const [usuario] = useState<UsuarioLogado | null>(() => getUsuario());
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-[#f4f1e8]/90 backdrop-blur-xl">

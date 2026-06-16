@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import api from "@/services/api";
@@ -49,14 +49,14 @@ export default function ConfiguracoesPage() {
         const response = await api.get("/users/me");
         const data = getData<Usuario>(response);
         setUsuario(data);
-      } catch (error) {
-        console.log("Erro ao carregar usuário:", error);
+      } catch {
+        setUsuario(null);
       } finally {
         setLoading(false);
       }
     }
 
-    carregarUsuario();
+    void carregarUsuario();
   }, []);
 
   const isJogador = !!usuario?.perfil_cliente;

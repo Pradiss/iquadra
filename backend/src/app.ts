@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 
 import authRoutes from "./routes/auth.routes";
@@ -15,11 +16,32 @@ import recorrenciaAulaRoutes from "./routes/recorrencia-aula.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import amizadeRoutes from "./routes/amizades.routes";
 import conviteJogoRoutes from "./routes/convite-jogo.routes";
+import { env } from "./config/env";
+import { AppError } from "./errors/app-error";
+import {
+  errorMiddleware,
+  notFoundMiddleware,
+} from "./middlewares/error.middleware";
+import { generalRateLimiter } from "./middlewares/rate-limit.middleware";
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.set("trust proxy", 1);
+app.use(helmet());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || env.CORS_ORIGINS.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new AppError("Origem nao permitida pelo CORS", 403, "CORS_DENIED"));
+    },
+  })
+);
+app.use(express.json({ limit: "100kb" }));
+app.use(generalRateLimiter);
 
 app.get("/", (req, res) => {
   return res.json({
@@ -41,5 +63,7 @@ app.use(recorrenciaAulaRoutes);
 app.use(dashboardRoutes);
 app.use(amizadeRoutes);
 app.use(conviteJogoRoutes);
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);
 
 export { app };

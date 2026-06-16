@@ -38,8 +38,8 @@ export default function PainelJogadorPage() {
       try {
         const response = await listarAcademias();
         setAcademias(Array.isArray(response) ? response : []);
-      } catch (error) {
-        console.error("Erro ao carregar academias:", error);
+      } catch {
+        setAcademias([]);
         setAcademias([]);
       } finally {
         setLoading(false);

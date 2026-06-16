@@ -119,8 +119,8 @@ export default function FormCadastroAcademia() {
     if (step === 3) {
       if (!isValidEmail(data.email)) return "Informe um e-mail válido.";
 
-      if (data.senha.length < 6)
-        return "A senha precisa ter pelo menos 6 caracteres.";
+      if (data.senha.length < 8)
+        return "A senha precisa ter pelo menos 8 caracteres.";
     }
 
     return "";
@@ -155,7 +155,7 @@ export default function FormCadastroAcademia() {
     setLoading(true);
 
     try {
-      await api.post("/auth/register/empresa", cleanPayload(data));
+      await api.post("/auth/register/academia", cleanPayload(data));
 
       router.push("/login?created=academia");
     } catch (error) {

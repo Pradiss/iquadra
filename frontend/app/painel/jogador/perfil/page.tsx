@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { clearAuthStorage, getUsuario } from "@/lib/auth-storage";
+import { getSafeImageUrl } from "@/lib/safe-image";
 
 type Usuario = {
   id: string;
@@ -107,15 +108,14 @@ export default function PerfilPage() {
         setTotalJogos(jogosUsuario.length);
 
         localStorage.setItem("usuario", JSON.stringify(user));
-      } catch (error) {
-        console.log("Erro ao carregar perfil:", error);
+      } catch {
         setErro("Não foi possível carregar todas as informações do perfil.");
       } finally {
         setLoading(false);
       }
     }
 
-    carregarPerfil();
+    void carregarPerfil();
   }, []);
 
   function sair() {
@@ -123,14 +123,16 @@ export default function PerfilPage() {
     router.push("/login");
   }
 
+  const fotoPerfil = getSafeImageUrl(usuario?.foto_perfil);
+
   return (
     <LayoutPainel>
       <section className="mx-auto max-w-xl rounded-[32px] bg-white p-6 text-center shadow-sm sm:p-8">
         <Avatar className="mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-white bg-green-100 shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
-          {usuario?.foto_perfil && (
+          {fotoPerfil && (
             <AvatarImage
-              src={usuario.foto_perfil}
-              alt={usuario.nome}
+              src={fotoPerfil}
+              alt={usuario?.nome ?? "Jogador"}
               className="h-full w-full rounded-full object-cover"
             />
           )}

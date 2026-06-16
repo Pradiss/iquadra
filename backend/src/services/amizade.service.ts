@@ -46,7 +46,6 @@ export async function solicitarAmizade(usuarioId: string, data: CreateAmizadeDat
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -54,7 +53,6 @@ export async function solicitarAmizade(usuarioId: string, data: CreateAmizadeDat
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -79,7 +77,6 @@ export async function listarAmizades(usuarioId: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -87,7 +84,6 @@ export async function listarAmizades(usuarioId: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -129,7 +125,6 @@ export async function aceitarAmizade(usuarioId: string, amizadeId: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -137,7 +132,6 @@ export async function aceitarAmizade(usuarioId: string, amizadeId: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },

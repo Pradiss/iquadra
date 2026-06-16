@@ -16,6 +16,7 @@ import {
   listarUsuarios,
   participarJogo,
 } from "@/services/jogador.service";
+import { getSafeImageUrl } from "@/lib/safe-image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,10 @@ function nomeUsuario(usuario: Usuario) {
   return usuario.nome || usuario.name || usuario.email || "Jogador";
 }
 
+function fotoUsuario(usuario?: Usuario | null) {
+  return getSafeImageUrl(usuario?.foto_perfil);
+}
+
 function normalizarUsuarios(response: unknown): Usuario[] {
   const data = response as {
     data?: Usuario[];
@@ -82,6 +87,25 @@ function formatarData(data: string) {
     month: "long",
     year: "numeric",
   });
+}
+
+function getErrorMessage(error: unknown) {
+  const fallback = "Nao foi possivel confirmar.";
+
+  if (typeof error !== "object" || error === null) {
+    return fallback;
+  }
+
+  const maybeApiError = error as {
+    response?: {
+      data?: {
+        message?: string;
+      };
+    };
+    message?: string;
+  };
+
+  return maybeApiError.response?.data?.message || maybeApiError.message || fallback;
 }
 
 export function AgendarJogoDialog({
@@ -116,7 +140,7 @@ export function AgendarJogoDialog({
         const nome = nomeUsuario(usuario).toLowerCase();
         const email = usuario.email?.toLowerCase() || "";
         const jaSelecionado = jogadores.some(
-          (jogador) => jogador?.id === usuario.id,
+          (jogador) => jogador?.id === usuario.id
         );
 
         if (jaSelecionado) return false;
@@ -130,6 +154,7 @@ export function AgendarJogoDialog({
   useEffect(() => {
     if (!open || !horario) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setErro("");
     setBusca("");
     setBuscandoIndex(null);
@@ -138,15 +163,9 @@ export function AgendarJogoDialog({
 
     listarUsuarios()
       .then((res) => {
-        const lista = normalizarUsuarios(res);
-
-        console.log("RESPOSTA USERS:", res);
-        console.log("USUARIOS NORMALIZADOS:", lista);
-
-        setUsuarios(lista);
+        setUsuarios(normalizarUsuarios(res));
       })
-      .catch((error) => {
-        console.log("ERRO USERS:", error?.response?.data || error);
+      .catch(() => {
         setUsuarios([]);
       });
   }, [open, horario]);
@@ -160,7 +179,7 @@ export function AgendarJogoDialog({
     if (buscandoIndex === null) return;
 
     setJogadores((atual) =>
-      atual.map((item, index) => (index === buscandoIndex ? usuario : item)),
+      atual.map((item, index) => (index === buscandoIndex ? usuario : item))
     );
 
     setBuscandoIndex(null);
@@ -169,13 +188,13 @@ export function AgendarJogoDialog({
 
   function removerJogador(index: number) {
     setJogadores((atual) =>
-      atual.map((item, i) => (i === index ? null : item)),
+      atual.map((item, i) => (i === index ? null : item))
     );
   }
 
   async function confirmar() {
     if (!horario || !data || !academiaId) {
-      setErro("Dados do horário incompletos.");
+      setErro("Dados do horario incompletos.");
       return;
     }
 
@@ -188,7 +207,7 @@ export function AgendarJogoDialog({
       } else {
         const inicio_em = new Date(`${data}T${horario.hora}:00`).toISOString();
         const fim_em = new Date(
-          `${data}T${horario.fim || horario.hora}:00`,
+          `${data}T${horario.fim || horario.hora}:00`
         ).toISOString();
 
         const jogo = await criarJogo({
@@ -202,18 +221,14 @@ export function AgendarJogoDialog({
         const convidados = jogadoresExibidos.filter(Boolean) as Usuario[];
 
         await Promise.all(
-          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id)),
+          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id))
         );
       }
 
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
-      setErro(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Não foi possível confirmar.",
-      );
+    } catch (error: unknown) {
+      setErro(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -232,10 +247,8 @@ export function AgendarJogoDialog({
           </DialogTitle>
 
           <p className="text-sm text-zinc-500">
-            Confira o horário e escolha os jogadores.
+            Confira o horario e escolha os jogadores.
           </p>
-
-          
         </DialogHeader>
 
         {horario && (
@@ -253,7 +266,7 @@ export function AgendarJogoDialog({
 
               <div className="flex items-center gap-2 text-zinc-600">
                 <Clock className="h-4 w-4" />
-                {horario.hora} {horario.fim ? `até ${horario.fim}` : ""}
+                {horario.hora} {horario.fim ? `ate ${horario.fim}` : ""}
               </div>
             </div>
           </div>
@@ -283,114 +296,124 @@ export function AgendarJogoDialog({
 
         {!entrandoEmJogo && (
           <div className="space-y-3">
-            {jogadoresExibidos.map((jogador, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200">
-                    {jogador?.foto_perfil ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={jogador.foto_perfil}
-                        alt={nomeUsuario(jogador)}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : jogador ? (
-                      <span className="text-xs font-black text-zinc-800">
-                        {nomeUsuario(jogador).charAt(0).toUpperCase()}
-                      </span>
+            {jogadoresExibidos.map((jogador, index) => {
+              const fotoPerfil = fotoUsuario(jogador);
+
+              return (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200">
+                      {jogador && fotoPerfil ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={fotoPerfil}
+                          alt={nomeUsuario(jogador)}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : jogador ? (
+                        <span className="text-xs font-black text-zinc-800">
+                          {nomeUsuario(jogador).charAt(0).toUpperCase()}
+                        </span>
+                      ) : (
+                        <Plus className="h-4 w-4 text-zinc-700" />
+                      )}
+                    </div>
+
+                    {buscandoIndex === index ? (
+                      <div className="relative flex-1">
+                        <Input
+                          autoFocus
+                          value={busca}
+                          onChange={(event) => setBusca(event.target.value)}
+                          placeholder={`Buscar jogador ${index + 2}`}
+                          className="pr-9"
+                        />
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setBuscandoIndex(null);
+                            setBusca("");
+                          }}
+                          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     ) : (
-                      <Plus className="h-4 w-4 text-zinc-700" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-zinc-700">
+                          {jogador
+                            ? nomeUsuario(jogador)
+                            : `Jogador ${index + 2}`}
+                        </p>
+                      </div>
                     )}
-                  </div>
 
-                  {buscandoIndex === index ? (
-                    <div className="relative flex-1">
-                      <Input
-                        autoFocus
-                        value={busca}
-                        onChange={(event) => setBusca(event.target.value)}
-                        placeholder={`Buscar jogador ${index + 2}`}
-                        className="pr-9"
-                      />
-
+                    {jogador ? (
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setBuscandoIndex(null);
-                          setBusca("");
-                        }}
-                        className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                        onClick={() => removerJogador(index)}
                       >
-                        <X className="h-4 w-4" />
+                        Remover
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-zinc-700">
-                        {jogador ? nomeUsuario(jogador) : `Jogador ${index + 2}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {jogador ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => removerJogador(index)}
-                    >
-                      Remover
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => abrirBusca(index)}
-                    >
-                      Adicionar
-                    </Button>
-                  )}
-                </div>
-
-                {buscandoIndex === index && (
-                  <div className="max-h-40 overflow-y-auto rounded-xl border border-zinc-200 p-2">
-                    {usuariosFiltrados.length === 0 ? (
-                      <p className="px-2 py-2 text-sm text-zinc-500">
-                        Nenhum jogador encontrado.
-                      </p>
                     ) : (
-                      usuariosFiltrados.map((usuario) => (
-                        <Button
-                          key={usuario.id}
-                          type="button"
-                          variant="ghost"
-                          onClick={() => selecionarJogador(usuario)}
-                          className="mb-1 h-auto w-full justify-start gap-2 py-2"
-                        >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-xs font-black">
-                            {usuario.foto_perfil ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={usuario.foto_perfil}
-                                alt={nomeUsuario(usuario)}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              nomeUsuario(usuario).charAt(0).toUpperCase()
-                            )}
-                          </span>
-
-                          <span className="truncate">
-                            {nomeUsuario(usuario)}
-                          </span>
-                        </Button>
-                      ))
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => abrirBusca(index)}
+                      >
+                        Adicionar
+                      </Button>
                     )}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {buscandoIndex === index && (
+                    <div className="max-h-40 overflow-y-auto rounded-xl border border-zinc-200 p-2">
+                      {usuariosFiltrados.length === 0 ? (
+                        <p className="px-2 py-2 text-sm text-zinc-500">
+                          Nenhum jogador encontrado.
+                        </p>
+                      ) : (
+                        usuariosFiltrados.map((usuario) => {
+                          const foto = fotoUsuario(usuario);
+
+                          return (
+                            <Button
+                              key={usuario.id}
+                              type="button"
+                              variant="ghost"
+                              onClick={() => selecionarJogador(usuario)}
+                              className="mb-1 h-auto w-full justify-start gap-2 py-2"
+                            >
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-xs font-black">
+                                {foto ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={foto}
+                                    alt={nomeUsuario(usuario)}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  nomeUsuario(usuario).charAt(0).toUpperCase()
+                                )}
+                              </span>
+
+                              <span className="truncate">
+                                {nomeUsuario(usuario)}
+                              </span>
+                            </Button>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

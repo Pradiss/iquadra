@@ -9,7 +9,11 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/aulas/recorrencias", listRecorrenciasAulaController);
+router.get(
+  "/aulas/recorrencias",
+  authMiddleware,
+  listRecorrenciasAulaController
+);
 
 router.post(
   "/aulas/recorrencias",

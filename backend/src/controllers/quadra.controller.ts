@@ -1,4 +1,4 @@
-import { Response } from "express";
+import type { Response } from "express";
 
 import { AuthRequest } from "../middlewares/auth.middleware";
 import {
@@ -13,103 +13,64 @@ import {
   updateQuadra,
   updateStatusQuadra,
 } from "../services/quadra.service";
+import { getRouteParam } from "../utils/request";
 
 export async function createQuadraController(req: AuthRequest, res: Response) {
-  try {
-    const { academiaId } = req.params;
-    const data = createQuadraSchema.parse(req.body);
+  const academiaId = getRouteParam(req, "academiaId");
+  const data = createQuadraSchema.parse(req.body);
+  const quadra = await createQuadra(req.user!.id, academiaId, data);
 
-    const quadra = await createQuadra(req.user!.id, academiaId, data);
-
-    return res.status(201).json({
-      success: true,
-      message: "Quadra criada com sucesso",
-      data: quadra,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao criar quadra",
-    });
-  }
+  return res.status(201).json({
+    success: true,
+    message: "Quadra criada com sucesso",
+    data: quadra,
+  });
 }
 
 export async function listQuadrasController(req: AuthRequest, res: Response) {
-  try {
-    const { academiaId } = req.params;
+  const academiaId = getRouteParam(req, "academiaId");
+  const quadras = await listQuadrasByAcademia(academiaId);
 
-    const quadras = await listQuadrasByAcademia(academiaId);
-
-    return res.json({
-      success: true,
-      total: quadras.length,
-      data: quadras,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao listar quadras",
-    });
-  }
+  return res.json({
+    success: true,
+    total: quadras.length,
+    data: quadras,
+  });
 }
 
 export async function getQuadraController(req: AuthRequest, res: Response) {
-  try {
-    const { id } = req.params;
+  const id = getRouteParam(req, "id");
+  const quadra = await getQuadraById(id);
 
-    const quadra = await getQuadraById(id);
-
-    return res.json({
-      success: true,
-      data: quadra,
-    });
-  } catch (error: any) {
-    return res.status(404).json({
-      success: false,
-      message: error.message || "Quadra não encontrada",
-    });
-  }
+  return res.json({
+    success: true,
+    data: quadra,
+  });
 }
 
 export async function updateQuadraController(req: AuthRequest, res: Response) {
-  try {
-    const { id } = req.params;
-    const data = updateQuadraSchema.parse(req.body);
+  const id = getRouteParam(req, "id");
+  const data = updateQuadraSchema.parse(req.body);
+  const quadra = await updateQuadra(req.user!.id, id, data);
 
-    const quadra = await updateQuadra(req.user!.id, id, data);
-
-    return res.json({
-      success: true,
-      message: "Quadra atualizada com sucesso",
-      data: quadra,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao atualizar quadra",
-    });
-  }
+  return res.json({
+    success: true,
+    message: "Quadra atualizada com sucesso",
+    data: quadra,
+  });
 }
 
 export async function updateStatusQuadraController(
   req: AuthRequest,
   res: Response
 ) {
-  try {
-    const { id } = req.params;
-    const { ativa } = updateStatusQuadraSchema.parse(req.body);
+  const id = getRouteParam(req, "id");
+  const { ativa } = updateStatusQuadraSchema.parse(req.body);
+  const quadra = await updateStatusQuadra(req.user!.id, id, ativa);
 
-    const quadra = await updateStatusQuadra(req.user!.id, id, ativa);
-
-    return res.json({
-      success: true,
-      message: "Status da quadra atualizado com sucesso",
-      data: quadra,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao atualizar status da quadra",
-    });
-  }
+  return res.json({
+    success: true,
+    message: "Status da quadra atualizado com sucesso",
+    data: quadra,
+  });
 }

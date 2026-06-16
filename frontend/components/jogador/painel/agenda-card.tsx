@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { getSafeImageUrl } from "@/lib/safe-image";
 
 type Participante = {
   id: string;
@@ -33,14 +34,6 @@ function inicial(nome: string) {
   return nome.charAt(0).toUpperCase();
 }
 
-function status(horario: Horario) {
-  if (horario.motivo === "BLOQUEADO") return "Bloqueado";
-  if (horario.motivo === "AULA") return "Aula";
-  if (!horario.jogo) return "Disponível";
-  if (horario.vagasDisponiveis > 0) return "Amistoso";
-  return "Ranking";
-}
-
 function corLinha(horario: Horario) {
   if (horario.motivo === "AULA" || horario.motivo === "BLOQUEADO") {
     return "bg-zinc-300 hover:bg-zinc-300";
@@ -58,12 +51,14 @@ function corLinha(horario: Horario) {
 }
 
 function Jogador({ jogador, label }: { jogador?: Participante; label: string }) {
+  const fotoPerfil = getSafeImageUrl(jogador?.foto_perfil);
+
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1.5">
       <div className="relative shrink-0">
         <Avatar className="h-7 w-7 bg-white">
-          {jogador?.foto_perfil && (
-            <AvatarImage src={jogador.foto_perfil} alt={jogador.nome} />
+          {fotoPerfil && (
+            <AvatarImage src={fotoPerfil} alt={jogador?.nome ?? label} />
           )}
 
           <AvatarFallback className="bg-white text-[10px] font-black text-zinc-800">
@@ -102,7 +97,7 @@ export function AgendaCard({ horario, onSelect }: Props) {
     <TableRow
       onClick={podeClicar ? onSelect : undefined}
       className={[
-        "relative  border-b-4 border-white",
+        "relative border-b-4 border-white",
         corLinha(horario),
         podeClicar ? "cursor-pointer" : "cursor-default",
       ].join(" ")}
@@ -125,8 +120,6 @@ export function AgendaCard({ horario, onSelect }: Props) {
 
           <Jogador jogador={jogadores[1]} label="Jogador B" />
         </div>
-
-        
       </TableCell>
     </TableRow>
   );

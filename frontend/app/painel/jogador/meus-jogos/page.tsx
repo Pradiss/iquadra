@@ -81,20 +81,16 @@ export default function MeusJogosPage() {
         listarConvitesJogos(),
       ]);
 
-      console.log("JOGOS API:", jogosApi);
-      console.log("CONVITES API:", convitesApi);
-
       setUsuarioId(usuario.id);
       setJogos(normalizarLista<Jogo>(jogosApi));
       setConvites(normalizarLista<Convite>(convitesApi));
-    } catch (error) {
-      console.log("Erro ao carregar meus jogos:", error);
+    } catch {
+      setJogos([]);
+      setConvites([]);
     } finally {
       setLoading(false);
     }
   }, []);
-
-  
 
   const carregarDados = useCallback(async () => {
     setLoading(true);
@@ -102,6 +98,7 @@ export default function MeusJogosPage() {
   }, [buscarDados]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void buscarDados();
   }, [buscarDados]);
 

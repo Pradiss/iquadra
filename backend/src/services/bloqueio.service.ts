@@ -111,7 +111,6 @@ export async function listBloqueiosByQuadra(quadraId: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
         },
       },
     },

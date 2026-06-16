@@ -1,13 +1,14 @@
 "use client";
 
-import { Camera, Save } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Save } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import api from "@/services/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getSafeImageUrl } from "@/lib/safe-image";
 
 type Usuario = {
   id: string;
@@ -44,43 +45,28 @@ function getData<T>(response: { data: unknown }): T {
 
 export function ConfigJogador({ usuario }: Props) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState(usuario.foto_perfil ?? "");
-
   const [form, setForm] = useState({
     nome: usuario.nome ?? "",
     email: usuario.email ?? "",
     telefone: usuario.telefone ?? "",
+    foto_perfil: usuario.foto_perfil ?? "",
     cidade: usuario.perfil_cliente?.cidade ?? "",
     cep: usuario.perfil_cliente?.cep ?? "",
     categoria: usuario.perfil_cliente?.categoria ?? "",
   });
 
-  const hasFoto = useMemo(() => Boolean(fotoPreview), [fotoPreview]);
+  const fotoSegura = getSafeImageUrl(form.foto_perfil);
 
   function updateField(field: keyof typeof form, value: string) {
     setForm((current) => ({
       ...current,
       [field]: value,
     }));
-  }
-
-  function handleFotoChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    setErro("");
-    setSucesso("");
-
-    setFotoFile(file);
-    setFotoPreview(URL.createObjectURL(file));
   }
 
   async function salvar() {
@@ -93,6 +79,7 @@ export function ConfigJogador({ usuario }: Props) {
         nome: form.nome.trim(),
         email: form.email.trim().toLowerCase(),
         telefone: form.telefone.trim(),
+        foto_perfil: form.foto_perfil.trim() || undefined,
         perfil_cliente: {
           cidade: form.cidade.trim(),
           cep: form.cep.trim(),
@@ -100,20 +87,7 @@ export function ConfigJogador({ usuario }: Props) {
         },
       });
 
-      let usuarioAtualizado = getData<Usuario>(response);
-
-      if (fotoFile) {
-        const formData = new FormData();
-        formData.append("foto", fotoFile);
-
-        const fotoResponse = await api.patch("/users/me/foto", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        usuarioAtualizado = getData<Usuario>(fotoResponse);
-      }
+      const usuarioAtualizado = getData<Usuario>(response);
 
       localStorage.setItem("usuario", JSON.stringify(usuarioAtualizado));
 
@@ -122,8 +96,7 @@ export function ConfigJogador({ usuario }: Props) {
       setTimeout(() => {
         router.push("/painel/jogador/perfil");
       }, 500);
-    } catch (error) {
-      console.log("Erro ao atualizar perfil:", error);
+    } catch {
       setErro("Não foi possível atualizar as informações do perfil.");
     } finally {
       setLoading(false);
@@ -152,9 +125,9 @@ export function ConfigJogador({ usuario }: Props) {
 
       <div className="mt-6 flex flex-col items-center rounded-[28px] bg-zinc-50 p-5">
         <Avatar className="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-green-100 shadow-[0_14px_40px_rgba(15,23,42,0.14)]">
-          {hasFoto && (
+          {fotoSegura && (
             <AvatarImage
-              src={fotoPreview}
+              src={fotoSegura}
               alt={form.nome}
               className="h-full w-full rounded-full object-cover"
             />
@@ -164,25 +137,6 @@ export function ConfigJogador({ usuario }: Props) {
             {getInitials(form.nome)}
           </AvatarFallback>
         </Avatar>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFotoChange}
-          className="hidden"
-        />
-
-        <Button
-          type="button"
-          variant="outline"
-          disabled={loading}
-          onClick={() => fileInputRef.current?.click()}
-          className="mt-4 rounded-2xl bg-white font-bold"
-        >
-          <Camera className="mr-2 h-4 w-4" />
-          Alterar foto
-        </Button>
       </div>
 
       <div className="mt-6 grid gap-4">
@@ -207,6 +161,15 @@ export function ConfigJogador({ usuario }: Props) {
           <Input
             value={form.telefone}
             onChange={(event) => updateField("telefone", event.target.value)}
+            className="h-[50px] rounded-xl bg-zinc-50"
+          />
+        </Campo>
+
+        <Campo label="URL da foto">
+          <Input
+            value={form.foto_perfil}
+            onChange={(event) => updateField("foto_perfil", event.target.value)}
+            placeholder="https://..."
             className="h-[50px] rounded-xl bg-zinc-50"
           />
         </Campo>

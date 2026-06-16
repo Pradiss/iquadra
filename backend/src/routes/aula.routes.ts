@@ -10,8 +10,8 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/aulas", listAulasController);
-router.get("/aulas/:id", getAulaController);
+router.get("/aulas", authMiddleware, listAulasController);
+router.get("/aulas/:id", authMiddleware, getAulaController);
 
 router.post("/aulas", authMiddleware, createAulaController);
 router.patch("/aulas/:id/cancelar", authMiddleware, cancelarAulaController);

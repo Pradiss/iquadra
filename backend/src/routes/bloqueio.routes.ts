@@ -9,7 +9,7 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/quadras/:quadraId/bloqueios", listBloqueiosController);
+router.get("/quadras/:quadraId/bloqueios", authMiddleware, listBloqueiosController);
 
 router.post(
   "/quadras/:quadraId/bloqueios",

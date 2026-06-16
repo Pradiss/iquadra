@@ -110,7 +110,6 @@ export async function convidarJogadorParaJogo(
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -118,7 +117,6 @@ export async function convidarJogadorParaJogo(
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -154,7 +152,6 @@ export async function listarConvitesJogos(usuarioId: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },

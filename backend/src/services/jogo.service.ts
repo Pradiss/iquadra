@@ -219,7 +219,6 @@ export async function getJogoById(id: string) {
             select: {
               id: true,
               nome: true,
-              email: true,
               foto_perfil: true,
             },
           },

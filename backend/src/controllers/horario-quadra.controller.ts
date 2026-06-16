@@ -1,4 +1,4 @@
-import { Response } from "express";
+import type { Response } from "express";
 
 import { AuthRequest } from "../middlewares/auth.middleware";
 import {
@@ -11,92 +11,61 @@ import {
   listHorariosQuadra,
   updateHorarioQuadra,
 } from "../services/horario-quadra.service";
+import { getRouteParam } from "../utils/request";
 
 export async function createHorarioQuadraController(
   req: AuthRequest,
   res: Response
 ) {
-  try {
-    const { quadraId } = req.params;
-    const data = createHorarioQuadraSchema.parse(req.body);
+  const quadraId = getRouteParam(req, "quadraId");
+  const data = createHorarioQuadraSchema.parse(req.body);
+  const horario = await createHorarioQuadra(req.user!.id, quadraId, data);
 
-    const horario = await createHorarioQuadra(req.user!.id, quadraId, data);
-
-    return res.status(201).json({
-      success: true,
-      message: "Horário criado com sucesso",
-      data: horario,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao criar horário",
-    });
-  }
+  return res.status(201).json({
+    success: true,
+    message: "Horario criado com sucesso",
+    data: horario,
+  });
 }
 
 export async function listHorariosQuadraController(
   req: AuthRequest,
   res: Response
 ) {
-  try {
-    const { quadraId } = req.params;
+  const quadraId = getRouteParam(req, "quadraId");
+  const horarios = await listHorariosQuadra(quadraId);
 
-    const horarios = await listHorariosQuadra(quadraId);
-
-    return res.json({
-      success: true,
-      total: horarios.length,
-      data: horarios,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao listar horários",
-    });
-  }
+  return res.json({
+    success: true,
+    total: horarios.length,
+    data: horarios,
+  });
 }
 
 export async function updateHorarioQuadraController(
   req: AuthRequest,
   res: Response
 ) {
-  try {
-    const { id } = req.params;
-    const data = updateHorarioQuadraSchema.parse(req.body);
+  const id = getRouteParam(req, "id");
+  const data = updateHorarioQuadraSchema.parse(req.body);
+  const horario = await updateHorarioQuadra(req.user!.id, id, data);
 
-    const horario = await updateHorarioQuadra(req.user!.id, id, data);
-
-    return res.json({
-      success: true,
-      message: "Horário atualizado com sucesso",
-      data: horario,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao atualizar horário",
-    });
-  }
+  return res.json({
+    success: true,
+    message: "Horario atualizado com sucesso",
+    data: horario,
+  });
 }
 
 export async function deleteHorarioQuadraController(
   req: AuthRequest,
   res: Response
 ) {
-  try {
-    const { id } = req.params;
+  const id = getRouteParam(req, "id");
+  await deleteHorarioQuadra(req.user!.id, id);
 
-    await deleteHorarioQuadra(req.user!.id, id);
-
-    return res.json({
-      success: true,
-      message: "Horário removido com sucesso",
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Erro ao remover horário",
-    });
-  }
+  return res.json({
+    success: true,
+    message: "Horario removido com sucesso",
+  });
 }

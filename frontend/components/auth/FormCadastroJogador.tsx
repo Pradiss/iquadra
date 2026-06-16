@@ -4,6 +4,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import api from "@/services/api";
 import AuthCard from "./AuthCard";
 import { maskCep, maskPhone, onlyNumbers } from "@/lib/masks";
 
@@ -100,8 +101,8 @@ export default function FormCadastroJogador() {
 
     if (step === 3) {
       if (!isValidEmail(data.email)) return "Informe um e-mail válido.";
-      if (data.senha.length < 6)
-        return "A senha precisa ter pelo menos 6 caracteres.";
+      if (data.senha.length < 8)
+        return "A senha precisa ter pelo menos 8 caracteres.";
     }
 
     return "";
@@ -136,10 +137,7 @@ export default function FormCadastroJogador() {
     setLoading(true);
 
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register/cliente`,
-        cleanPayload(data)
-      );
+      await api.post("/auth/register/cliente", cleanPayload(data));
 
       router.push("/login?created=jogador");
     } catch (error) {

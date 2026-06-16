@@ -142,7 +142,16 @@ export async function getQuadraById(id: string) {
   const quadra = await prisma.quadra.findUnique({
     where: { id },
     include: {
-      academia: true,
+      academia: {
+        select: {
+          id: true,
+          nome: true,
+          slug: true,
+          cidade: true,
+          estado: true,
+          status: true,
+        },
+      },
       horarios: true,
     },
   });

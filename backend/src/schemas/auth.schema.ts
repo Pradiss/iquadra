@@ -1,49 +1,88 @@
 import { z } from "zod";
+import {
+  cepSchema,
+  emailSchema,
+  nameSchema,
+  optionalCepSchema,
+  optionalCnpjSchema,
+  optionalMediumTextSchema,
+  optionalSafeUrlSchema,
+  optionalShortTextSchema,
+  passwordSchema,
+  phoneSchema,
+  slugSchema,
+} from "./common";
 
-export const registerClienteSchema = z.object({
-  nome: z.string().min(3),
-  email: z.string().email(),
-  telefone: z.string().min(8),
-  senha: z.string().min(6),
-  foto_perfil: z.string().optional(),
+const estadoSchema = z.preprocess(
+  emptyToUndefined,
+  z
+    .string()
+    .trim()
+    .length(2, "Estado deve ter 2 letras")
+    .transform((value) => value.toUpperCase())
+    .optional()
+);
 
-  categoria: z.enum(["A", "B", "C", "D", "INICIANTE"]),
-  cidade: z.string().min(2),
-  cep: z.string().min(8),
-});
+export const registerClienteSchema = z
+  .object({
+    nome: nameSchema,
+    email: emailSchema,
+    telefone: phoneSchema,
+    senha: passwordSchema,
+    foto_perfil: optionalSafeUrlSchema,
 
-export const registerAcademiaSchema = z.object({
-  nome_dono: z.string().min(3),
-  email: z.string().email(),
-  telefone: z.string().min(8),
-  senha: z.string().min(6),
-  foto_perfil: z.string().optional(),
+    categoria: z.enum(["A", "B", "C", "D", "INICIANTE"]),
+    cidade: z.string().trim().min(2).max(120),
+    cep: cepSchema,
+  })
+  .strict();
 
-  nome_academia: z.string().min(3),
-  slug: z.string().min(3),
-  cnpj: z.string().optional(),
-  endereco: z.string().optional(),
-  cidade: z.string().optional(),
-  estado: z.string().optional(),
-  cep: z.string().optional(),
-});
+export const registerAcademiaSchema = z
+  .object({
+    nome_dono: nameSchema,
+    email: emailSchema,
+    telefone: phoneSchema,
+    senha: passwordSchema,
+    foto_perfil: optionalSafeUrlSchema,
 
-export const registerProfessorSchema = z.object({
-  nome: z.string().min(3),
-  email: z.string().email(),
-  telefone: z.string().min(8),
-  senha: z.string().min(6),
-  foto_perfil: z.string().optional(),
+    nome_academia: nameSchema,
+    slug: slugSchema,
+    cnpj: optionalCnpjSchema,
+    endereco: optionalMediumTextSchema,
+    cidade: optionalShortTextSchema,
+    estado: estadoSchema,
+    cep: optionalCepSchema,
+  })
+  .strict();
 
-  bio: z.string().optional(),
-  especialidades: z.string().optional(),
-  cidade: z.string().optional(),
-});
+export const registerProfessorSchema = z
+  .object({
+    nome: nameSchema,
+    email: emailSchema,
+    telefone: phoneSchema,
+    senha: passwordSchema,
+    foto_perfil: optionalSafeUrlSchema,
 
-export const loginSchema = z.object({
-  email: z.string().email(),
-  senha: z.string().min(1),
-});
+    bio: optionalMediumTextSchema,
+    especialidades: optionalMediumTextSchema,
+    cidade: optionalShortTextSchema,
+  })
+  .strict();
+
+export const loginSchema = z
+  .object({
+    email: emailSchema,
+    senha: z.string().min(1).max(128),
+  })
+  .strict();
+
+function emptyToUndefined(value: unknown) {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
+
+  return value;
+}
 
 export type RegisterClienteData = z.infer<typeof registerClienteSchema>;
 export type RegisterAcademiaData = z.infer<typeof registerAcademiaSchema>;

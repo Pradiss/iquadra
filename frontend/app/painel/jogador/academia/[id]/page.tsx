@@ -230,8 +230,7 @@ export default function AcademiaAgendaPage() {
       });
 
       setHorarios(agenda);
-    } catch (error) {
-      console.error("Erro ao carregar agenda da academia:", error);
+    } catch {
       setAcademia(null);
       setQuadras([]);
       setHorarios([]);
@@ -241,7 +240,8 @@ export default function AcademiaAgendaPage() {
   }, [academiaId, dataSelecionada]);
 
   useEffect(() => {
-    carregarAgenda();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void carregarAgenda();
   }, [carregarAgenda]);
 
   function selecionarHorario(horario: HorarioAgenda) {

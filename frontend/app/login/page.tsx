@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import FormLogin from "@/components/auth/FormLogin";
 
 export default async function LoginPage() {
@@ -30,7 +31,9 @@ export default async function LoginPage() {
           </p>
         </div>
 
-        <FormLogin />
+        <Suspense fallback={null}>
+          <FormLogin />
+        </Suspense>
       </section>
     </main>
   );

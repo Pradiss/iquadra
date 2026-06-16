@@ -110,7 +110,6 @@ export async function createAula(usuarioId: string, data: CreateAulaData) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -118,7 +117,6 @@ export async function createAula(usuarioId: string, data: CreateAulaData) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -156,7 +154,6 @@ export async function listAulas(params: {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -164,7 +161,6 @@ export async function listAulas(params: {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -185,7 +181,6 @@ export async function getAulaById(id: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },
@@ -193,7 +188,6 @@ export async function getAulaById(id: string) {
         select: {
           id: true,
           nome: true,
-          email: true,
           foto_perfil: true,
         },
       },

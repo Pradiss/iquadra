@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import {
   LoginData,
@@ -25,9 +26,9 @@ function gerarToken(usuario: { id: string; email: string }) {
       sub: usuario.id,
       email: usuario.email,
     },
-    process.env.JWT_SECRET as string,
+    env.JWT_SECRET,
     {
-      expiresIn: "7d",
+      expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
     }
   );
 }

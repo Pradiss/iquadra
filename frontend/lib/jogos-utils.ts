@@ -20,6 +20,9 @@ export type Jogo = {
   inicio_em?: string;
   fim_em?: string;
   status?: string;
+  tipo_jogo?: "SIMPLES" | "DUPLA";
+  maximo_participantes?: number;
+  observacoes?: string | null;
   criado_por_usuario_id?: string;
   responsavel_usuario_id?: string;
   academia?: Academia;

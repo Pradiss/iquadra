@@ -12,27 +12,65 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-import { getToken, getUsuario } from "@/lib/auth-storage";
+import api from "@/services/api";
+import { clearAuthStorage, getToken } from "@/lib/auth-storage";
 import { PainelHeader } from "./header";
 import { PainelSidebar } from "./sidebar";
 import { PainelBottomNav } from "./bottom-nav";
 import { LogoutButton } from "./logoutButton";
 import { isPainelLinkActive, painelJogadorNavItems } from "./nav-items";
 
+function getData<T>(response: { data: unknown }): T {
+  const data = response.data as { data?: T; user?: T };
+  return data.data ?? data.user ?? (response.data as T);
+}
 
 export function LayoutPainel({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    const usuario = getUsuario();
+    let mounted = true;
 
-    if (!token || !usuario) {
-      router.replace("/login");
+    async function validateSession() {
+      const token = getToken();
+
+      if (!token) {
+        clearAuthStorage();
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        const response = await api.get("/users/me");
+        const usuario = getData(response);
+        localStorage.setItem("usuario", JSON.stringify(usuario));
+      } catch {
+        clearAuthStorage();
+        router.replace("/login");
+      } finally {
+        if (mounted) {
+          setCheckingAuth(false);
+        }
+      }
     }
+
+    void validateSession();
+
+    return () => {
+      mounted = false;
+    };
   }, [router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#f4f1e8] px-6 py-8 text-sm font-semibold text-zinc-600">
+        Carregando...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f1e8]">

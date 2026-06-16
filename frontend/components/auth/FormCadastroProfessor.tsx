@@ -83,8 +83,8 @@ export default function FormCadastroProfessor() {
 
     if (step === 3) {
       if (!isValidEmail(data.email)) return "Informe um e-mail válido.";
-      if (data.senha.length < 6)
-        return "A senha precisa ter pelo menos 6 caracteres.";
+      if (data.senha.length < 8)
+        return "A senha precisa ter pelo menos 8 caracteres.";
     }
 
     return "";
