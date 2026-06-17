@@ -222,10 +222,12 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
           categoria: p.usuario.perfil_cliente?.categoria || "Sem ranking",
         }))
       : [];
+    const maximoParticipantes =
+      jogoConflitante?.maximo_participantes ?? quadra.capacidade_maxima;
     const jogadoresConfirmados = participantes.length;
     const permiteMostrarVagas = !conflitoBloqueio && !aulaConflitante;
     const vagasDisponiveis = permiteMostrarVagas
-      ? Math.max(quadra.capacidade_maxima - jogadoresConfirmados, 0)
+      ? Math.max(maximoParticipantes - jogadoresConfirmados, 0)
       : 0;
 
     slots.push({
@@ -248,9 +250,12 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
       jogo: jogoConflitante
         ? {
             id: jogoConflitante.id,
+            criador_usuario_id: jogoConflitante.criado_por_usuario_id,
             tipo_jogo: jogoConflitante.tipo_jogo,
             status: jogoConflitante.status,
             maximo_participantes: jogoConflitante.maximo_participantes,
+            jogadores_confirmados: jogadoresConfirmados,
+            vagas_disponiveis: vagasDisponiveis,
             observacoes: jogoConflitante.observacoes,
             participantes,
           }

@@ -67,3 +67,8 @@ export async function sairDoJogo(jogoId: string) {
   const response = await api.delete(`/jogos/${jogoId}/participar`);
   return getData(response);
 }
+
+export async function cancelarJogoInteiro(jogoId: string) {
+  const response = await api.patch(`/jogos/${jogoId}/cancelar`);
+  return getData(response);
+}

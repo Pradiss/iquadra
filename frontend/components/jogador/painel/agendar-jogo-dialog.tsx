@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock, MapPin, Plus, UsersRound, X } from "lucide-react";
 
 import {
+  cancelarJogoInteiro,
   criarJogo,
   convidarJogador,
   listarUsuarios,
@@ -22,12 +23,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
+type UsuarioAcademia = {
+  academia_id?: string;
+  perfil?: string;
+  status?: string;
+  academia?: {
+    id?: string;
+  } | null;
+};
+
 type Usuario = {
   id: string;
   nome?: string;
   name?: string;
   email?: string;
   foto_perfil?: string | null;
+  perfil_cliente?: {
+    categoria?: string | null;
+  } | null;
+  academias?: UsuarioAcademia[];
 };
 
 type Participante = {
@@ -47,6 +61,12 @@ type HorarioSelecionado = {
   permiteSimples: boolean;
   permiteDupla: boolean;
   jogoId?: string;
+  criadorUsuarioId?: string;
+  status?: string;
+  tipoJogo?: "SIMPLES" | "DUPLA";
+  maximoParticipantes?: number;
+  jogadoresConfirmados?: number;
+  vagasDisponiveis?: number;
   participantes?: Participante[];
 };
 
@@ -113,6 +133,54 @@ function getErrorMessage(error: unknown) {
   );
 }
 
+function usuarioEhAdminDaAcademia(
+  usuario: Usuario | null,
+  academiaId: string,
+) {
+  if (!usuario?.academias?.length) return false;
+
+  return usuario.academias.some((vinculo) => {
+    const vinculoAcademiaId = vinculo.academia_id || vinculo.academia?.id;
+    const perfil = vinculo.perfil || "";
+
+    return (
+      vinculoAcademiaId === academiaId &&
+      vinculo.status !== "INATIVO" &&
+      ["DONO", "ADMIN_ACADEMIA"].includes(perfil)
+    );
+  });
+}
+
+function ParticipanteItem({ participante }: { participante: Participante }) {
+  const fotoPerfil = getSafeImageUrl(participante.foto_perfil);
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-white p-2 text-sm font-semibold text-zinc-700">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-xs font-black text-zinc-800">
+        {fotoPerfil ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={fotoPerfil}
+            alt={participante.nome}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          participante.nome.charAt(0).toUpperCase()
+        )}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{participante.nome}</span>
+        {participante.categoria && (
+          <span className="block truncate text-xs font-bold text-zinc-500">
+            {participante.categoria}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
 export function AgendarJogoDialog({
   open,
   onOpenChange,
@@ -135,13 +203,26 @@ export function AgendarJogoDialog({
 
   const usuarioLogado = getUsuario() as Usuario | null;
   const entrandoEmJogo = Boolean(horario?.jogoId);
+  const participantes = horario?.participantes ?? [];
+  const jogadoresConfirmados =
+    horario?.jogadoresConfirmados ?? participantes.length;
+  const maximoParticipantes =
+    horario?.maximoParticipantes ?? (tipoJogo === "SIMPLES" ? 2 : 4);
+  const vagasDisponiveis =
+    horario?.vagasDisponiveis ??
+    Math.max(maximoParticipantes - jogadoresConfirmados, 0);
+  const temVaga = vagasDisponiveis > 0;
 
   const jaParticipa = Boolean(
     usuarioLogado?.id &&
-    horario?.participantes?.some(
-      (participante) => participante.id === usuarioLogado.id,
-    ),
+      participantes.some((participante) => participante.id === usuarioLogado.id),
   );
+  const usuarioCriador = Boolean(
+    usuarioLogado?.id && horario?.criadorUsuarioId === usuarioLogado.id,
+  );
+  const podeCancelarJogoInteiro =
+    entrandoEmJogo &&
+    (usuarioCriador || usuarioEhAdminDaAcademia(usuarioLogado, academiaId));
 
   const quantidadeConvites = tipoJogo === "SIMPLES" ? 1 : 3;
   const jogadoresExibidos = jogadores.slice(0, quantidadeConvites);
@@ -159,28 +240,42 @@ export function AgendarJogoDialog({
           (jogador) => jogador?.id === usuario.id,
         );
 
-        if (jaSelecionado) return false;
+        if (usuario.id === usuarioLogado?.id || jaSelecionado) return false;
 
         return nome.includes(termo) || email.includes(termo);
       })
       .slice(0, 10);
-  }, [busca, usuarios, jogadores]);
+  }, [busca, usuarios, jogadores, usuarioLogado?.id]);
 
   useEffect(() => {
     if (!open || !horario) return;
 
-    setErro("");
-    setBusca("");
-    setBuscandoIndex(null);
-    setJogadores([null, null, null]);
-    setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
+    let ativo = true;
+    const timeoutId = window.setTimeout(() => {
+      if (!ativo) return;
 
-    if (!horario.jogoId) {
-      listarUsuarios()
-        .then((res) => setUsuarios(normalizarUsuarios(res)))
-        .catch(() => setUsuarios([]));
-    }
-  }, [open, horario?.id, horario?.jogoId, horario?.permiteSimples]);
+      setErro("");
+      setBusca("");
+      setBuscandoIndex(null);
+      setJogadores([null, null, null]);
+      setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
+
+      if (!horario.jogoId) {
+        listarUsuarios()
+          .then((res) => {
+            if (ativo) setUsuarios(normalizarUsuarios(res));
+          })
+          .catch(() => {
+            if (ativo) setUsuarios([]);
+          });
+      }
+    }, 0);
+
+    return () => {
+      ativo = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [open, horario]);
 
   function abrirBusca(index: number) {
     setBuscandoIndex(index);
@@ -207,6 +302,11 @@ export function AgendarJogoDialog({
   async function confirmar() {
     if (!horario || !data || !academiaId) {
       setErro("Dados do horário incompletos.");
+      return;
+    }
+
+    if (horario.jogoId && !jaParticipa && !temVaga) {
+      setErro("Este jogo já está completo.");
       return;
     }
 
@@ -248,6 +348,43 @@ export function AgendarJogoDialog({
     }
   }
 
+  async function cancelarJogoSelecionado() {
+    if (!horario?.jogoId) return;
+
+    setLoading(true);
+    setErro("");
+
+    try {
+      await cancelarJogoInteiro(horario.jogoId);
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: unknown) {
+      setErro(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const titulo = jaParticipa
+    ? "Sua participação"
+    : entrandoEmJogo
+      ? "Jogo criado"
+      : "Quem vai jogar?";
+  const descricao = entrandoEmJogo
+    ? "Confira os jogadores confirmados neste horário."
+    : "Você entra como Jogador 1 e pode convidar os demais.";
+  const textoBotaoPrincipal = loading
+    ? "Confirmando..."
+    : jaParticipa
+      ? "Desmarcar participação"
+      : entrandoEmJogo
+        ? temVaga
+          ? "Entrar no jogo"
+          : "Jogo completo"
+        : "Confirmar jogo";
+  const desabilitarBotaoPrincipal =
+    loading || !horario || (entrandoEmJogo && !jaParticipa && !temVaga);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[24px] border-0 p-6 sm:max-w-[390px]">
@@ -257,20 +394,10 @@ export function AgendarJogoDialog({
           </div>
 
           <DialogTitle className="text-lg font-black text-zinc-950">
-            {jaParticipa
-              ? "Desmarcar participação?"
-              : entrandoEmJogo
-                ? "Entrar no jogo"
-                : "Quem vai jogar?"}
+            {titulo}
           </DialogTitle>
 
-          <p className="text-sm text-zinc-500">
-            {jaParticipa
-              ? "Você já está confirmado neste horário."
-              : entrandoEmJogo
-                ? "Entre neste jogo já criado por outro jogador."
-                : "Confira o horário e escolha os jogadores."}
-          </p>
+          <p className="text-sm text-zinc-500">{descricao}</p>
         </DialogHeader>
 
         {horario && (
@@ -294,24 +421,30 @@ export function AgendarJogoDialog({
           </div>
         )}
 
-        {entrandoEmJogo && horario?.participantes?.length ? (
+        {entrandoEmJogo ? (
           <div className="rounded-2xl bg-zinc-50 p-3">
-            <p className="mb-2 text-xs font-bold text-zinc-500">
-              Jogadores confirmados
-            </p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-xs font-bold text-zinc-500">
+                Jogadores confirmados
+              </p>
+              <span className="text-xs font-black text-zinc-700">
+                {jogadoresConfirmados}/{maximoParticipantes}
+              </span>
+            </div>
 
             <div className="grid gap-2">
-              {horario.participantes.map((participante) => (
-                <div
-                  key={participante.id}
-                  className="flex items-center gap-2 text-sm font-semibold text-zinc-700"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-200 text-xs font-black">
-                    {participante.nome.charAt(0).toUpperCase()}
-                  </span>
-                  {participante.nome}
-                </div>
-              ))}
+              {participantes.length > 0 ? (
+                participantes.map((participante) => (
+                  <ParticipanteItem
+                    key={participante.id}
+                    participante={participante}
+                  />
+                ))
+              ) : (
+                <p className="rounded-xl bg-white p-3 text-sm text-zinc-500">
+                  Nenhum jogador confirmado.
+                </p>
+              )}
             </div>
           </div>
         ) : null}
@@ -337,14 +470,16 @@ export function AgendarJogoDialog({
             </Button>
           </div>
         )}
+
         {!entrandoEmJogo && usuarioLogado && (
-          <div className="space-y-2">
+          <div className="space-y-4">
+            <p className="text-xs font-bold text-zinc-500">Jogador 1</p>
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200">
                 {fotoUsuario(usuarioLogado) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={fotoUsuario(usuarioLogado) ?? ""}
+                    src={fotoUsuario(usuarioLogado)}
                     alt={nomeUsuario(usuarioLogado)}
                     className="h-full w-full object-cover"
                   />
@@ -360,8 +495,6 @@ export function AgendarJogoDialog({
                   {nomeUsuario(usuarioLogado)}
                 </p>
               </div>
-
-            
             </div>
           </div>
         )}
@@ -502,7 +635,7 @@ export function AgendarJogoDialog({
         <div className="sticky bottom-0 space-y-2 bg-white pt-3">
           <Button
             type="button"
-            disabled={loading || !horario}
+            disabled={desabilitarBotaoPrincipal}
             onClick={confirmar}
             className={
               jaParticipa
@@ -510,14 +643,20 @@ export function AgendarJogoDialog({
                 : "h-11 w-full"
             }
           >
-            {loading
-              ? "Confirmando..."
-              : jaParticipa
-                ? "Desmarcar participação"
-                : entrandoEmJogo
-                  ? "Entrar no jogo"
-                  : "Confirmar"}
+            {textoBotaoPrincipal}
           </Button>
+
+          {podeCancelarJogoInteiro && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={cancelarJogoSelecionado}
+              className="h-11 w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+            >
+              Cancelar jogo inteiro
+            </Button>
+          )}
 
           <Button
             type="button"
@@ -525,7 +664,7 @@ export function AgendarJogoDialog({
             onClick={() => onOpenChange(false)}
             className="h-11 w-full"
           >
-            Cancelar
+            Fechar
           </Button>
         </div>
       </DialogContent>

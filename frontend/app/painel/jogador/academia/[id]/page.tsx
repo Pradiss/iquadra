@@ -57,9 +57,12 @@ type HorarioAgenda = {
   vagasDisponiveis: number;
   jogo?: {
     id: string;
+    criador_usuario_id?: string;
     tipo_jogo?: "SIMPLES" | "DUPLA";
     status?: string;
     maximo_participantes?: number;
+    jogadores_confirmados?: number;
+    vagas_disponiveis?: number;
     observacoes?: string | null;
     participantes: Participante[];
   } | null;
@@ -75,6 +78,13 @@ type HorarioSelecionado = {
   permiteSimples: boolean;
   permiteDupla: boolean;
   jogoId?: string;
+  criadorUsuarioId?: string;
+  status?: string;
+  tipoJogo?: "SIMPLES" | "DUPLA";
+  maximoParticipantes?: number;
+  jogadoresConfirmados?: number;
+  vagasDisponiveis?: number;
+  participantes?: Participante[];
 };
 
 type SlotDisponibilidade = {
@@ -90,9 +100,12 @@ type SlotDisponibilidade = {
   vagas_disponiveis?: number;
   jogo?: {
     id: string;
+    criador_usuario_id?: string;
     tipo_jogo?: "SIMPLES" | "DUPLA";
     status?: string;
     maximo_participantes?: number;
+    jogadores_confirmados?: number;
+    vagas_disponiveis?: number;
     observacoes?: string | null;
     participantes?: Participante[];
   } | null;
@@ -132,8 +145,12 @@ function montarHorariosDaQuadra(
     );
 
     const jogadoresConfirmados = Number(
-      slot.jogadores_confirmados ?? participantes.length
+      slot.jogadores_confirmados ??
+        slot.jogo?.jogadores_confirmados ??
+        participantes.length
     );
+    const maximoParticipantesJogo =
+      slot.jogo?.maximo_participantes ?? capacidadeMaxima;
 
     return {
       id: `${quadra.id}-${slot.inicio}`,
@@ -159,7 +176,9 @@ function montarHorariosDaQuadra(
       ),
       jogadoresConfirmados,
       vagasDisponiveis: Number(
-        slot.vagas_disponiveis ?? Math.max(capacidadeMaxima - jogadoresConfirmados, 0)
+        slot.vagas_disponiveis ??
+          slot.jogo?.vagas_disponiveis ??
+          Math.max(maximoParticipantesJogo - jogadoresConfirmados, 0)
       ),
       jogo: slot.jogo
         ? {
@@ -268,7 +287,11 @@ export default function AcademiaAgendaPage() {
   }, [academiaId, dataSelecionada]);
 
   useEffect(() => {
-    void carregarAgenda();
+    const timeoutId = window.setTimeout(() => {
+      void carregarAgenda();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [carregarAgenda]);
 
   function selecionarHorario(horario: HorarioAgenda) {
@@ -282,6 +305,13 @@ export default function AcademiaAgendaPage() {
     permiteSimples: horario.permiteSimples,
     permiteDupla: horario.permiteDupla,
     jogoId: horario.jogo?.id,
+    criadorUsuarioId: horario.jogo?.criador_usuario_id,
+    status: horario.jogo?.status,
+    tipoJogo: horario.jogo?.tipo_jogo,
+    maximoParticipantes: horario.jogo?.maximo_participantes,
+    jogadoresConfirmados: horario.jogadoresConfirmados,
+    vagasDisponiveis: horario.vagasDisponiveis,
+    participantes: horario.jogo?.participantes ?? [],
   });
 
   setDialogOpen(true);

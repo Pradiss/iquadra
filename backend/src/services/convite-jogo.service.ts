@@ -1,27 +1,28 @@
 import { prisma } from "../lib/prisma";
 import { ConvidarJogadorData } from "../schemas/convite-jogo.schema";
 
-async function validarAmizade(usuarioId: string, amigoId: string) {
-  const amizade = await prisma.amizade.findFirst({
-    where: {
-      status: "ACEITA",
-      OR: [
-        {
-          usuario_id: usuarioId,
-          amigo_id: amigoId,
-        },
-        {
-          usuario_id: amigoId,
-          amigo_id: usuarioId,
-        },
-      ],
+const conviteJogoInclude = {
+  jogo: {
+    include: {
+      quadra: true,
+      academia: true,
     },
-  });
-
-  if (!amizade) {
-    throw new Error("Você só pode convidar jogadores que são seus amigos");
-  }
-}
+  },
+  convidado: {
+    select: {
+      id: true,
+      nome: true,
+      foto_perfil: true,
+    },
+  },
+  enviadoPor: {
+    select: {
+      id: true,
+      nome: true,
+      foto_perfil: true,
+    },
+  },
+};
 
 export async function convidarJogadorParaJogo(
   usuarioId: string,
@@ -38,6 +39,9 @@ export async function convidarJogadorParaJogo(
       participantes: {
         where: { status: "CONFIRMADO" },
       },
+      convites: {
+        where: { status: "PENDENTE" },
+      },
     },
   });
 
@@ -45,7 +49,7 @@ export async function convidarJogadorParaJogo(
     throw new Error("Jogo não encontrado");
   }
 
-  if (jogo.status !== "ABERTO") {
+  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
     throw new Error("Este jogo não está aberto para convites");
   }
 
@@ -69,8 +73,6 @@ export async function convidarJogadorParaJogo(
     throw new Error("Usuário convidado não encontrado");
   }
 
-  await validarAmizade(usuarioId, data.convidado_usuario_id);
-
   const jaParticipa = jogo.participantes.some(
     (participante) => participante.usuario_id === data.convidado_usuario_id
   );
@@ -92,6 +94,26 @@ export async function convidarJogadorParaJogo(
     throw new Error("Este usuário já foi convidado para este jogo");
   }
 
+  if (
+    jogo.participantes.length + jogo.convites.length >=
+    jogo.maximo_participantes
+  ) {
+    throw new Error("Todas as vagas deste jogo já estão ocupadas ou convidadas");
+  }
+
+  if (conviteExistente) {
+    return prisma.conviteJogo.update({
+      where: {
+        id: conviteExistente.id,
+      },
+      data: {
+        enviado_por_id: usuarioId,
+        status: "PENDENTE",
+      },
+      include: conviteJogoInclude,
+    });
+  }
+
   return prisma.conviteJogo.create({
     data: {
       jogo_id: jogoId,
@@ -99,28 +121,7 @@ export async function convidarJogadorParaJogo(
       enviado_por_id: usuarioId,
       status: "PENDENTE",
     },
-    include: {
-      jogo: {
-        include: {
-          quadra: true,
-          academia: true,
-        },
-      },
-      convidado: {
-        select: {
-          id: true,
-          nome: true,
-          foto_perfil: true,
-        },
-      },
-      enviadoPor: {
-        select: {
-          id: true,
-          nome: true,
-          foto_perfil: true,
-        },
-      },
-    },
+    include: conviteJogoInclude,
   });
 }
 
@@ -169,7 +170,11 @@ export async function aceitarConviteJogo(usuarioId: string, conviteId: string) {
       jogo: {
         include: {
           participantes: {
-            where: { status: "CONFIRMADO" },
+            where: {
+              status: {
+                in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+              },
+            },
           },
         },
       },
@@ -188,33 +193,50 @@ export async function aceitarConviteJogo(usuarioId: string, conviteId: string) {
     throw new Error("Este convite não está pendente");
   }
 
-  if (convite.jogo.status !== "ABERTO") {
+  if (!["ABERTO", "COMPLETO"].includes(convite.jogo.status)) {
     throw new Error("Este jogo não está mais aberto");
   }
 
-  const jaParticipa = convite.jogo.participantes.some(
+  const participantesConfirmados = convite.jogo.participantes.filter(
+    (participante) => participante.status === "CONFIRMADO"
+  );
+
+  const participanteExistente = convite.jogo.participantes.find(
     (participante) => participante.usuario_id === usuarioId
   );
 
-  if (jaParticipa) {
+  if (participanteExistente?.status === "CONFIRMADO") {
     throw new Error("Você já participa deste jogo");
   }
 
-  if (convite.jogo.participantes.length >= convite.jogo.maximo_participantes) {
+  if (participantesConfirmados.length >= convite.jogo.maximo_participantes) {
     throw new Error("Este jogo já está completo");
   }
 
-  const totalAposAceitar = convite.jogo.participantes.length + 1;
+  const totalAposAceitar = participantesConfirmados.length + 1;
 
   const result = await prisma.$transaction(async (tx) => {
-    await tx.participanteJogo.create({
-      data: {
-        jogo_id: convite.jogo_id,
-        usuario_id: usuarioId,
-        papel: "JOGADOR",
-        status: "CONFIRMADO",
-      },
-    });
+    if (participanteExistente) {
+      await tx.participanteJogo.update({
+        where: {
+          id: participanteExistente.id,
+        },
+        data: {
+          status: "CONFIRMADO",
+          papel:
+            participanteExistente.papel === "CRIADOR" ? "CRIADOR" : "JOGADOR",
+        },
+      });
+    } else {
+      await tx.participanteJogo.create({
+        data: {
+          jogo_id: convite.jogo_id,
+          usuario_id: usuarioId,
+          papel: "JOGADOR",
+          status: "CONFIRMADO",
+        },
+      });
+    }
 
     const conviteAtualizado = await tx.conviteJogo.update({
       where: { id: conviteId },
@@ -223,11 +245,24 @@ export async function aceitarConviteJogo(usuarioId: string, conviteId: string) {
       },
     });
 
-    if (totalAposAceitar >= convite.jogo.maximo_participantes) {
-      await tx.jogo.update({
-        where: { id: convite.jogo_id },
+    const jogoFicouCompleto =
+      totalAposAceitar >= convite.jogo.maximo_participantes;
+
+    await tx.jogo.update({
+      where: { id: convite.jogo_id },
+      data: {
+        status: jogoFicouCompleto ? "COMPLETO" : "ABERTO",
+      },
+    });
+
+    if (jogoFicouCompleto) {
+      await tx.conviteJogo.updateMany({
+        where: {
+          jogo_id: convite.jogo_id,
+          status: "PENDENTE",
+        },
         data: {
-          status: "COMPLETO",
+          status: "CANCELADO",
         },
       });
     }

@@ -242,7 +242,9 @@ export async function participarJogo(usuarioId: string, jogoId: string) {
     include: {
       participantes: {
         where: {
-          status: "CONFIRMADO",
+          status: {
+            in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+          },
         },
       },
     },
@@ -252,43 +254,86 @@ export async function participarJogo(usuarioId: string, jogoId: string) {
     throw new Error("Jogo não encontrado");
   }
 
-  if (jogo.status !== "ABERTO") {
+  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
     throw new Error("Este jogo não está aberto para participantes");
   }
 
-  const jaParticipa = jogo.participantes.some(
+  const participantesConfirmados = jogo.participantes.filter(
+    (participante) => participante.status === "CONFIRMADO"
+  );
+
+  const participanteExistente = jogo.participantes.find(
     (participante) => participante.usuario_id === usuarioId
   );
 
-  if (jaParticipa) {
+  if (participanteExistente?.status === "CONFIRMADO") {
     throw new Error("Você já participa deste jogo");
   }
 
-  if (jogo.participantes.length >= jogo.maximo_participantes) {
+  if (participantesConfirmados.length >= jogo.maximo_participantes) {
     throw new Error("Este jogo já está completo");
   }
 
-  await prisma.participanteJogo.create({
-    data: {
-      jogo_id: jogoId,
-      usuario_id: usuarioId,
-      papel: "JOGADOR",
-      status: "CONFIRMADO",
-    },
-  });
+  const totalParticipantes = participantesConfirmados.length + 1;
 
-  const totalParticipantes = jogo.participantes.length + 1;
+  await prisma.$transaction(async (tx) => {
+    if (participanteExistente) {
+      await tx.participanteJogo.update({
+        where: {
+          id: participanteExistente.id,
+        },
+        data: {
+          status: "CONFIRMADO",
+          papel:
+            participanteExistente.papel === "CRIADOR" ? "CRIADOR" : "JOGADOR",
+        },
+      });
+    } else {
+      await tx.participanteJogo.create({
+        data: {
+          jogo_id: jogoId,
+          usuario_id: usuarioId,
+          papel: "JOGADOR",
+          status: "CONFIRMADO",
+        },
+      });
+    }
 
-  if (totalParticipantes >= jogo.maximo_participantes) {
-    await prisma.jogo.update({
+    await tx.conviteJogo.updateMany({
+      where: {
+        jogo_id: jogoId,
+        convidado_usuario_id: usuarioId,
+        status: "PENDENTE",
+      },
+      data: {
+        status: "ACEITO",
+      },
+    });
+
+    const jogoFicouCompleto =
+      totalParticipantes >= jogo.maximo_participantes;
+
+    await tx.jogo.update({
       where: {
         id: jogoId,
       },
       data: {
-        status: "COMPLETO",
+        status: jogoFicouCompleto ? "COMPLETO" : "ABERTO",
       },
     });
-  }
+
+    if (jogoFicouCompleto) {
+      await tx.conviteJogo.updateMany({
+        where: {
+          jogo_id: jogoId,
+          status: "PENDENTE",
+        },
+        data: {
+          status: "CANCELADO",
+        },
+      });
+    }
+  });
 
   return getJogoById(jogoId);
 }
@@ -324,13 +369,25 @@ export async function sairJogo(usuarioId: string, jogoId: string) {
   });
 
   if (participantesAtivos === 0) {
-    await prisma.jogo.update({
-      where: {
-        id: jogoId,
-      },
-      data: {
-        status: "SEM_PARTICIPANTES",
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.jogo.update({
+        where: {
+          id: jogoId,
+        },
+        data: {
+          status: "SEM_PARTICIPANTES",
+        },
+      });
+
+      await tx.conviteJogo.updateMany({
+        where: {
+          jogo_id: jogoId,
+          status: "PENDENTE",
+        },
+        data: {
+          status: "CANCELADO",
+        },
+      });
     });
   } else {
     await prisma.jogo.update({
@@ -357,21 +414,45 @@ export async function cancelarJogo(usuarioId: string, jogoId: string) {
     throw new Error("Jogo não encontrado");
   }
 
+  const vinculoAdmin = await prisma.academiaUsuario.findFirst({
+    where: {
+      academia_id: jogo.academia_id,
+      usuario_id: usuarioId,
+      status: "ATIVO",
+      perfil: {
+        in: ["DONO", "ADMIN_ACADEMIA"],
+      },
+    },
+  });
+
   const podeCancelar =
     jogo.criado_por_usuario_id === usuarioId ||
-    jogo.responsavel_usuario_id === usuarioId;
+    jogo.responsavel_usuario_id === usuarioId ||
+    Boolean(vinculoAdmin);
 
   if (!podeCancelar) {
     throw new Error("Você não tem permissão para cancelar este jogo");
   }
 
-  await prisma.jogo.update({
-    where: {
-      id: jogoId,
-    },
-    data: {
-      status: "CANCELADO",
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.jogo.update({
+      where: {
+        id: jogoId,
+      },
+      data: {
+        status: "CANCELADO",
+      },
+    });
+
+    await tx.conviteJogo.updateMany({
+      where: {
+        jogo_id: jogoId,
+        status: "PENDENTE",
+      },
+      data: {
+        status: "CANCELADO",
+      },
+    });
   });
 
   return getJogoById(jogoId);

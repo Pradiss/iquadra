@@ -21,12 +21,14 @@ type Horario = {
   capacidadeMaxima: number;
   vagasDisponiveis: number;
   jogo?: {
+    maximo_participantes?: number;
     participantes: Participante[];
   } | null;
 };
 
 type Props = {
   horario: Horario;
+  canSelect?: boolean;
   onSelect: () => void;
 };
 
@@ -85,21 +87,24 @@ function Jogador({ jogador, label }: { jogador?: Participante; label: string }) 
   );
 }
 
-export function AgendaCard({ horario, onSelect }: Props) {
+export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
   const jogadores = horario.jogo?.participantes ?? [];
-
-  const podeClicar =
-    horario.motivo !== "AULA" &&
-    horario.motivo !== "BLOQUEADO" &&
-    horario.vagasDisponiveis > 0;
+  const totalJogadores = Math.max(
+    Math.min(horario.jogo?.maximo_participantes ?? horario.capacidadeMaxima, 4),
+    2,
+  );
+  const jogadoresSlots = Array.from(
+    { length: totalJogadores },
+    (_, index) => jogadores[index],
+  );
 
   return (
     <TableRow
-      onClick={podeClicar ? onSelect : undefined}
+      onClick={canSelect ? onSelect : undefined}
       className={[
         "relative border-b-4 border-white",
         corLinha(horario),
-        podeClicar ? "cursor-pointer" : "cursor-default",
+        canSelect ? "cursor-pointer" : "cursor-default",
       ].join(" ")}
     >
       <TableCell className="w-[54px] bg-black/5 px-2 text-[10px] font-black text-zinc-950">
@@ -111,14 +116,14 @@ export function AgendaCard({ horario, onSelect }: Props) {
       </TableCell>
 
       <TableCell className="px-2">
-        <div className="flex w-full items-center gap-2 pr-14">
-          <Jogador jogador={jogadores[0]} label="Jogador A" />
-
-          <span className="shrink-0 text-[10px] font-black text-zinc-950">
-            X
-          </span>
-
-          <Jogador jogador={jogadores[1]} label="Jogador B" />
+        <div className="grid w-full grid-cols-2 gap-2">
+          {jogadoresSlots.map((jogador, index) => (
+            <Jogador
+              key={`${horario.id}-jogador-${index}`}
+              jogador={jogador}
+              label={`Jogador ${index + 1}`}
+            />
+          ))}
         </div>
       </TableCell>
     </TableRow>

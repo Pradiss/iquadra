@@ -1,6 +1,7 @@
 "use client";
 
 import { AgendaCard } from "./agenda-card";
+import { getUsuario } from "@/lib/auth-storage";
 
 import {
   Table,
@@ -26,6 +27,8 @@ type Horario = {
   vagasDisponiveis: number;
   jogo?: {
     id: string;
+    criador_usuario_id?: string;
+    maximo_participantes?: number;
     participantes: {
       id: string;
       nome: string;
@@ -42,6 +45,8 @@ type Props = {
 };
 
 export function AgendaList({ horarios, onSelect }: Props) {
+  const usuarioLogado = getUsuario();
+
   return (
     <div>
       <Table>
@@ -55,14 +60,29 @@ export function AgendaList({ horarios, onSelect }: Props) {
 
         <TableBody>
           {horarios.map((horario) => {
+            const usuarioParticipa = Boolean(
+              usuarioLogado?.id &&
+                horario.jogo?.participantes.some(
+                  (participante) => participante.id === usuarioLogado.id,
+                ),
+            );
+            const usuarioCriador =
+              Boolean(usuarioLogado?.id) &&
+              horario.jogo?.criador_usuario_id === usuarioLogado?.id;
             const podeSelecionar =
               horario.disponivel ||
-              Boolean(horario.jogo && horario.vagasDisponiveis > 0);
+              Boolean(
+                horario.jogo &&
+                  (horario.vagasDisponiveis > 0 ||
+                    usuarioParticipa ||
+                    usuarioCriador),
+              );
 
             return (
               <AgendaCard
                 key={horario.id}
                 horario={horario}
+                canSelect={podeSelecionar}
                 onSelect={() => {
                   if (podeSelecionar) {
                     onSelect(horario);
