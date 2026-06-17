@@ -10,12 +10,12 @@ type Props = {
 export function JogosTabs({ aba, onChange }: Props) {
   return (
     <div className="mt-6 flex gap-2 overflow-x-auto">
-      <Tab active={aba === "pendentes"} onClick={() => onChange("pendentes")}>
-        Pendentes
-      </Tab>
-
       <Tab active={aba === "proximos"} onClick={() => onChange("proximos")}>
         Próximos
+      </Tab>
+
+      <Tab active={aba === "pendentes"} onClick={() => onChange("pendentes")}>
+        Pendentes
       </Tab>
 
       <Tab active={aba === "historico"} onClick={() => onChange("historico")}>

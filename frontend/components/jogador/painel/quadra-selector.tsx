@@ -30,7 +30,7 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
   }
 
   return (
-   <div className="flex gap-2 overflow-x-auto">
+    <div className="flex gap-2 overflow-x-auto">
       {quadras.map((quadra) => {
         const ativo = selected === quadra.id;
 
@@ -47,13 +47,13 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
                 : "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50",
             ].join(" ")}
           >
-            <span className="w-full truncate text-md font-bold">
+            <span className="w-full truncate text-sm leading-tight font-bold">
               {quadra.nome}
             </span>
 
             <span
               className={[
-                "w-full truncate text-[10px] font-semibold",
+                "mt-[-2px] w-full truncate text-[9px] leading-none font-semibold",
                 ativo ? "text-green-700" : "text-zinc-500",
               ].join(" ")}
             >
