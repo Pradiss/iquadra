@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-
+import path from "path";
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
@@ -16,6 +16,7 @@ import recorrenciaAulaRoutes from "./routes/recorrencia-aula.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import amizadeRoutes from "./routes/amizades.routes";
 import conviteJogoRoutes from "./routes/convite-jogo.routes";
+
 import { env } from "./config/env";
 import { AppError } from "./errors/app-error";
 import {
@@ -41,6 +42,11 @@ app.use(
   })
 );
 app.use(express.json({ limit: "100kb" }));
+
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "public", "uploads"))
+);
 app.use(generalRateLimiter);
 
 app.get("/", (req, res) => {

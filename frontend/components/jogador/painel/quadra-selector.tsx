@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 type Quadra = {
   id: string;
   nome: string;
-  capacidade_minima?: number;
-  capacidade_maxima?: number;
-  permite_simples?: boolean;
-  permite_dupla?: boolean;
+  tipo_piso?: string | null;
+  coberta?: boolean | null;
+  capacidade_minima?: number | null;
+  capacidade_maxima?: number | null;
+  permite_simples?: boolean | null;
+  permite_dupla?: boolean | null;
 };
-
 type Props = {
   quadras: Quadra[];
   selected?: string;
@@ -29,6 +30,17 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
     return "Indefinido";
   }
 
+  function getDetalhesQuadra(quadra: Quadra) {
+    const detalhes = [];
+
+    if (quadra.tipo_piso) detalhes.push(quadra.tipo_piso);
+    if (quadra.coberta !== null && quadra.coberta !== undefined) {
+      detalhes.push(quadra.coberta ? "Coberta" : "Descoberta");
+    }
+
+    return detalhes.length ? detalhes.join(" • ") : "Sem detalhes";
+  }
+
   return (
     <div className="flex gap-2 overflow-x-auto">
       {quadras.map((quadra) => {
@@ -38,22 +50,51 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
           <Button
             key={quadra.id}
             type="button"
-            variant={ativo ? "default" : "outline"}
+            variant="outline"
             onClick={() => onSelect(quadra.id)}
             className={[
-              "h-auto min-h-[58px] w-[120px] shrink-0 flex-col items-start rounded-xl px-3 py-2 text-left",
+              "h-auto min-h-[76px] w-[138px] shrink-0 rounded-2xl px-3 py-2.5 text-left",
+              "flex flex-col items-start justify-start gap-1.5  transition-all",
               ativo
-                ? "border border-green-600 bg-green-100 text-zinc-950 hover:bg-green-100"
-                : "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50",
+                ? "border-green-600 bg-green-50 text-zinc-950 ring-1 ring-green-500 hover:bg-green-50"
+                : "border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50",
             ].join(" ")}
           >
-            <span className="w-full truncate text-sm leading-tight font-bold">
+            <span className="w-full truncate text-sm font-bold leading-tight">
               {quadra.nome}
             </span>
 
+            <div className="flex w-full flex-wrap gap-1">
+              {quadra.tipo_piso && (
+                <span
+                  className={[
+                    "max-w-full truncate rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none",
+                    ativo
+                      ? "bg-green-100 text-green-700"
+                      : "bg-zinc-100 text-zinc-600",
+                  ].join(" ")}
+                >
+                  {quadra.tipo_piso}
+                </span>
+              )}
+
+              {quadra.coberta !== null && quadra.coberta !== undefined && (
+                <span
+                  className={[
+                    "rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none",
+                    ativo
+                      ? "bg-green-100 text-green-700"
+                      : "bg-zinc-100 text-zinc-600",
+                  ].join(" ")}
+                >
+                  {quadra.coberta ? "Coberta" : "Descoberta"}
+                </span>
+              )}
+            </div>
+
             <span
               className={[
-                "mt-[-2px] w-full truncate text-[9px] leading-none font-semibold",
+                "mt-auto w-full truncate text-[10px] font-semibold leading-none",
                 ativo ? "text-green-700" : "text-zinc-500",
               ].join(" ")}
             >

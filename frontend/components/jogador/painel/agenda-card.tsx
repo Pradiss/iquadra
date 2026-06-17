@@ -103,7 +103,7 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
     <TableRow
       onClick={canSelect ? onSelect : undefined}
       className={[
-        "relative border-b-4 border-white",
+        "relative border-b-4 rounded-[20px] border-white",
         corLinha(horario),
         canSelect ? "cursor-pointer" : "cursor-default",
       ].join(" ")}
