@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthCard from "./AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { UsuarioLogado } from "@/lib/auth-storage";
+import { getPainelHomeByRole, getUserRole } from "@/lib/user-role";
 
 function getSuccessMessage(created?: string | null) {
   if (created === "jogador") {
@@ -30,17 +32,7 @@ type LoginResponse = {
   message: string;
   data: {
     token: string;
-    usuario: {
-      id: string;
-      nome: string;
-      email: string;
-      telefone: string;
-      foto_perfil: string | null;
-      status: string;
-      perfil_cliente: unknown | null;
-      perfil_professor: unknown | null;
-      academias: unknown[];
-    };
+    usuario: UsuarioLogado;
   };
 };
 
@@ -73,24 +65,10 @@ export default function FormLogin() {
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
 
-      const isAdmin =
-        Array.isArray(usuario.academias) && usuario.academias.length > 0;
+      const role = getUserRole(usuario);
 
-      const isProfessor = Boolean(usuario.perfil_professor);
-      const isJogador = Boolean(usuario.perfil_cliente);
-
-      if (isAdmin) {
-        router.replace("/painel/admin");
-        return;
-      }
-
-      if (isProfessor) {
-        router.replace("/painel/professor");
-        return;
-      }
-
-      if (isJogador) {
-        router.replace("/painel/jogador");
+      if (role) {
+        router.replace(getPainelHomeByRole(role));
         return;
       }
 

@@ -92,9 +92,26 @@ export async function bloquearHorario(
     hora_inicio: string;
     hora_fim: string;
     motivo: string;
+    tipo_bloqueio?:
+      | "MANUTENCAO"
+      | "EVENTO"
+      | "FERIADO"
+      | "PARTICULAR"
+      | "OUTRO";
   }
 ) {
-  const response = await api.post(`/quadras/${quadraId}/bloqueios`, data);
+  const inicio_em = new Date(
+    `${data.data}T${data.hora_inicio}:00`
+  ).toISOString();
+  const fim_em = new Date(`${data.data}T${data.hora_fim}:00`).toISOString();
+
+  const response = await api.post(`/quadras/${quadraId}/bloqueios`, {
+    inicio_em,
+    fim_em,
+    tipo_bloqueio: data.tipo_bloqueio ?? "OUTRO",
+    motivo: data.motivo,
+  });
+
   return getData(response);
 }
 

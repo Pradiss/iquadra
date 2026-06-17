@@ -5,7 +5,6 @@ import { LogOut, Settings, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import api from "@/services/api";
-import { LayoutPainel } from "@/components/painel/layout-painel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,7 +142,7 @@ export default function PerfilPage() {
   const fotoPerfil = getSafeImageUrl(usuario?.foto_perfil);
 
   return (
-    <LayoutPainel>
+    <>
       <section className="mx-auto max-w-xl rounded-[32px] bg-white p-6 text-center shadow-sm sm:p-8">
         <Avatar className="mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-white bg-green-100 shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
           {fotoPerfil && (
@@ -214,7 +213,7 @@ export default function PerfilPage() {
             type="button"
             variant="outline"
             className="h-[50px] w-full rounded-2xl font-bold"
-            onClick={() => router.push("/painel/configuracoes")}
+            onClick={() => router.push("/painel/jogador/configuracoes")}
           >
             <Settings className="mr-2 h-4 w-4" />
             Configurações
@@ -231,6 +230,6 @@ export default function PerfilPage() {
           </Button>
         </div>
       </section>
-    </LayoutPainel>
+    </>
   );
 }

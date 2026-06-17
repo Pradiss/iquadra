@@ -1,3 +1,19 @@
+export type AcademiaUsuarioLogado = {
+  id?: string;
+  academia_id?: string;
+  usuario_id?: string;
+  perfil?: string | null;
+  status?: string | null;
+  academia?: {
+    id?: string;
+    nome?: string;
+    slug?: string;
+    cidade?: string | null;
+    estado?: string | null;
+    status?: string | null;
+  } | null;
+};
+
 export type UsuarioLogado = {
   id: string;
   nome: string;
@@ -6,7 +22,7 @@ export type UsuarioLogado = {
   foto_perfil?: string | null;
   perfil_cliente?: unknown | null;
   perfil_professor?: unknown | null;
-  academias?: unknown[];
+  academias?: AcademiaUsuarioLogado[];
 };
 
 export function getToken() {

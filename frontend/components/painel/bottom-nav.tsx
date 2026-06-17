@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { getUserRole } from "@/lib/user-role";
+import type { LayoutPainelRole } from "./layout-painel";
 import {
   isPainelLinkActive,
   painelAdminNavItems,
@@ -11,7 +11,7 @@ import {
 } from "./nav-items";
 
 type PainelBottomNavProps = {
-  role?: ReturnType<typeof getUserRole>;
+  role: LayoutPainelRole;
 };
 
 export function PainelBottomNav({ role }: PainelBottomNavProps) {

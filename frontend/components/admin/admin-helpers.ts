@@ -1,6 +1,7 @@
 import axios from "axios";
 
-import { getUsuario } from "@/lib/auth-storage";
+import { getUsuario, type AcademiaUsuarioLogado } from "@/lib/auth-storage";
+import { getAdminAcademias } from "@/lib/user-role";
 import { buscarUltimaAcademia, salvarUltimaAcademia } from "@/lib/last-academia";
 import { useMemo } from "react";
 
@@ -14,17 +15,8 @@ export type AcademiaPainel = {
   nome?: string;
 };
 
-type UsuarioAcademia = {
-  academia_id?: string;
-  status?: string;
-  academia?: {
-    id?: string;
-    nome?: string;
-  };
-};
-
 type UsuarioAdmin = {
-  academias?: UsuarioAcademia[];
+  academias?: AcademiaUsuarioLogado[];
 };
 
 export const todayInput = new Date().toISOString().slice(0, 10);
@@ -41,15 +33,15 @@ export const diasSemana = [
 export function useAdminAcademia() {
   return useMemo(() => {
     const usuario = getUsuario() as UsuarioAdmin | null;
-    const vinculos = Array.isArray(usuario?.academias)
-      ? usuario.academias
-      : [];
+    const vinculos = getAdminAcademias(usuario);
 
     if (vinculos.length === 0) return null;
 
     const ultimaAcademiaId = buscarUltimaAcademia();
 
-    const normalizar = (vinculo?: UsuarioAcademia): AcademiaPainel | null => {
+    const normalizar = (
+      vinculo?: AcademiaUsuarioLogado
+    ): AcademiaPainel | null => {
       const id = vinculo?.academia_id ?? vinculo?.academia?.id;
 
       if (!id) return null;

@@ -3,16 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useState } from "react";
 
-import { getSafeImageUrl } from "@/lib/safe-image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getUsuario, type UsuarioLogado } from "@/lib/auth-storage";
-import { getUserRole } from "@/lib/user-role";
+import type { UsuarioLogado } from "@/lib/auth-storage";
+import { getSafeImageUrl } from "@/lib/safe-image";
+import type { LayoutPainelRole } from "./layout-painel";
 
 type PainelHeaderProps = {
-  role?: ReturnType<typeof getUserRole>;
+  role: LayoutPainelRole;
+  usuario: UsuarioLogado;
   onOpenMenu: () => void;
 };
 
@@ -33,19 +33,19 @@ function getFirstName(nome?: string) {
 
 function getHomeHref(role: PainelHeaderProps["role"]) {
   return role === "admin" ? "/painel/admin" : "/painel/jogador";
-  
 }
-
 
 function getPainelLabel(role: PainelHeaderProps["role"]) {
   return role === "admin" ? "Painel admin" : "Painel do jogador";
-  
 }
-export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
-  const [usuario] = useState<UsuarioLogado | null>(() => getUsuario());
-  const homeHref = getHomeHref(role);
-  const fotoPerfil = getSafeImageUrl(usuario?.foto_perfil);
 
+export function PainelHeader({
+  role,
+  usuario,
+  onOpenMenu,
+}: PainelHeaderProps) {
+  const homeHref = getHomeHref(role);
+  const fotoPerfil = getSafeImageUrl(usuario.foto_perfil);
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-[#f4f1e8]/90 backdrop-blur-xl">
@@ -56,11 +56,12 @@ export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
             variant="secondary"
             size="icon"
             onClick={onOpenMenu}
-            className=" lg:hidden"
+            className="lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link href={homeHref} className="hidden lg:flex items-center">
+
+          <Link href={homeHref} className="hidden items-center lg:flex">
             <Image
               src="/logo.png"
               alt="IQuadra"
@@ -71,8 +72,9 @@ export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
             />
           </Link>
         </div>
+
         <div>
-          <Link href={homeHref} className="flex lg:hidden items-center">
+          <Link href={homeHref} className="flex items-center lg:hidden">
             <Image
               src="/logo.png"
               alt="IQuadra"
@@ -87,7 +89,7 @@ export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
         <div className="flex items-center gap-3">
           <div className="hidden text-right sm:block">
             <p className="text-sm font-bold text-zinc-900">
-              Olá, {getFirstName(usuario?.nome)}
+              Ola, {getFirstName(usuario.nome)}
             </p>
             <p className="text-xs font-semibold text-green-700">
               {getPainelLabel(role)}
@@ -98,13 +100,13 @@ export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
             {fotoPerfil && (
               <AvatarImage
                 src={fotoPerfil}
-                alt={usuario?.nome ?? "Usuário"}
+                alt={usuario.nome ?? "Usuario"}
                 className="h-full w-full object-cover"
               />
             )}
 
             <AvatarFallback className="bg-green-100 font-black text-green-800">
-              {getInitials(usuario?.nome)}
+              {getInitials(usuario.nome)}
             </AvatarFallback>
           </Avatar>
         </div>

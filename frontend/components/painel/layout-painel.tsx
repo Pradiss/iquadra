@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import type { ReactNode } from "react";
 
 import {
   Sheet,
@@ -12,12 +13,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-import api from "@/services/api";
-import { clearAuthStorage, getToken } from "@/lib/auth-storage";
-import { getUserRole } from "@/lib/user-role";
+import type { UsuarioLogado } from "@/lib/auth-storage";
 import { PainelHeader } from "./header";
 import { PainelSidebar } from "./sidebar";
-import { PainelBottomNav } from "./bottom-nav";
+// import { PainelBottomNav } from "./bottom-nav";
 import { LogoutButton } from "./logoutButton";
 import {
   isPainelLinkActive,
@@ -25,89 +24,34 @@ import {
   painelJogadorNavItems,
 } from "./nav-items";
 
-function getData<T>(response: { data: unknown }): T {
-  const data = response.data as { data?: T; user?: T };
-  return data.data ?? data.user ?? (response.data as T);
-}
+export type LayoutPainelRole = "admin" | "jogador";
 
-type PainelRole = ReturnType<typeof getUserRole>;
-
-function getHomeHref(role: PainelRole) {
+function getHomeHref(role: LayoutPainelRole) {
   return role === "admin" ? "/painel/admin" : "/painel/jogador";
 }
 
-function getRedirectPath(pathname: string, role: PainelRole) {
-  if (role === "admin") {
-    if (pathname.startsWith("/painel/jogador")) return "/painel/admin";
-    if (pathname === "/painel/configuracoes") {
-      return "/painel/admin/configuracoes";
-    }
-  }
-
-  if (role === "jogador" && pathname.startsWith("/painel/admin")) {
-    return "/painel/jogador";
-  }
-
-  return null;
-}
-
-export function LayoutPainel({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+export function LayoutPainel({
+  children,
+  role,
+  usuario,
+}: {
+  children: ReactNode;
+  role: LayoutPainelRole;
+  usuario: UsuarioLogado;
+}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [role, setRole] = useState<PainelRole>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function validateSession() {
-      const token = getToken();
-
-      if (!token) {
-        clearAuthStorage();
-        router.replace("/login");
-        return;
-      }
-
-      try {
-        const response = await api.get("/users/me");
-        const usuario = getData<Parameters<typeof getUserRole>[0]>(response);
-        localStorage.setItem("usuario", JSON.stringify(usuario));
-
-        const usuarioRole = getUserRole(usuario);
-        const redirectPath = getRedirectPath(pathname, usuarioRole);
-
-        if (redirectPath) {
-          router.replace(redirectPath);
-          return;
-        }
-
-        if (mounted) {
-          setRole(usuarioRole);
-          setCheckingAuth(false);
-        }
-      } catch {
-        clearAuthStorage();
-        router.replace("/login");
-      }
-    }
-
-    void validateSession();
-
-    return () => {
-      mounted = false;
-    };
-  }, [pathname, router]);
-
- 
 
   const navItems =
     role === "admin" ? painelAdminNavItems : painelJogadorNavItems;
 
   return (
     <div className="min-h-screen bg-[#f4f1e8]">
-      <PainelHeader role={role} onOpenMenu={() => setMenuOpen(true)} />
+      <PainelHeader
+        role={role}
+        usuario={usuario}
+        onOpenMenu={() => setMenuOpen(true)}
+      />
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
@@ -175,7 +119,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <PainelBottomNav role={role} />
+      {/* <PainelBottomNav role={role} /> */}
     </div>
   );
 }

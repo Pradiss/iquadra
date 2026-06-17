@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, MapPin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { LayoutPainel } from "@/components/painel/layout-painel";
 import { QuadraSelector } from "@/components/jogador/painel/quadra-selector";
 import { AgendaList } from "@/components/jogador/painel/agenda-list";
 import { AgendarJogoDialog } from "@/components/jogador/painel/agendar-jogo-dialog";
@@ -326,7 +325,7 @@ export default function AcademiaAgendaPage() {
   }
 
   return (
-    <LayoutPainel>
+    <>
       <section className="max-w-5xl">
         <div className="mb-6">
           <div className="flex items-start justify-between gap-4">
@@ -398,6 +397,6 @@ export default function AcademiaAgendaPage() {
         academiaId={academiaId}
         onSuccess={carregarAgenda}
       />
-    </LayoutPainel>
+    </>
   );
 }

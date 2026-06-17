@@ -1,16 +1,14 @@
-import { LayoutPainel } from "@/components/painel/layout-painel";
+import { AdminPage } from "@/components/admin/AdminPage";
 
-
-export default function AdminAgendaPage() {
+export default function AdminConfiguracoesPage() {
   return (
-    <LayoutPainel>
-      
-        
-      
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-         Configuracao em construção.
-        </div>
-      
-    </LayoutPainel>
+    <AdminPage
+      title="Configuracoes"
+      description="Ajustes da academia e do painel administrativo."
+    >
+      <div className="rounded-2xl bg-white p-5 shadow-sm">
+        Configuracao em construcao.
+      </div>
+    </AdminPage>
   );
 }

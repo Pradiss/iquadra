@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { LayoutPainel } from "@/components/painel/layout-painel";
 import { Button } from "@/components/ui/button";
 import { JogosTabs } from "@/components/jogador/meus-jogos/jogos-tabs";
 import { EmptyJogos } from "@/components/jogador/meus-jogos/empty-jogos";
@@ -149,7 +148,11 @@ export default function MeusJogosPage() {
   }, [buscarDados]);
 
   useEffect(() => {
-    void buscarDados();
+    const timeoutId = window.setTimeout(() => {
+      void buscarDados();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [buscarDados]);
 
   const meusJogos = useMemo(() => {
@@ -201,7 +204,7 @@ export default function MeusJogosPage() {
   }
 
   return (
-    <LayoutPainel>
+    <>
       <section>
         <p className="text-sm font-semibold text-green-700">Meus jogos</p>
 
@@ -288,6 +291,6 @@ export default function MeusJogosPage() {
           </>
         )}
       </section>
-    </LayoutPainel>
+    </>
   );
 }

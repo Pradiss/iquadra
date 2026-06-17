@@ -12,6 +12,7 @@ type Quadra = {
   permite_simples?: boolean | null;
   permite_dupla?: boolean | null;
 };
+
 type Props = {
   quadras: Quadra[];
   selected?: string;
@@ -30,17 +31,6 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
     return "Indefinido";
   }
 
-  function getDetalhesQuadra(quadra: Quadra) {
-    const detalhes = [];
-
-    if (quadra.tipo_piso) detalhes.push(quadra.tipo_piso);
-    if (quadra.coberta !== null && quadra.coberta !== undefined) {
-      detalhes.push(quadra.coberta ? "Coberta" : "Descoberta");
-    }
-
-    return detalhes.length ? detalhes.join(" • ") : "Sem detalhes";
-  }
-
   return (
     <div className="flex gap-2 overflow-x-auto">
       {quadras.map((quadra) => {
@@ -54,7 +44,7 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
             onClick={() => onSelect(quadra.id)}
             className={[
               "h-auto min-h-[76px] w-[138px] shrink-0 rounded-2xl px-3 py-2.5 text-left",
-              "flex flex-col items-start justify-start gap-1.5  transition-all",
+              "flex flex-col items-start justify-start gap-1.5 transition-all",
               ativo
                 ? "border-green-600 bg-green-50 text-zinc-950 ring-1 ring-green-500 hover:bg-green-50"
                 : "border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50",

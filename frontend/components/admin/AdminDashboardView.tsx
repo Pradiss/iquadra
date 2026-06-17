@@ -6,23 +6,16 @@ import { useRouter } from "next/navigation";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { Button } from "@/components/ui/button";
 import { listarQuadras, type QuadraAdmin } from "@/services/admin.service";
-import { getUsuario } from "@/lib/auth-storage";
-
-type UsuarioAcademia = {
-  academia_id?: string;
-  academia?: {
-    id?: string;
-    nome?: string;
-  };
-};
+import { getUsuario, type AcademiaUsuarioLogado } from "@/lib/auth-storage";
+import { getAdminAcademias } from "@/lib/user-role";
 
 type UsuarioAdmin = {
-  academias?: UsuarioAcademia[];
+  academias?: AcademiaUsuarioLogado[];
 };
 
 function getAcademiaId() {
   const usuario = getUsuario() as UsuarioAdmin | null;
-  const vinculo = usuario?.academias?.[0];
+  const vinculo = getAdminAcademias(usuario)[0];
 
   return vinculo?.academia_id ?? vinculo?.academia?.id ?? "";
 }
@@ -69,30 +62,7 @@ export function AdminDashboardView() {
         </p>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <AdminCard>
-          <p className="text-sm font-semibold text-zinc-500">
-            Total de quadras
-          </p>
-          <strong className="mt-3 block text-3xl font-bold text-zinc-950">
-            {loading ? "..." : totalQuadras}
-          </strong>
-        </AdminCard>
-
-        <AdminCard>
-          <p className="text-sm font-semibold text-zinc-500">Quadras ativas</p>
-          <strong className="mt-3 block text-3xl font-bold text-zinc-950">
-            {loading ? "..." : quadrasAtivas}
-          </strong>
-        </AdminCard>
-
-        <AdminCard>
-          <p className="text-sm font-semibold text-zinc-500">Slot padrão</p>
-          <strong className="mt-3 block text-3xl font-bold text-zinc-950">
-            90min
-          </strong>
-        </AdminCard>
-      </section>
+     
 
       <section className="grid gap-4 lg:grid-cols-3">
         <AdminCard
@@ -133,6 +103,31 @@ export function AdminDashboardView() {
             Ver agenda
           </Button>
         </AdminCard>
+
+         <section className="grid gap-3 sm:grid-cols-3">
+        <AdminCard>
+          <p className="text-sm font-semibold text-zinc-500">
+            Total de quadras
+          </p>
+          <strong className="mt-3 block text-3xl font-bold text-zinc-950">
+            {loading ? "..." : totalQuadras}
+          </strong>
+        </AdminCard>
+
+        <AdminCard>
+          <p className="text-sm font-semibold text-zinc-500">Quadras ativas</p>
+          <strong className="mt-3 block text-3xl font-bold text-zinc-950">
+            {loading ? "..." : quadrasAtivas}
+          </strong>
+        </AdminCard>
+
+        <AdminCard>
+          <p className="text-sm font-semibold text-zinc-500">Slot padrão</p>
+          <strong className="mt-3 block text-3xl font-bold text-zinc-950">
+            90min
+          </strong>
+        </AdminCard>
+      </section>
       </section>
     </div>
   );

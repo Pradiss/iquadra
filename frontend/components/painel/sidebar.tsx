@@ -9,10 +9,10 @@ import {
   painelAdminNavItems,
   painelJogadorNavItems,
 } from "./nav-items";
-import { getUserRole } from "@/lib/user-role";
+import type { LayoutPainelRole } from "./layout-painel";
 
 type PainelSidebarProps = {
-  role?: ReturnType<typeof getUserRole>;
+  role: LayoutPainelRole;
 };
 
 export function PainelSidebar({ role }: PainelSidebarProps) {

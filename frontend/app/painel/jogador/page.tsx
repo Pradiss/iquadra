@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import { listarAcademias } from "@/services/jogador.service";
 
-import { LayoutPainel } from "@/components/painel/layout-painel";
 import { AcademiaSearch } from "@/components/jogador/painel/academia-search";
 import { AcademiaCardMini } from "@/components/jogador/painel/academia-card-mini";
 
@@ -55,7 +54,7 @@ export default function PainelJogadorPage() {
   }
 
   return (
-    <LayoutPainel>
+    <>
       <section className="max-w-5xl">
         <section className="mb-6">
           <p className="text-sm font-semibold text-green-700">Início</p>
@@ -93,6 +92,6 @@ export default function PainelJogadorPage() {
           </div>
         )}
       </section>
-    </LayoutPainel>
+    </>
   );
 }
