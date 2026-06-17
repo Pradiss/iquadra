@@ -100,13 +100,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
     };
   }, [pathname, router]);
 
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen bg-[#f4f1e8] px-6 py-8 text-sm font-semibold text-zinc-600">
-        Carregando...
-      </div>
-    );
-  }
+ 
 
   const navItems =
     role === "admin" ? painelAdminNavItems : painelJogadorNavItems;

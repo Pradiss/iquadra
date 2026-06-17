@@ -28,6 +28,7 @@ type Usuario = {
 
 type Jogo = {
   id: string;
+  status?: string;
   data?: string;
   inicio_em?: string;
   criado_por_usuario_id?: string;
@@ -75,6 +76,20 @@ function isUsuarioNoJogo(jogo: Jogo, usuarioId: string) {
   );
 }
 
+function isJogoCompleto(jogo: Jogo) {
+  const status = String((jogo as Jogo & { status?: string }).status ?? "")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  return (
+    status === "CONCLUIDO" ||
+    status === "COMPLETO" ||
+    status === "FINALIZADO" ||
+    status === "FINISHED"
+  );
+}
+
 export default function PerfilPage() {
   const router = useRouter();
 
@@ -101,7 +116,9 @@ export default function PerfilPage() {
         const jogos = getData<Jogo[]>(jogosResponse);
 
         const jogosUsuario = Array.isArray(jogos)
-          ? jogos.filter((jogo) => isUsuarioNoJogo(jogo, user.id))
+          ? jogos.filter(
+              (jogo) => isUsuarioNoJogo(jogo, user.id) && isJogoCompleto(jogo),
+            )
           : [];
 
         setUsuario(user);

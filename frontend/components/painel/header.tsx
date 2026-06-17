@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getSafeImageUrl } from "@/lib/safe-image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getUsuario, type UsuarioLogado } from "@/lib/auth-storage";
 import { getUserRole } from "@/lib/user-role";
@@ -32,15 +33,19 @@ function getFirstName(nome?: string) {
 
 function getHomeHref(role: PainelHeaderProps["role"]) {
   return role === "admin" ? "/painel/admin" : "/painel/jogador";
+  
 }
+
 
 function getPainelLabel(role: PainelHeaderProps["role"]) {
   return role === "admin" ? "Painel admin" : "Painel do jogador";
+  
 }
-
 export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
   const [usuario] = useState<UsuarioLogado | null>(() => getUsuario());
   const homeHref = getHomeHref(role);
+  const fotoPerfil = getSafeImageUrl(usuario?.foto_perfil);
+
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-[#f4f1e8]/90 backdrop-blur-xl">
@@ -65,10 +70,9 @@ export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
               style={{ width: "auto" }}
             />
           </Link>
-         
         </div>
         <div>
-           <Link href={homeHref} className="flex lg:hidden items-center">
+          <Link href={homeHref} className="flex lg:hidden items-center">
             <Image
               src="/logo.png"
               alt="IQuadra"
@@ -90,7 +94,15 @@ export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
             </p>
           </div>
 
-          <Avatar className="h-10 w-10 bg-green-100 text-green-800">
+          <Avatar className="h-10 w-10 overflow-hidden bg-green-100 text-green-800">
+            {fotoPerfil && (
+              <AvatarImage
+                src={fotoPerfil}
+                alt={usuario?.nome ?? "Usuário"}
+                className="h-full w-full object-cover"
+              />
+            )}
+
             <AvatarFallback className="bg-green-100 font-black text-green-800">
               {getInitials(usuario?.nome)}
             </AvatarFallback>
