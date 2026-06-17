@@ -8,8 +8,10 @@ import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getUsuario, type UsuarioLogado } from "@/lib/auth-storage";
+import { getUserRole } from "@/lib/user-role";
 
 type PainelHeaderProps = {
+  role?: ReturnType<typeof getUserRole>;
   onOpenMenu: () => void;
 };
 
@@ -28,8 +30,17 @@ function getFirstName(nome?: string) {
   return nome?.trim().split(" ")[0] || "Jogador";
 }
 
-export function PainelHeader({ onOpenMenu }: PainelHeaderProps) {
+function getHomeHref(role: PainelHeaderProps["role"]) {
+  return role === "admin" ? "/painel/admin" : "/painel/jogador";
+}
+
+function getPainelLabel(role: PainelHeaderProps["role"]) {
+  return role === "admin" ? "Painel admin" : "Painel do jogador";
+}
+
+export function PainelHeader({ role, onOpenMenu }: PainelHeaderProps) {
   const [usuario] = useState<UsuarioLogado | null>(() => getUsuario());
+  const homeHref = getHomeHref(role);
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-[#f4f1e8]/90 backdrop-blur-xl">
@@ -44,7 +55,7 @@ export function PainelHeader({ onOpenMenu }: PainelHeaderProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link href="/painel/jogador" className="hidden lg:flex items-center">
+          <Link href={homeHref} className="hidden lg:flex items-center">
             <Image
               src="/logo.png"
               alt="IQuadra"
@@ -57,7 +68,7 @@ export function PainelHeader({ onOpenMenu }: PainelHeaderProps) {
          
         </div>
         <div>
-           <Link href="/painel/jogador" className="flex lg:hidden items-center">
+           <Link href={homeHref} className="flex lg:hidden items-center">
             <Image
               src="/logo.png"
               alt="IQuadra"
@@ -75,7 +86,7 @@ export function PainelHeader({ onOpenMenu }: PainelHeaderProps) {
               Olá, {getFirstName(usuario?.nome)}
             </p>
             <p className="text-xs font-semibold text-green-700">
-              Painel do jogador
+              {getPainelLabel(role)}
             </p>
           </div>
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { Trash2 } from "lucide-react";
 
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminField } from "@/components/admin/AdminField";
@@ -12,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   atualizarStatusQuadra,
   criarQuadra,
+  excluirQuadra,
   listarQuadras,
   type QuadraAdmin,
   type TipoPiso,
@@ -37,6 +39,7 @@ export function AdminQuadrasForm() {
   const [quadras, setQuadras] = useState<QuadraAdmin[]>([]);
   const [loading, setLoading] = useState(Boolean(academia));
   const [saving, setSaving] = useState(false);
+  const [acaoQuadraId, setAcaoQuadraId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const [form, setForm] = useState({
@@ -69,7 +72,11 @@ export function AdminQuadrasForm() {
   }, [academia]);
 
   useEffect(() => {
-    void carregar();
+    const timeoutId = window.setTimeout(() => {
+      void carregar();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [carregar]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -123,6 +130,7 @@ export function AdminQuadrasForm() {
 
   async function toggleStatus(quadra: QuadraAdmin) {
     setFeedback(null);
+    setAcaoQuadraId(quadra.id);
 
     try {
       await atualizarStatusQuadra(quadra.id, !quadra.ativa);
@@ -138,6 +146,37 @@ export function AdminQuadrasForm() {
         type: "error",
         message: getErrorMessage(error, "Não foi possível alterar a quadra."),
       });
+    } finally {
+      setAcaoQuadraId(null);
+    }
+  }
+
+  async function excluirQuadraSelecionada(quadra: QuadraAdmin) {
+    const confirmou = window.confirm(
+      `Excluir a quadra "${quadra.nome}"? Se ela tiver jogos ou aulas vinculados, use Inativar.`,
+    );
+
+    if (!confirmou) return;
+
+    setFeedback(null);
+    setAcaoQuadraId(quadra.id);
+
+    try {
+      await excluirQuadra(quadra.id);
+
+      setFeedback({
+        type: "success",
+        message: "Quadra excluída com sucesso.",
+      });
+
+      await carregar();
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(error, "Não foi possível excluir a quadra."),
+      });
+    } finally {
+      setAcaoQuadraId(null);
     }
   }
 
@@ -261,7 +300,7 @@ export function AdminQuadrasForm() {
 
       <AdminCard
         title="Quadras cadastradas"
-        description="Ative ou inative quadras conforme a operação."
+        description="Inative quadras em uso ou exclua quadras sem agenda vinculada."
       >
         {loading ? (
           <p className="text-sm text-zinc-500">Carregando quadras...</p>
@@ -300,10 +339,22 @@ export function AdminQuadrasForm() {
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={acaoQuadraId === quadra.id}
                     onClick={() => void toggleStatus(quadra)}
                     className="h-9 rounded-xl bg-white"
                   >
                     {quadra.ativa ? "Inativar" : "Ativar"}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={acaoQuadraId === quadra.id}
+                    onClick={() => void excluirQuadraSelecionada(quadra)}
+                    className="h-9 gap-1 rounded-xl border-red-200 bg-white text-red-700 hover:bg-red-50 hover:text-red-800"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Excluir
                   </Button>
                 </div>
               </div>

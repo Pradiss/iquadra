@@ -3,18 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isPainelLinkActive, painelJogadorNavItems } from "./nav-items";
+import { getUserRole } from "@/lib/user-role";
+import {
+  isPainelLinkActive,
+  painelAdminNavItems,
+  painelJogadorNavItems,
+} from "./nav-items";
 
-export function PainelBottomNav() {
+type PainelBottomNavProps = {
+  role?: ReturnType<typeof getUserRole>;
+};
+
+export function PainelBottomNav({ role }: PainelBottomNavProps) {
   const pathname = usePathname();
 
- const items = painelJogadorNavItems.filter((item) =>
-  [
-    "/painel/jogador",
-    "/painel/jogador/meus-jogos",
-    "/painel/jogador/perfil",
-  ].includes(item.href)
-);
+ const items = role === "admin" ? painelAdminNavItems : painelJogadorNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white/95 px-2 py-2 shadow-[0_-12px_40px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">

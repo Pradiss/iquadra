@@ -127,10 +127,14 @@ export async function createQuadra(
   });
 }
 
-export async function listQuadrasByAcademia(academiaId: string) {
+export async function listQuadrasByAcademia(
+  academiaId: string,
+  incluirInativas = false
+) {
   return prisma.quadra.findMany({
     where: {
       academia_id: academiaId,
+      ...(incluirInativas ? {} : { ativa: true }),
     },
     orderBy: {
       ordem_exibicao: "asc",
@@ -214,4 +218,51 @@ export async function updateStatusQuadra(
     where: { id: quadraId },
     data: { ativa },
   });
+}
+
+export async function deleteQuadra(usuarioId: string, quadraId: string) {
+  const quadra = await prisma.quadra.findUnique({
+    where: { id: quadraId },
+  });
+
+  if (!quadra) {
+    throw new Error("Quadra nao encontrada");
+  }
+
+  await verificarPermissaoAcademia(usuarioId, quadra.academia_id);
+
+  const [jogos, aulas, recorrencias] = await prisma.$transaction([
+    prisma.jogo.count({
+      where: { quadra_id: quadraId },
+    }),
+    prisma.aula.count({
+      where: { quadra_id: quadraId },
+    }),
+    prisma.recorrenciaAula.count({
+      where: { quadra_id: quadraId },
+    }),
+  ]);
+
+  if (jogos > 0 || aulas > 0 || recorrencias > 0) {
+    throw new Error(
+      "Nao e possivel excluir uma quadra com jogos, aulas ou recorrencias vinculadas. Inative a quadra para remover dos agendamentos."
+    );
+  }
+
+  await prisma.$transaction([
+    prisma.bloqueioQuadra.deleteMany({
+      where: { quadra_id: quadraId },
+    }),
+    prisma.horarioEspecialQuadra.deleteMany({
+      where: { quadra_id: quadraId },
+    }),
+    prisma.horarioQuadra.deleteMany({
+      where: { quadra_id: quadraId },
+    }),
+    prisma.quadra.delete({
+      where: { id: quadraId },
+    }),
+  ]);
+
+  return quadra;
 }

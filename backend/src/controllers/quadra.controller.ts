@@ -8,6 +8,7 @@ import {
 } from "../schemas/quadra.schema";
 import {
   createQuadra,
+  deleteQuadra,
   getQuadraById,
   listQuadrasByAcademia,
   updateQuadra,
@@ -29,7 +30,8 @@ export async function createQuadraController(req: AuthRequest, res: Response) {
 
 export async function listQuadrasController(req: AuthRequest, res: Response) {
   const academiaId = getRouteParam(req, "academiaId");
-  const quadras = await listQuadrasByAcademia(academiaId);
+  const incluirInativas = req.query.incluir_inativas === "true";
+  const quadras = await listQuadrasByAcademia(academiaId, incluirInativas);
 
   return res.json({
     success: true,
@@ -44,6 +46,17 @@ export async function getQuadraController(req: AuthRequest, res: Response) {
 
   return res.json({
     success: true,
+    data: quadra,
+  });
+}
+
+export async function deleteQuadraController(req: AuthRequest, res: Response) {
+  const id = getRouteParam(req, "id");
+  const quadra = await deleteQuadra(req.user!.id, id);
+
+  return res.json({
+    success: true,
+    message: "Quadra excluida com sucesso",
     data: quadra,
   });
 }

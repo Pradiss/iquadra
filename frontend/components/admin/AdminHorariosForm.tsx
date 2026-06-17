@@ -103,11 +103,19 @@ export function AdminHorariosForm() {
   }, [selectedQuadra]);
 
   useEffect(() => {
-    void carregarQuadras();
+    const timeoutId = window.setTimeout(() => {
+      void carregarQuadras();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [carregarQuadras]);
 
   useEffect(() => {
-    void carregarHorarios();
+    const timeoutId = window.setTimeout(() => {
+      void carregarHorarios();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [carregarHorarios]);
 
   function toggleDia(dia: number) {

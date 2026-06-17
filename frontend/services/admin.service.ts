@@ -34,7 +34,9 @@ export type DashboardAdmin = {
 };
 
 export async function listarQuadras(academiaId: string) {
-  const response = await api.get(`/academias/${academiaId}/quadras`);
+  const response = await api.get(`/academias/${academiaId}/quadras`, {
+    params: { incluir_inativas: true },
+  });
   return getData<QuadraAdmin[]>(response);
 }
 
@@ -57,6 +59,11 @@ export async function criarQuadra(
 
 export async function atualizarStatusQuadra(quadraId: string, ativa: boolean) {
   const response = await api.patch(`/quadras/${quadraId}/status`, { ativa });
+  return getData<QuadraAdmin>(response);
+}
+
+export async function excluirQuadra(quadraId: string) {
+  const response = await api.delete(`/quadras/${quadraId}`);
   return getData<QuadraAdmin>(response);
 }
 

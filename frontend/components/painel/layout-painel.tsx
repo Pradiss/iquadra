@@ -14,15 +14,41 @@ import {
 
 import api from "@/services/api";
 import { clearAuthStorage, getToken } from "@/lib/auth-storage";
+import { getUserRole } from "@/lib/user-role";
 import { PainelHeader } from "./header";
 import { PainelSidebar } from "./sidebar";
-// import { PainelBottomNav } from "./bottom-nav";
+import { PainelBottomNav } from "./bottom-nav";
 import { LogoutButton } from "./logoutButton";
-import { isPainelLinkActive, painelJogadorNavItems } from "./nav-items";
+import {
+  isPainelLinkActive,
+  painelAdminNavItems,
+  painelJogadorNavItems,
+} from "./nav-items";
 
 function getData<T>(response: { data: unknown }): T {
   const data = response.data as { data?: T; user?: T };
   return data.data ?? data.user ?? (response.data as T);
+}
+
+type PainelRole = ReturnType<typeof getUserRole>;
+
+function getHomeHref(role: PainelRole) {
+  return role === "admin" ? "/painel/admin" : "/painel/jogador";
+}
+
+function getRedirectPath(pathname: string, role: PainelRole) {
+  if (role === "admin") {
+    if (pathname.startsWith("/painel/jogador")) return "/painel/admin";
+    if (pathname === "/painel/configuracoes") {
+      return "/painel/admin/configuracoes";
+    }
+  }
+
+  if (role === "jogador" && pathname.startsWith("/painel/admin")) {
+    return "/painel/jogador";
+  }
+
+  return null;
 }
 
 export function LayoutPainel({ children }: { children: React.ReactNode }) {
@@ -30,6 +56,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [role, setRole] = useState<PainelRole>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -45,15 +72,24 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
 
       try {
         const response = await api.get("/users/me");
-        const usuario = getData(response);
+        const usuario = getData<Parameters<typeof getUserRole>[0]>(response);
         localStorage.setItem("usuario", JSON.stringify(usuario));
+
+        const usuarioRole = getUserRole(usuario);
+        const redirectPath = getRedirectPath(pathname, usuarioRole);
+
+        if (redirectPath) {
+          router.replace(redirectPath);
+          return;
+        }
+
+        if (mounted) {
+          setRole(usuarioRole);
+          setCheckingAuth(false);
+        }
       } catch {
         clearAuthStorage();
         router.replace("/login");
-      } finally {
-        if (mounted) {
-          setCheckingAuth(false);
-        }
       }
     }
 
@@ -62,7 +98,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [pathname, router]);
 
   if (checkingAuth) {
     return (
@@ -72,9 +108,12 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const navItems =
+    role === "admin" ? painelAdminNavItems : painelJogadorNavItems;
+
   return (
     <div className="min-h-screen bg-[#f4f1e8]">
-      <PainelHeader onOpenMenu={() => setMenuOpen(true)} />
+      <PainelHeader role={role} onOpenMenu={() => setMenuOpen(true)} />
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
@@ -83,7 +122,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
         >
           <SheetHeader className="border-b border-black/5 px-5 py-5">
             <SheetTitle className="text-left text-base font-bold">
-              <Link href="/painel/jogador" className="flex items-center">
+              <Link href={getHomeHref(role)} className="flex items-center">
                 <Image
                   src="/logo.png"
                   alt="IQuadra"
@@ -97,7 +136,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
           </SheetHeader>
 
           <nav className="space-y-2 px-4 py-5">
-            {painelJogadorNavItems.map((item) => {
+            {navItems.map((item) => {
               const active = isPainelLinkActive(pathname, item.href);
               const Icon = item.icon;
 
@@ -135,15 +174,14 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       <div className="flex">
-        <PainelSidebar />
+        <PainelSidebar role={role} />
 
         <main className="min-w-0 flex-1 px-4 py-6 pb-28 sm:px-6 lg:ml-[300px] lg:px-12 lg:py-8">
           {children}
-         
         </main>
       </div>
 
-      {/* <PainelBottomNav /> */}
+      <PainelBottomNav role={role} />
     </div>
   );
 }

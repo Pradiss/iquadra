@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   createQuadraController,
+  deleteQuadraController,
   getQuadraController,
   listQuadrasController,
   updateQuadraController,
@@ -17,5 +18,6 @@ router.post("/academias/:academiaId/quadras", authMiddleware, createQuadraContro
 router.get("/quadras/:id", getQuadraController);
 router.put("/quadras/:id", authMiddleware, updateQuadraController);
 router.patch("/quadras/:id/status", authMiddleware, updateStatusQuadraController);
+router.delete("/quadras/:id", authMiddleware, deleteQuadraController);
 
 export default router;

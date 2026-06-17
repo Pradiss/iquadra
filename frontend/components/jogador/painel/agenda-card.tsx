@@ -16,6 +16,7 @@ type Participante = {
 type Horario = {
   id: string;
   hora: string;
+  horaFim: string;
   quadraNome: string;
   motivo: "JOGO" | "AULA" | "BLOQUEADO" | null;
   capacidadeMaxima: number;
@@ -107,8 +108,13 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
         canSelect ? "cursor-pointer" : "cursor-default",
       ].join(" ")}
     >
-      <TableCell className="w-[54px] bg-black/5 px-2 text-[10px] font-black text-zinc-950">
-        {horario.hora}
+      <TableCell className="w-[72px] bg-black/5 px-2 text-zinc-950">
+        <div className="grid gap-0.5 leading-none">
+          <span className="text-[10px] font-black">{horario.hora}</span>
+          <span className="text-[8px] font-bold text-zinc-700">
+            até {horario.horaFim}
+          </span>
+        </div>
       </TableCell>
 
       <TableCell className="w-[44px] bg-black/5 px-2 text-center text-[10px] font-black text-zinc-950">

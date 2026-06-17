@@ -9,13 +9,17 @@ import {
   painelAdminNavItems,
   painelJogadorNavItems,
 } from "./nav-items";
+import { getUserRole } from "@/lib/user-role";
 
-export function PainelSidebar() {
+type PainelSidebarProps = {
+  role?: ReturnType<typeof getUserRole>;
+};
+
+export function PainelSidebar({ role }: PainelSidebarProps) {
   const pathname = usePathname();
 
-  const navItems = pathname.startsWith("/painel/admin")
-    ? painelAdminNavItems
-    : painelJogadorNavItems;
+  const navItems =
+    role === "admin" ? painelAdminNavItems : painelJogadorNavItems;
 
   return (
     <aside className="fixed left-0 top-20 hidden h-[calc(100vh-80px)] w-[300px] flex-col border-r border-black/5 bg-[#f4f1e8] px-8 py-8 lg:flex">
