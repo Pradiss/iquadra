@@ -16,7 +16,7 @@ import api from "@/services/api";
 import { clearAuthStorage, getToken } from "@/lib/auth-storage";
 import { PainelHeader } from "./header";
 import { PainelSidebar } from "./sidebar";
-import { PainelBottomNav } from "./bottom-nav";
+// import { PainelBottomNav } from "./bottom-nav";
 import { LogoutButton } from "./logoutButton";
 import { isPainelLinkActive, painelJogadorNavItems } from "./nav-items";
 
@@ -143,7 +143,7 @@ export function LayoutPainel({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <PainelBottomNav />
+      {/* <PainelBottomNav /> */}
     </div>
   );
 }

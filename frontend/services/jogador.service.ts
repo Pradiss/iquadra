@@ -61,3 +61,9 @@ export async function convidarJogador(jogoId: string, usuarioId: string) {
 
   return getData(response);
 }
+
+
+export async function sairDoJogo(jogoId: string) {
+  const response = await api.delete(`/jogos/${jogoId}/participar`);
+  return getData(response);
+}

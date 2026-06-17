@@ -74,6 +74,7 @@ type HorarioSelecionado = {
   capacidadeMaxima: number;
   permiteSimples: boolean;
   permiteDupla: boolean;
+  jogoId?: string;
 };
 
 type SlotDisponibilidade = {
@@ -271,19 +272,20 @@ export default function AcademiaAgendaPage() {
   }, [carregarAgenda]);
 
   function selecionarHorario(horario: HorarioAgenda) {
-    setHorarioSelecionado({
-      id: horario.id,
-      hora: horario.hora,
-      fim: horario.horaFim,
-      quadraId: horario.quadraId,
-      quadraNome: horario.quadraNome,
-      capacidadeMaxima: horario.capacidadeMaxima,
-      permiteSimples: horario.permiteSimples,
-      permiteDupla: horario.permiteDupla,
-    });
+  setHorarioSelecionado({
+    id: horario.id,
+    hora: horario.hora,
+    fim: horario.horaFim,
+    quadraId: horario.quadraId,
+    quadraNome: horario.quadraNome,
+    capacidadeMaxima: horario.capacidadeMaxima,
+    permiteSimples: horario.permiteSimples,
+    permiteDupla: horario.permiteDupla,
+    jogoId: horario.jogo?.id,
+  });
 
-    setDialogOpen(true);
-  }
+  setDialogOpen(true);
+}
 
   function fecharDialog(open: boolean) {
     setDialogOpen(open);

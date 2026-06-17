@@ -8,8 +8,10 @@ import {
   convidarJogador,
   listarUsuarios,
   participarJogo,
+  sairDoJogo,
 } from "@/services/jogador.service";
 import { getSafeImageUrl } from "@/lib/safe-image";
+import { getUsuario } from "@/lib/auth-storage";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,13 @@ type Usuario = {
   foto_perfil?: string | null;
 };
 
+type Participante = {
+  id: string;
+  nome: string;
+  foto_perfil?: string | null;
+  categoria?: string | null;
+};
+
 type HorarioSelecionado = {
   id: string;
   hora: string;
@@ -38,6 +47,7 @@ type HorarioSelecionado = {
   permiteSimples: boolean;
   permiteDupla: boolean;
   jogoId?: string;
+  participantes?: Participante[];
 };
 
 type Props = {
@@ -83,7 +93,7 @@ function formatarData(data: string) {
 }
 
 function getErrorMessage(error: unknown) {
-  const fallback = "Nao foi possivel confirmar.";
+  const fallback = "Não foi possível confirmar.";
 
   if (typeof error !== "object" || error === null) {
     return fallback;
@@ -123,23 +133,30 @@ export function AgendarJogoDialog({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
+  const usuarioLogado = getUsuario() as Usuario | null;
   const entrandoEmJogo = Boolean(horario?.jogoId);
+
+  const jaParticipa = Boolean(
+    usuarioLogado?.id &&
+    horario?.participantes?.some(
+      (participante) => participante.id === usuarioLogado.id,
+    ),
+  );
+
   const quantidadeConvites = tipoJogo === "SIMPLES" ? 1 : 3;
   const jogadoresExibidos = jogadores.slice(0, quantidadeConvites);
 
   const usuariosFiltrados = useMemo(() => {
     const termo = busca.toLowerCase().trim();
 
-    if (termo.length < 2) {
-      return [];
-    }
+    if (termo.length < 2) return [];
 
     return usuarios
       .filter((usuario) => {
         const nome = nomeUsuario(usuario).toLowerCase();
         const email = usuario.email?.toLowerCase() || "";
         const jaSelecionado = jogadores.some(
-          (jogador) => jogador?.id === usuario.id
+          (jogador) => jogador?.id === usuario.id,
         );
 
         if (jaSelecionado) return false;
@@ -158,14 +175,12 @@ export function AgendarJogoDialog({
     setJogadores([null, null, null]);
     setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
 
-    listarUsuarios()
-      .then((res) => {
-        setUsuarios(normalizarUsuarios(res));
-      })
-      .catch(() => {
-        setUsuarios([]);
-      });
-  }, [open, horario?.id]);
+    if (!horario.jogoId) {
+      listarUsuarios()
+        .then((res) => setUsuarios(normalizarUsuarios(res)))
+        .catch(() => setUsuarios([]));
+    }
+  }, [open, horario?.id, horario?.jogoId, horario?.permiteSimples]);
 
   function abrirBusca(index: number) {
     setBuscandoIndex(index);
@@ -176,7 +191,7 @@ export function AgendarJogoDialog({
     if (buscandoIndex === null) return;
 
     setJogadores((atual) =>
-      atual.map((item, index) => (index === buscandoIndex ? usuario : item))
+      atual.map((item, index) => (index === buscandoIndex ? usuario : item)),
     );
 
     setBuscandoIndex(null);
@@ -185,13 +200,13 @@ export function AgendarJogoDialog({
 
   function removerJogador(index: number) {
     setJogadores((atual) =>
-      atual.map((item, i) => (i === index ? null : item))
+      atual.map((item, i) => (i === index ? null : item)),
     );
   }
 
   async function confirmar() {
     if (!horario || !data || !academiaId) {
-      setErro("Dados do horario incompletos.");
+      setErro("Dados do horário incompletos.");
       return;
     }
 
@@ -199,12 +214,14 @@ export function AgendarJogoDialog({
     setErro("");
 
     try {
-      if (horario.jogoId) {
+      if (horario.jogoId && jaParticipa) {
+        await sairDoJogo(horario.jogoId);
+      } else if (horario.jogoId) {
         await participarJogo(horario.jogoId);
       } else {
         const inicio_em = new Date(`${data}T${horario.hora}:00`).toISOString();
         const fim_em = new Date(
-          `${data}T${horario.fim || horario.hora}:00`
+          `${data}T${horario.fim || horario.hora}:00`,
         ).toISOString();
 
         const jogo = await criarJogo({
@@ -218,7 +235,7 @@ export function AgendarJogoDialog({
         const convidados = jogadoresExibidos.filter(Boolean) as Usuario[];
 
         await Promise.all(
-          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id))
+          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id)),
         );
       }
 
@@ -240,11 +257,19 @@ export function AgendarJogoDialog({
           </div>
 
           <DialogTitle className="text-lg font-black text-zinc-950">
-            {entrandoEmJogo ? "Entrar no jogo" : "Quem vai jogar?"}
+            {jaParticipa
+              ? "Desmarcar participação?"
+              : entrandoEmJogo
+                ? "Entrar no jogo"
+                : "Quem vai jogar?"}
           </DialogTitle>
 
           <p className="text-sm text-zinc-500">
-            Confira o horario e escolha os jogadores.
+            {jaParticipa
+              ? "Você já está confirmado neste horário."
+              : entrandoEmJogo
+                ? "Entre neste jogo já criado por outro jogador."
+                : "Confira o horário e escolha os jogadores."}
           </p>
         </DialogHeader>
 
@@ -263,11 +288,33 @@ export function AgendarJogoDialog({
 
               <div className="flex items-center gap-2 text-zinc-600">
                 <Clock className="h-4 w-4" />
-                {horario.hora} {horario.fim ? `ate ${horario.fim}` : ""}
+                {horario.hora} {horario.fim ? `até ${horario.fim}` : ""}
               </div>
             </div>
           </div>
         )}
+
+        {entrandoEmJogo && horario?.participantes?.length ? (
+          <div className="rounded-2xl bg-zinc-50 p-3">
+            <p className="mb-2 text-xs font-bold text-zinc-500">
+              Jogadores confirmados
+            </p>
+
+            <div className="grid gap-2">
+              {horario.participantes.map((participante) => (
+                <div
+                  key={participante.id}
+                  className="flex items-center gap-2 text-sm font-semibold text-zinc-700"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-200 text-xs font-black">
+                    {participante.nome.charAt(0).toUpperCase()}
+                  </span>
+                  {participante.nome}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {!entrandoEmJogo && (
           <div className="grid grid-cols-2 gap-2">
@@ -288,6 +335,34 @@ export function AgendarJogoDialog({
             >
               Dupla
             </Button>
+          </div>
+        )}
+        {!entrandoEmJogo && usuarioLogado && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200">
+                {fotoUsuario(usuarioLogado) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={fotoUsuario(usuarioLogado) ?? ""}
+                    alt={nomeUsuario(usuarioLogado)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-black text-zinc-800">
+                    {nomeUsuario(usuarioLogado).charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-zinc-700">
+                  {nomeUsuario(usuarioLogado)}
+                </p>
+              </div>
+
+            
+            </div>
           </div>
         )}
 
@@ -429,13 +504,19 @@ export function AgendarJogoDialog({
             type="button"
             disabled={loading || !horario}
             onClick={confirmar}
-            className="h-11 w-full"
+            className={
+              jaParticipa
+                ? "h-11 w-full bg-red-600 text-white hover:bg-red-700"
+                : "h-11 w-full"
+            }
           >
             {loading
               ? "Confirmando..."
-              : entrandoEmJogo
-                ? "Entrar no jogo"
-                : "Confirmar"}
+              : jaParticipa
+                ? "Desmarcar participação"
+                : entrandoEmJogo
+                  ? "Entrar no jogo"
+                  : "Confirmar"}
           </Button>
 
           <Button

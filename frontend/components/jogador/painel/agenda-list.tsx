@@ -43,24 +43,34 @@ type Props = {
 
 export function AgendaList({ horarios, onSelect }: Props) {
   return (
-    <div className="">
-      <Table className="">
+    <div>
+      <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="">Hora</TableHead>
-            <TableHead className="">Quadra</TableHead>
+            <TableHead>Hora</TableHead>
+            <TableHead>Quadra</TableHead>
             <TableHead>Jogadores</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {horarios.map((horario) => (
-            <AgendaCard
-              key={horario.id}
-              horario={horario}
-              onSelect={() => onSelect(horario)}
-            />
-          ))}
+          {horarios.map((horario) => {
+            const podeSelecionar =
+              horario.disponivel ||
+              Boolean(horario.jogo && horario.vagasDisponiveis > 0);
+
+            return (
+              <AgendaCard
+                key={horario.id}
+                horario={horario}
+                onSelect={() => {
+                  if (podeSelecionar) {
+                    onSelect(horario);
+                  }
+                }}
+              />
+            );
+          })}
         </TableBody>
       </Table>
     </div>
