@@ -46,8 +46,19 @@ function isConvitePendente(convite: Convite) {
 }
 
 function getDataJogo(jogo: Jogo) {
+  const jogoComDatas = jogo as Jogo & {
+    data_hora?: string;
+    data?: string;
+    created_at?: string;
+    horario_inicio?: string;
+  };
+
   const value =
-    jogo.inicio_em ?? jogo.data_hora ?? jogo.data ?? jogo.created_at;
+    jogo.inicio_em ??
+    jogoComDatas.data_hora ??
+    jogoComDatas.data ??
+    jogoComDatas.horario_inicio ??
+    jogoComDatas.created_at;
 
   if (!value) return null;
 
