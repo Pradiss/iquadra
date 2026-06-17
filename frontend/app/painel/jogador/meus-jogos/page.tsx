@@ -19,13 +19,7 @@ import {
 } from "@/services/jogos.service";
 
 import type { Convite, Jogo } from "@/lib/jogos-utils";
-import {
-  isJogoFuturo,
-  isStatusHistorico,
-  isUsuarioNoJogo,
-  sortJogosAsc,
-  sortJogosDesc,
-} from "@/lib/jogos-utils";
+import { sortJogosAsc, sortJogosDesc } from "@/lib/jogos-utils";
 
 type AbaJogos = "pendentes" | "proximos" | "historico";
 
@@ -48,21 +42,67 @@ function normalizarLista<T>(response: unknown): T[] {
 
 function isConvitePendente(convite: Convite) {
   const status = convite.status?.toUpperCase();
-
   return !status || status === "PENDENTE" || status === "PENDING";
 }
 
-function isJogoAguardandoJogadores(jogo: Jogo) {
-  const status = jogo.status?.toUpperCase();
-  const participantes = jogo.participantes?.length ?? 0;
-  const maximo = jogo.maximo_participantes ?? 2;
+function getDataJogo(jogo: Jogo) {
+  const value =
+    jogo.inicio_em ?? jogo.data_hora ?? jogo.data ?? jogo.created_at;
 
-  return (
-    isJogoFuturo(jogo) &&
-    !isStatusHistorico(jogo.status) &&
-    status !== "CANCELADO" &&
-    participantes < maximo
+  if (!value) return null;
+
+  const data = new Date(value);
+  if (Number.isNaN(data.getTime())) return null;
+
+  return data;
+}
+
+function usuarioEstaNoJogo(jogo: Jogo, usuarioId: string) {
+  if (!usuarioId) return false;
+
+  return Boolean(
+    jogo.participantes?.some((participante) => {
+      const participanteAny = participante as {
+        usuario_id?: string;
+        usuario?: { id?: string };
+        id?: string;
+      };
+
+      return (
+        participanteAny.usuario_id === usuarioId ||
+        participanteAny.usuario?.id === usuarioId ||
+        participanteAny.id === usuarioId
+      );
+    }),
   );
+}
+
+function isCancelado(jogo: Jogo) {
+  const status = jogo.status?.toUpperCase();
+  return status === "CANCELADO" || status === "CANCELED";
+}
+
+function isConcluido(jogo: Jogo) {
+  const status = jogo.status?.toUpperCase();
+  return (
+    status === "CONCLUIDO" ||
+    status === "CONCLUÍDO" ||
+    status === "FINALIZADO" ||
+    status === "FINISHED"
+  );
+}
+
+function isFuturo(jogo: Jogo) {
+  const data = getDataJogo(jogo);
+
+  if (!data) {
+    return true;
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  return data.getTime() >= hoje.getTime();
 }
 
 export default function MeusJogosPage() {
@@ -98,42 +138,39 @@ export default function MeusJogosPage() {
   }, [buscarDados]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void buscarDados();
   }, [buscarDados]);
 
   const meusJogos = useMemo(() => {
-    if (!usuarioId) return [];
-
-    return jogos.filter((jogo) => isUsuarioNoJogo(jogo, usuarioId));
+    return jogos.filter((jogo) => usuarioEstaNoJogo(jogo, usuarioId));
   }, [jogos, usuarioId]);
 
   const convitesPendentes = useMemo(() => {
     return convites.filter(isConvitePendente);
   }, [convites]);
 
-  const jogosAguardandoJogadores = useMemo(() => {
-    return [...meusJogos].filter(isJogoAguardandoJogadores).sort(sortJogosAsc);
-  }, [meusJogos]);
-
   const jogosProximos = useMemo(() => {
     return [...meusJogos]
-      .filter((jogo) => {
-        const status = jogo.status?.toUpperCase();
-
-        return (
-          isJogoFuturo(jogo) &&
-          !isStatusHistorico(jogo.status) &&
-          status !== "CANCELADO" &&
-          !isJogoAguardandoJogadores(jogo)
-        );
-      })
+      .filter(
+        (jogo) => isFuturo(jogo) && !isCancelado(jogo) && !isConcluido(jogo),
+      )
       .sort(sortJogosAsc);
   }, [meusJogos]);
 
+  const jogosPendentes = useMemo(() => {
+    return [...jogosProximos].filter((jogo) => {
+      const participantes = jogo.participantes?.length ?? 0;
+      const maximo = jogo.maximo_participantes ?? 2;
+
+      return participantes < maximo;
+    });
+  }, [jogosProximos]);
+
   const jogosHistorico = useMemo(() => {
     return [...meusJogos]
-      .filter((jogo) => !isJogoFuturo(jogo) || isStatusHistorico(jogo.status))
+      .filter(
+        (jogo) => !isFuturo(jogo) || isCancelado(jogo) || isConcluido(jogo),
+      )
       .sort(sortJogosDesc);
   }, [meusJogos]);
 
@@ -173,10 +210,9 @@ export default function MeusJogosPage() {
 
         {!loading && aba === "pendentes" && (
           <>
-            {convitesPendentes.length === 0 &&
-              jogosAguardandoJogadores.length === 0 && (
-                <EmptyJogos text="Nenhum convite ou jogo pendente." />
-              )}
+            {convitesPendentes.length === 0 && jogosPendentes.length === 0 && (
+              <EmptyJogos text="Nenhum convite ou jogo aguardando jogadores." />
+            )}
 
             {convitesPendentes.map((convite) => (
               <ConviteCard
@@ -187,7 +223,7 @@ export default function MeusJogosPage() {
               />
             ))}
 
-            {jogosAguardandoJogadores.map((jogo) => (
+            {jogosPendentes.map((jogo) => (
               <JogoCard
                 key={jogo.id}
                 jogo={jogo}
