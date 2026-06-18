@@ -18,7 +18,7 @@ export function AdminPage({
           {title}
         </h1>
 
-        <p className="mt-3 text-sm text-zinc-500">{description}</p>
+        <p className="mt-3 text-sm text-zinc-400">{description}</p>
       </section>
 
       {children}
