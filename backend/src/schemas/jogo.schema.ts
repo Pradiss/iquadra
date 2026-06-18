@@ -25,5 +25,14 @@ export const listJogosQuerySchema = z
   })
   .strict();
 
+export const adicionarParticipanteJogoSchema = z
+  .object({
+    usuario_id: uuidSchema,
+  })
+  .strict();
+
 export type CreateJogoData = z.infer<typeof createJogoSchema>;
 export type ListJogosQuery = z.infer<typeof listJogosQuerySchema>;
+export type AdicionarParticipanteJogoData = z.infer<
+  typeof adicionarParticipanteJogoSchema
+>;

@@ -1,6 +1,10 @@
 export type Usuario = {
   id: string;
   nome: string;
+  foto_perfil?: string | null;
+  perfil_cliente?: {
+    categoria?: string | null;
+  } | null;
 };
 
 export type Academia = {
@@ -10,7 +14,12 @@ export type Academia = {
 };
 
 export type Participante = {
+  id?: string;
   usuario_id?: string;
+  status?: string;
+  nome?: string;
+  foto_perfil?: string | null;
+  categoria?: string | null;
   usuario?: Usuario;
 };
 

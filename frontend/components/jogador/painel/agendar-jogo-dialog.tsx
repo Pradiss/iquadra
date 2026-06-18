@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock, MapPin, Plus, UsersRound, X } from "lucide-react";
 
 import {
+  adicionarParticipanteJogo,
   cancelarJogoInteiro,
   criarJogo,
-  convidarJogador,
   listarUsuarios,
   participarJogo,
+  removerParticipanteJogo,
   sairDoJogo,
 } from "@/services/jogador.service";
 import { getSafeImageUrl } from "@/lib/safe-image";
@@ -46,9 +47,19 @@ type Usuario = {
 
 type Participante = {
   id: string;
+  usuario_id?: string;
   nome: string;
   foto_perfil?: string | null;
   categoria?: string | null;
+  status?: string;
+  usuario?: {
+    id?: string;
+    nome?: string;
+    foto_perfil?: string | null;
+    perfil_cliente?: {
+      categoria?: string | null;
+    } | null;
+  };
 };
 
 type HorarioSelecionado = {
@@ -104,6 +115,35 @@ function normalizarUsuarios(response: unknown): Usuario[] {
   return [];
 }
 
+function normalizarParticipantesConfirmados(response: unknown): Participante[] {
+  const jogo = response as {
+    participantes?: Participante[];
+  };
+
+  if (!Array.isArray(jogo?.participantes)) return [];
+
+  return jogo.participantes
+    .filter((participante) => {
+      const status = participante.status?.toUpperCase();
+      return !status || status === "CONFIRMADO";
+    })
+    .map((participante) => {
+      const usuario = participante.usuario;
+      const id = participante.usuario_id || usuario?.id || participante.id;
+
+      return {
+        id,
+        usuario_id: participante.usuario_id || usuario?.id || id,
+        nome: usuario?.nome || participante.nome || "Jogador",
+        foto_perfil: usuario?.foto_perfil ?? participante.foto_perfil ?? null,
+        categoria:
+          usuario?.perfil_cliente?.categoria ?? participante.categoria ?? null,
+        status: participante.status,
+      };
+    })
+    .filter((participante) => Boolean(participante.id));
+}
+
 function formatarData(data: string) {
   return new Date(data + "T00:00:00").toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -151,7 +191,13 @@ function usuarioEhAdminDaAcademia(
   });
 }
 
-function ParticipanteItem({ participante }: { participante: Participante }) {
+function ParticipanteItem({
+  participante,
+  action,
+}: {
+  participante: Participante;
+  action?: React.ReactNode;
+}) {
   const fotoPerfil = getSafeImageUrl(participante.foto_perfil);
 
   return (
@@ -177,6 +223,8 @@ function ParticipanteItem({ participante }: { participante: Participante }) {
           </span>
         )}
       </span>
+
+      {action}
     </div>
   );
 }
@@ -192,25 +240,34 @@ export function AgendarJogoDialog({
   const [tipoJogo, setTipoJogo] = useState<"SIMPLES" | "DUPLA">("SIMPLES");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [busca, setBusca] = useState("");
-  const [buscandoIndex, setBuscandoIndex] = useState<number | null>(null);
+  const [buscandoIndex, setBuscandoIndex] = useState<
+    number | "existente" | null
+  >(null);
   const [jogadores, setJogadores] = useState<(Usuario | null)[]>([
     null,
     null,
     null,
   ]);
+  const [participantesAtuais, setParticipantesAtuais] = useState<
+    Participante[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
-  const usuarioLogado = getUsuario() as Usuario | null;
+  const usuarioLogado = useMemo(() => getUsuario() as Usuario | null, []);
   const entrandoEmJogo = Boolean(horario?.jogoId);
-  const participantes = horario?.participantes ?? [];
-  const jogadoresConfirmados =
-    horario?.jogadoresConfirmados ?? participantes.length;
   const maximoParticipantes =
     horario?.maximoParticipantes ?? (tipoJogo === "SIMPLES" ? 2 : 4);
-  const vagasDisponiveis =
-    horario?.vagasDisponiveis ??
-    Math.max(maximoParticipantes - jogadoresConfirmados, 0);
+  const participantes = useMemo(() => {
+    if (entrandoEmJogo) return participantesAtuais;
+
+    return horario?.participantes ?? [];
+  }, [entrandoEmJogo, horario?.participantes, participantesAtuais]);
+  const jogadoresConfirmados = participantes.length;
+  const vagasDisponiveis = entrandoEmJogo
+    ? Math.max(maximoParticipantes - jogadoresConfirmados, 0)
+    : (horario?.vagasDisponiveis ??
+      Math.max(maximoParticipantes - jogadoresConfirmados, 0));
   const temVaga = vagasDisponiveis > 0;
 
   const jaParticipa = Boolean(
@@ -223,6 +280,8 @@ export function AgendarJogoDialog({
   const podeCancelarJogoInteiro =
     entrandoEmJogo &&
     (usuarioCriador || usuarioEhAdminDaAcademia(usuarioLogado, academiaId));
+  const podeGerenciarParticipantes = podeCancelarJogoInteiro;
+  const podeAdicionarParticipante = podeGerenciarParticipantes && temVaga;
 
   const quantidadeConvites = tipoJogo === "SIMPLES" ? 1 : 3;
   const jogadoresExibidos = jogadores.slice(0, quantidadeConvites);
@@ -239,13 +298,22 @@ export function AgendarJogoDialog({
         const jaSelecionado = jogadores.some(
           (jogador) => jogador?.id === usuario.id,
         );
+        const jaParticipaDoJogo = participantes.some(
+          (participante) => participante.id === usuario.id,
+        );
 
-        if (usuario.id === usuarioLogado?.id || jaSelecionado) return false;
+        if (
+          usuario.id === usuarioLogado?.id ||
+          jaSelecionado ||
+          jaParticipaDoJogo
+        ) {
+          return false;
+        }
 
         return nome.includes(termo) || email.includes(termo);
       })
       .slice(0, 10);
-  }, [busca, usuarios, jogadores, usuarioLogado?.id]);
+  }, [busca, usuarios, jogadores, participantes, usuarioLogado?.id]);
 
   useEffect(() => {
     if (!open || !horario) return;
@@ -258,9 +326,10 @@ export function AgendarJogoDialog({
       setBusca("");
       setBuscandoIndex(null);
       setJogadores([null, null, null]);
+      setParticipantesAtuais(horario.participantes ?? []);
       setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
 
-      if (!horario.jogoId) {
+      if (!horario.jogoId || podeGerenciarParticipantes) {
         listarUsuarios()
           .then((res) => {
             if (ativo) setUsuarios(normalizarUsuarios(res));
@@ -275,15 +344,20 @@ export function AgendarJogoDialog({
       ativo = false;
       window.clearTimeout(timeoutId);
     };
-  }, [open, horario]);
+  }, [open, horario, podeGerenciarParticipantes]);
 
-  function abrirBusca(index: number) {
+  function abrirBusca(index: number | "existente") {
     setBuscandoIndex(index);
     setBusca("");
   }
 
   function selecionarJogador(usuario: Usuario) {
     if (buscandoIndex === null) return;
+
+    if (buscandoIndex === "existente") {
+      void adicionarJogadorAoJogo(usuario);
+      return;
+    }
 
     setJogadores((atual) =>
       atual.map((item, index) => (index === buscandoIndex ? usuario : item)),
@@ -297,6 +371,57 @@ export function AgendarJogoDialog({
     setJogadores((atual) =>
       atual.map((item, i) => (i === index ? null : item)),
     );
+  }
+
+  async function adicionarJogadorAoJogo(usuario: Usuario) {
+    if (!horario?.jogoId) return;
+
+    setLoading(true);
+    setErro("");
+
+    try {
+      const jogoAtualizado = await adicionarParticipanteJogo(
+        horario.jogoId,
+        usuario.id,
+      );
+      setParticipantesAtuais(
+        normalizarParticipantesConfirmados(jogoAtualizado),
+      );
+      setBuscandoIndex(null);
+      setBusca("");
+      onSuccess?.();
+    } catch (error: unknown) {
+      setErro(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function removerParticipanteSelecionado(usuarioId: string) {
+    if (!horario?.jogoId) return;
+
+    setLoading(true);
+    setErro("");
+
+    try {
+      const jogoAtualizado = await removerParticipanteJogo(
+        horario.jogoId,
+        usuarioId,
+      );
+      const participantesConfirmados =
+        normalizarParticipantesConfirmados(jogoAtualizado);
+
+      setParticipantesAtuais(participantesConfirmados);
+      onSuccess?.();
+
+      if (participantesConfirmados.length === 0) {
+        onOpenChange(false);
+      }
+    } catch (error: unknown) {
+      setErro(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function confirmar() {
@@ -332,11 +457,13 @@ export function AgendarJogoDialog({
           fim_em,
         });
 
-        const convidados = jogadoresExibidos.filter(Boolean) as Usuario[];
+        const jogadoresSelecionados = jogadoresExibidos.filter(
+          Boolean,
+        ) as Usuario[];
 
-        await Promise.all(
-          convidados.map((jogador) => convidarJogador(jogo.id, jogador.id)),
-        );
+        for (const jogador of jogadoresSelecionados) {
+          await adicionarParticipanteJogo(jogo.id, jogador.id);
+        }
       }
 
       onOpenChange(false);
@@ -372,11 +499,11 @@ export function AgendarJogoDialog({
       : "Quem vai jogar?";
   const descricao = entrandoEmJogo
     ? "Confira os jogadores confirmados neste horário."
-    : "Você entra como Jogador 1 e pode convidar os demais.";
+    : "Você entra como Jogador 1 e pode adicionar os demais.";
   const textoBotaoPrincipal = loading
     ? "Confirmando..."
     : jaParticipa
-      ? "Desmarcar participação"
+      ? "Sair do jogo"
       : entrandoEmJogo
         ? temVaga
           ? "Entrar no jogo"
@@ -438,6 +565,22 @@ export function AgendarJogoDialog({
                   <ParticipanteItem
                     key={participante.id}
                     participante={participante}
+                    action={
+                      podeGerenciarParticipantes &&
+                      participante.id !== usuarioLogado?.id ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={loading}
+                          onClick={() =>
+                            removerParticipanteSelecionado(participante.id)
+                          }
+                          className="shrink-0 text-red-700 hover:bg-red-50 hover:text-red-800"
+                        >
+                          Remover
+                        </Button>
+                      ) : undefined
+                    }
                   />
                 ))
               ) : (
@@ -446,6 +589,91 @@ export function AgendarJogoDialog({
                 </p>
               )}
             </div>
+
+            {podeAdicionarParticipante && (
+              <div className="mt-3 space-y-2">
+                {buscandoIndex === "existente" ? (
+                  <div className="relative">
+                    <Input
+                      autoFocus
+                      value={busca}
+                      onChange={(event) => setBusca(event.target.value)}
+                      placeholder="Buscar jogador"
+                      className="pr-9"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setBuscandoIndex(null);
+                        setBusca("");
+                      }}
+                      className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading}
+                    onClick={() => abrirBusca("existente")}
+                    className="h-10 w-full"
+                  >
+                    Adicionar jogador
+                  </Button>
+                )}
+
+                {buscandoIndex === "existente" && (
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2">
+                    {busca.trim().length < 2 ? (
+                      <p className="px-2 py-2 text-sm text-zinc-500">
+                        Digite pelo menos 2 letras para buscar jogadores.
+                      </p>
+                    ) : usuariosFiltrados.length === 0 ? (
+                      <p className="px-2 py-2 text-sm text-zinc-500">
+                        Nenhum jogador encontrado.
+                      </p>
+                    ) : (
+                      usuariosFiltrados.map((usuario) => {
+                        const foto = fotoUsuario(usuario);
+
+                        return (
+                          <Button
+                            key={usuario.id}
+                            type="button"
+                            variant="ghost"
+                            disabled={loading}
+                            onClick={() => selecionarJogador(usuario)}
+                            className="mb-1 h-auto w-full justify-start gap-2 py-2"
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-xs font-black">
+                              {foto ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={foto}
+                                  alt={nomeUsuario(usuario)}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                nomeUsuario(usuario).charAt(0).toUpperCase()
+                              )}
+                            </span>
+
+                            <span className="truncate">
+                              {nomeUsuario(usuario)}
+                            </span>
+                          </Button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : null}
 

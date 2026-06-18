@@ -1,5 +1,8 @@
 import { prisma } from "../lib/prisma";
-import { CreateJogoData } from "../schemas/jogo.schema";
+import {
+  AdicionarParticipanteJogoData,
+  CreateJogoData,
+} from "../schemas/jogo.schema";
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -95,6 +98,37 @@ async function validarConflitoAgenda(
   if (bloqueioConflitante) {
     throw new Error("Este horário está bloqueado");
   }
+}
+
+async function validarPermissaoGerenciarParticipantes(
+  usuarioId: string,
+  jogo: {
+    academia_id: string;
+    criado_por_usuario_id: string;
+  }
+) {
+  if (jogo.criado_por_usuario_id === usuarioId) {
+    return;
+  }
+
+  const vinculoAdmin = await prisma.academiaUsuario.findFirst({
+    where: {
+      academia_id: jogo.academia_id,
+      usuario_id: usuarioId,
+      status: "ATIVO",
+      perfil: {
+        in: ["DONO", "ADMIN_ACADEMIA"],
+      },
+    },
+  });
+
+  if (!vinculoAdmin) {
+    throw new Error("Voce nao tem permissao para gerenciar participantes");
+  }
+}
+
+function getStatusPorTotalParticipantes(total: number, maximo: number) {
+  return total >= maximo ? "COMPLETO" : "ABERTO";
 }
 
 export async function createJogo(usuarioId: string, data: CreateJogoData) {
@@ -323,6 +357,212 @@ export async function participarJogo(usuarioId: string, jogoId: string) {
     });
 
     if (jogoFicouCompleto) {
+      await tx.conviteJogo.updateMany({
+        where: {
+          jogo_id: jogoId,
+          status: "PENDENTE",
+        },
+        data: {
+          status: "CANCELADO",
+        },
+      });
+    }
+  });
+
+  return getJogoById(jogoId);
+}
+
+export async function adicionarParticipanteJogo(
+  usuarioId: string,
+  jogoId: string,
+  data: AdicionarParticipanteJogoData
+) {
+  const jogo = await prisma.jogo.findUnique({
+    where: {
+      id: jogoId,
+    },
+    include: {
+      participantes: {
+        where: {
+          status: {
+            in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+          },
+        },
+      },
+    },
+  });
+
+  if (!jogo) {
+    throw new Error("Jogo nao encontrado");
+  }
+
+  await validarPermissaoGerenciarParticipantes(usuarioId, jogo);
+
+  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
+    throw new Error("Este jogo nao esta aberto para participantes");
+  }
+
+  const usuario = await prisma.usuario.findUnique({
+    where: {
+      id: data.usuario_id,
+    },
+  });
+
+  if (!usuario) {
+    throw new Error("Usuario nao encontrado");
+  }
+
+  const participantesConfirmados = jogo.participantes.filter(
+    (participante) => participante.status === "CONFIRMADO"
+  );
+
+  const participanteExistente = jogo.participantes.find(
+    (participante) => participante.usuario_id === data.usuario_id
+  );
+
+  if (participanteExistente?.status === "CONFIRMADO") {
+    throw new Error("Este usuario ja participa do jogo");
+  }
+
+  if (participantesConfirmados.length >= jogo.maximo_participantes) {
+    throw new Error("Este jogo ja esta completo");
+  }
+
+  const totalParticipantes = participantesConfirmados.length + 1;
+  const jogoFicouCompleto =
+    totalParticipantes >= jogo.maximo_participantes;
+
+  await prisma.$transaction(async (tx) => {
+    if (participanteExistente) {
+      await tx.participanteJogo.update({
+        where: {
+          id: participanteExistente.id,
+        },
+        data: {
+          status: "CONFIRMADO",
+          papel:
+            data.usuario_id === jogo.criado_por_usuario_id
+              ? "CRIADOR"
+              : "JOGADOR",
+        },
+      });
+    } else {
+      await tx.participanteJogo.create({
+        data: {
+          jogo_id: jogoId,
+          usuario_id: data.usuario_id,
+          papel:
+            data.usuario_id === jogo.criado_por_usuario_id
+              ? "CRIADOR"
+              : "JOGADOR",
+          status: "CONFIRMADO",
+        },
+      });
+    }
+
+    await tx.conviteJogo.updateMany({
+      where: {
+        jogo_id: jogoId,
+        convidado_usuario_id: data.usuario_id,
+        status: "PENDENTE",
+      },
+      data: {
+        status: "ACEITO",
+      },
+    });
+
+    await tx.jogo.update({
+      where: {
+        id: jogoId,
+      },
+      data: {
+        status: getStatusPorTotalParticipantes(
+          totalParticipantes,
+          jogo.maximo_participantes
+        ),
+      },
+    });
+
+    if (jogoFicouCompleto) {
+      await tx.conviteJogo.updateMany({
+        where: {
+          jogo_id: jogoId,
+          status: "PENDENTE",
+        },
+        data: {
+          status: "CANCELADO",
+        },
+      });
+    }
+  });
+
+  return getJogoById(jogoId);
+}
+
+export async function removerParticipanteJogo(
+  usuarioId: string,
+  jogoId: string,
+  participanteUsuarioId: string
+) {
+  const jogo = await prisma.jogo.findUnique({
+    where: {
+      id: jogoId,
+    },
+    include: {
+      participantes: {
+        where: {
+          status: "CONFIRMADO",
+        },
+      },
+    },
+  });
+
+  if (!jogo) {
+    throw new Error("Jogo nao encontrado");
+  }
+
+  await validarPermissaoGerenciarParticipantes(usuarioId, jogo);
+
+  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
+    throw new Error("Este jogo nao esta aberto para remover participantes");
+  }
+
+  const participante = jogo.participantes.find(
+    (item) => item.usuario_id === participanteUsuarioId
+  );
+
+  if (!participante) {
+    throw new Error("Este usuario nao participa do jogo");
+  }
+
+  const totalRestante = jogo.participantes.length - 1;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.participanteJogo.update({
+      where: {
+        id: participante.id,
+      },
+      data: {
+        status: "REMOVIDO",
+      },
+    });
+
+    await tx.jogo.update({
+      where: {
+        id: jogoId,
+      },
+      data: {
+        status:
+          totalRestante === 0
+            ? "SEM_PARTICIPANTES"
+            : getStatusPorTotalParticipantes(
+                totalRestante,
+                jogo.maximo_participantes
+              ),
+      },
+    });
+
+    if (totalRestante === 0) {
       await tx.conviteJogo.updateMany({
         where: {
           jogo_id: jogoId,

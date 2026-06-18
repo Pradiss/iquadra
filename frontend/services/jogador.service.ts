@@ -54,10 +54,24 @@ export async function participarJogo(jogoId: string) {
   return getData(response);
 }
 
-export async function convidarJogador(jogoId: string, usuarioId: string) {
-  const response = await api.post(`/jogos/${jogoId}/convidar`, {
-    convidado_usuario_id: usuarioId,
+export async function adicionarParticipanteJogo(
+  jogoId: string,
+  usuarioId: string,
+) {
+  const response = await api.post(`/jogos/${jogoId}/participantes`, {
+    usuario_id: usuarioId,
   });
+
+  return getData(response);
+}
+
+export async function removerParticipanteJogo(
+  jogoId: string,
+  usuarioId: string,
+) {
+  const response = await api.delete(
+    `/jogos/${jogoId}/participantes/${usuarioId}`,
+  );
 
   return getData(response);
 }

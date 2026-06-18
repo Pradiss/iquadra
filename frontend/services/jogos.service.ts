@@ -36,6 +36,28 @@ export async function cancelarJogo(id: string) {
   return getData(response);
 }
 
+export async function adicionarParticipanteJogo(
+  jogoId: string,
+  usuarioId: string,
+) {
+  const response = await api.post(`/jogos/${jogoId}/participantes`, {
+    usuario_id: usuarioId,
+  });
+
+  return getData(response);
+}
+
+export async function removerParticipanteJogo(
+  jogoId: string,
+  usuarioId: string,
+) {
+  const response = await api.delete(
+    `/jogos/${jogoId}/participantes/${usuarioId}`,
+  );
+
+  return getData(response);
+}
+
 export async function criarJogo(data: {
   academia_id: string;
   quadra_id: string;

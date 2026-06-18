@@ -1,13 +1,19 @@
 import type { Response } from "express";
 
 import { AuthRequest } from "../middlewares/auth.middleware";
-import { createJogoSchema, listJogosQuerySchema } from "../schemas/jogo.schema";
 import {
+  adicionarParticipanteJogoSchema,
+  createJogoSchema,
+  listJogosQuerySchema,
+} from "../schemas/jogo.schema";
+import {
+  adicionarParticipanteJogo,
   cancelarJogo,
   createJogo,
   getJogoById,
   listJogos,
   participarJogo,
+  removerParticipanteJogo,
   sairJogo,
 } from "../services/jogo.service";
 import { getRouteParam } from "../utils/request";
@@ -51,6 +57,36 @@ export async function participarJogoController(req: AuthRequest, res: Response) 
   return res.json({
     success: true,
     message: "Voce entrou no jogo",
+    data: jogo,
+  });
+}
+
+export async function adicionarParticipanteJogoController(
+  req: AuthRequest,
+  res: Response
+) {
+  const id = getRouteParam(req, "id");
+  const data = adicionarParticipanteJogoSchema.parse(req.body);
+  const jogo = await adicionarParticipanteJogo(req.user!.id, id, data);
+
+  return res.status(201).json({
+    success: true,
+    message: "Participante adicionado com sucesso",
+    data: jogo,
+  });
+}
+
+export async function removerParticipanteJogoController(
+  req: AuthRequest,
+  res: Response
+) {
+  const id = getRouteParam(req, "id");
+  const usuarioId = getRouteParam(req, "usuarioId");
+  const jogo = await removerParticipanteJogo(req.user!.id, id, usuarioId);
+
+  return res.json({
+    success: true,
+    message: "Participante removido com sucesso",
     data: jogo,
   });
 }
