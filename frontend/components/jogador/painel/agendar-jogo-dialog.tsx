@@ -444,17 +444,13 @@ export function AgendarJogoDialog({
       } else if (horario.jogoId) {
         await participarJogo(horario.jogoId);
       } else {
-        const inicio_em = new Date(`${data}T${horario.hora}:00`).toISOString();
-        const fim_em = new Date(
-          `${data}T${horario.fim || horario.hora}:00`,
-        ).toISOString();
-
         const jogo = await criarJogo({
           academia_id: academiaId,
           quadra_id: horario.quadraId,
           tipo_jogo: tipoJogo,
-          inicio_em,
-          fim_em,
+          data,
+          hora_inicio: horario.hora,
+          hora_fim: horario.fim || horario.hora,
         });
 
         const jogadoresSelecionados = jogadoresExibidos.filter(

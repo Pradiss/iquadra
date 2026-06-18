@@ -117,14 +117,10 @@ export async function bloquearHorario(
       | "OUTRO";
   }
 ) {
-  const inicio_em = new Date(
-    `${data.data}T${data.hora_inicio}:00`
-  ).toISOString();
-  const fim_em = new Date(`${data.data}T${data.hora_fim}:00`).toISOString();
-
   const response = await api.post(`/quadras/${quadraId}/bloqueios`, {
-    inicio_em,
-    fim_em,
+    data: data.data,
+    hora_inicio: data.hora_inicio,
+    hora_fim: data.hora_fim,
     tipo_bloqueio: data.tipo_bloqueio ?? "OUTRO",
     motivo: data.motivo,
   });

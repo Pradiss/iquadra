@@ -1,18 +1,16 @@
 import { prisma } from "../lib/prisma";
 import { CreateRecorrenciaAulaData } from "../schemas/recorrencia-aula.schema";
+import {
+  addDaysToDateOnly,
+  buildDateTime,
+  formatInAppTimeZone,
+  getDiaSemana,
+} from "../utils/date-time";
 
-function timeToDate(data: string, hora: string) {
-  return new Date(`${data}T${hora}:00`);
-}
+function formatarConflito(date: Date) {
+  const { data, hora } = formatInAppTimeZone(date);
 
-function addDays(date: Date, days: number) {
-  const newDate = new Date(date);
-  newDate.setDate(newDate.getDate() + days);
-  return newDate;
-}
-
-function formatDate(date: Date) {
-  return date.toISOString().split("T")[0];
+  return `${data} ${hora}`;
 }
 
 async function verificarPermissaoAcademia(usuarioId: string, academiaId: string) {
@@ -42,7 +40,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     },
   });
 
-  if (jogo) throw new Error(`Conflito com jogo em ${inicio.toISOString()}`);
+  if (jogo) throw new Error(`Conflito com jogo em ${formatarConflito(inicio)}`);
 
   const aula = await prisma.aula.findFirst({
     where: {
@@ -53,7 +51,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     },
   });
 
-  if (aula) throw new Error(`Conflito com aula em ${inicio.toISOString()}`);
+  if (aula) throw new Error(`Conflito com aula em ${formatarConflito(inicio)}`);
 
   const bloqueio = await prisma.bloqueioQuadra.findFirst({
     where: {
@@ -63,7 +61,9 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     },
   });
 
-  if (bloqueio) throw new Error(`Conflito com bloqueio em ${inicio.toISOString()}`);
+  if (bloqueio) {
+    throw new Error(`Conflito com bloqueio em ${formatarConflito(inicio)}`);
+  }
 }
 
 export async function createRecorrenciaAula(
@@ -82,26 +82,23 @@ export async function createRecorrenciaAula(
     throw new Error("Quadra não pertence à academia informada");
   }
 
-  const inicioBase = new Date(`${data.data_inicio}T00:00:00`);
-  const fimBase = data.data_fim
-    ? new Date(`${data.data_fim}T00:00:00`)
-    : addDays(inicioBase, 90);
+  const inicioBase = buildDateTime(data.data_inicio, "00:00");
+  const dataFim = data.data_fim ?? addDaysToDateOnly(data.data_inicio, 90);
+  const fimBase = buildDateTime(dataFim, "00:00");
 
   const aulasParaCriar: {
     inicio_em: Date;
     fim_em: Date;
   }[] = [];
 
-  let dataAtual = inicioBase;
+  let dataAtual = data.data_inicio;
 
-  while (dataAtual <= fimBase) {
-    const diaSemana = dataAtual.getDay();
+  while (dataAtual <= dataFim) {
+    const diaSemana = getDiaSemana(dataAtual);
 
     if (data.dias_semana.includes(diaSemana)) {
-      const dataFormatada = formatDate(dataAtual);
-
-      const inicio = timeToDate(dataFormatada, data.horario_inicio);
-      const fim = timeToDate(dataFormatada, data.horario_fim);
+      const inicio = buildDateTime(dataAtual, data.horario_inicio);
+      const fim = buildDateTime(dataAtual, data.horario_fim);
 
       if (fim <= inicio) {
         throw new Error("Horário final deve ser maior que o horário inicial");
@@ -115,7 +112,7 @@ export async function createRecorrenciaAula(
       });
     }
 
-    dataAtual = addDays(dataAtual, 1);
+    dataAtual = addDaysToDateOnly(dataAtual, 1);
   }
 
   if (aulasParaCriar.length === 0) {

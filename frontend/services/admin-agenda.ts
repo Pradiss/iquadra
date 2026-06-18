@@ -59,6 +59,21 @@ export type AgendaHorario = {
   jogo?: AgendaJogo | null;
 };
 
+export type AgendaEventoAdmin = {
+  tipo: "JOGO" | "AULA" | "BLOQUEIO";
+  id: string;
+  quadra: string;
+  inicio_em: string;
+  fim_em: string;
+  status?: string;
+};
+
+export type AgendaAdmin = {
+  data: string;
+  total: number;
+  eventos: AgendaEventoAdmin[];
+};
+
 export async function listarQuadrasAdminAgenda(academiaId: string) {
   const response = await api.get(`/academias/${academiaId}/quadras`);
   return getData<QuadraAgenda[]>(response);
@@ -66,7 +81,6 @@ export async function listarQuadrasAdminAgenda(academiaId: string) {
 
 export async function buscarAgendaAdmin(params: {
   academiaId: string;
-  quadraId: string;
   data: string;
 }) {
   const response = await api.get(
@@ -75,11 +89,10 @@ export async function buscarAgendaAdmin(params: {
       params: {
         data: params.data,
       },
-      
     }
   );
 
-  return getData<AgendaHorario[]>(response);
+  return getData<AgendaAdmin>(response);
 }
 
 export async function buscarUsuariosAdminAgenda(q: string) {
@@ -96,13 +109,34 @@ export async function buscarUsuariosAdminAgenda(q: string) {
 export async function criarAgendamentoAdmin(data: {
   academia_id: string;
   quadra_id: string;
-  inicio_em: string;
-  fim_em: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
   tipo_jogo: TipoJogoAgenda;
   participantes: ParticipanteForm[];
 }) {
-  const response = await api.post("/admin/agendamentos", data);
-  return getData(response);
+  const response = await api.post("/jogos", {
+    academia_id: data.academia_id,
+    quadra_id: data.quadra_id,
+    data: data.data,
+    hora_inicio: data.hora_inicio,
+    hora_fim: data.hora_fim,
+    tipo_jogo: data.tipo_jogo,
+  });
+  const jogo = getData<{ id: string }>(response);
+
+  await Promise.all(
+    data.participantes
+      .map((participante) => participante.usuario_id ?? participante.id)
+      .filter(Boolean)
+      .map((usuarioId) =>
+        api.post(`/jogos/${jogo.id}/participantes`, {
+          usuario_id: usuarioId,
+        })
+      )
+  );
+
+  return jogo;
 }
 
 export async function editarAgendamentoAdmin(
@@ -110,17 +144,19 @@ export async function editarAgendamentoAdmin(
   data: {
     academia_id: string;
     quadra_id: string;
-    inicio_em: string;
-    fim_em: string;
+    data: string;
+    hora_inicio: string;
+    hora_fim: string;
     tipo_jogo: TipoJogoAgenda;
     participantes: ParticipanteForm[];
   }
 ) {
-  const response = await api.put(`/admin/agendamentos/${jogoId}`, data);
-  return getData(response);
+  void jogoId;
+  void data;
+  throw new Error("Edicao de agendamento admin ainda nao possui endpoint.");
 }
 
 export async function cancelarAgendamentoAdmin(jogoId: string) {
-  const response = await api.patch(`/admin/agendamentos/${jogoId}/cancelar`);
+  const response = await api.patch(`/jogos/${jogoId}/cancelar`);
   return getData(response);
 }

@@ -48,7 +48,7 @@ export function AdminHorariosForm() {
 
   const [form, setForm] = useState({
     dias_semana: [] as number[],
-    hora_inicio: "08:00",
+    hora_inicio: "06:00",
     hora_fim: "22:00",
   });
 

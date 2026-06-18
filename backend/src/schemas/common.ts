@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidDateOnly } from "../utils/date-time";
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -64,7 +65,7 @@ export const optionalCepSchema = z.preprocess(
 export const dateOnlySchema = z
   .string()
   .regex(dateRegex, "Data deve estar no formato YYYY-MM-DD")
-  .refine((value) => !Number.isNaN(new Date(`${value}T00:00:00`).getTime()), {
+  .refine((value) => isValidDateOnly(value), {
     message: "Data invalida",
   });
 

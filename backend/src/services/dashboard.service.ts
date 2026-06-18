@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { formatInAppTimeZone, getLocalDayRange } from "../utils/date-time";
 
 async function verificarPermissaoAcademia(usuarioId: string, academiaId: string) {
   const vinculo = await prisma.academiaUsuario.findFirst({
@@ -23,23 +24,8 @@ export async function getDashboardAcademia(
 ) {
   await verificarPermissaoAcademia(usuarioId, academiaId);
 
-  const hoje = new Date();
-  const inicioDia = new Date(
-    hoje.getFullYear(),
-    hoje.getMonth(),
-    hoje.getDate(),
-    0,
-    0,
-    0
-  );
-  const fimDia = new Date(
-    hoje.getFullYear(),
-    hoje.getMonth(),
-    hoje.getDate(),
-    23,
-    59,
-    59
-  );
+  const hoje = formatInAppTimeZone(new Date()).data;
+  const { inicio: inicioDia, fim: fimDia } = getLocalDayRange(hoje);
 
   const [
     totalQuadras,
@@ -60,7 +46,7 @@ export async function getDashboardAcademia(
         academia_id: academiaId,
         inicio_em: {
           gte: inicioDia,
-          lte: fimDia,
+          lt: fimDia,
         },
         status: {
           in: ["ABERTO", "COMPLETO"],
@@ -73,7 +59,7 @@ export async function getDashboardAcademia(
         academia_id: academiaId,
         inicio_em: {
           gte: inicioDia,
-          lte: fimDia,
+          lt: fimDia,
         },
         status: "CONFIRMADA",
       },
@@ -129,8 +115,7 @@ export async function getAgendaAcademia(
 ) {
   await verificarPermissaoAcademia(usuarioId, academiaId);
 
-  const inicioDia = new Date(`${data}T00:00:00`);
-  const fimDia = new Date(`${data}T23:59:59`);
+  const { inicio: inicioDia, fim: fimDia } = getLocalDayRange(data);
 
   const [jogos, aulas, bloqueios] = await Promise.all([
     prisma.jogo.findMany({
@@ -138,7 +123,7 @@ export async function getAgendaAcademia(
         academia_id: academiaId,
         inicio_em: {
           gte: inicioDia,
-          lte: fimDia,
+          lt: fimDia,
         },
         status: {
           in: ["ABERTO", "COMPLETO"],
@@ -168,7 +153,7 @@ export async function getAgendaAcademia(
         academia_id: academiaId,
         inicio_em: {
           gte: inicioDia,
-          lte: fimDia,
+          lt: fimDia,
         },
         status: "CONFIRMADA",
       },

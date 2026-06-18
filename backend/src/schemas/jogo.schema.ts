@@ -3,19 +3,34 @@ import {
   dateOnlySchema,
   dateTimeSchema,
   optionalMediumTextSchema,
+  timeSchema,
   uuidSchema,
 } from "./common";
 
-export const createJogoSchema = z
+const createJogoBaseSchema = z
   .object({
     academia_id: uuidSchema,
     quadra_id: uuidSchema,
     tipo_jogo: z.enum(["SIMPLES", "DUPLA"]),
-    inicio_em: dateTimeSchema,
-    fim_em: dateTimeSchema,
     observacoes: optionalMediumTextSchema,
   })
   .strict();
+
+export const createJogoSchema = z.union([
+  createJogoBaseSchema
+    .extend({
+      data: dateOnlySchema,
+      hora_inicio: timeSchema,
+      hora_fim: timeSchema,
+    })
+    .strict(),
+  createJogoBaseSchema
+    .extend({
+      inicio_em: dateTimeSchema,
+      fim_em: dateTimeSchema,
+    })
+    .strict(),
+]);
 
 export const listJogosQuerySchema = z
   .object({

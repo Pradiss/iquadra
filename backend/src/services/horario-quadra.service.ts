@@ -3,6 +3,7 @@ import {
   CreateHorarioQuadraData,
   UpdateHorarioQuadraData,
 } from "../schemas/horario-quadra.schema";
+import { validarJanelaDeSlots } from "../utils/date-time";
 
 async function verificarPermissaoPorQuadra(usuarioId: string, quadraId: string) {
   const quadra = await prisma.quadra.findUnique({
@@ -38,13 +39,16 @@ export async function createHorarioQuadra(
 ) {
   await verificarPermissaoPorQuadra(usuarioId, quadraId);
 
+  const duracaoSlot = data.duracao_slot_minutos ?? 90;
+  validarJanelaDeSlots(data.abre_as, data.fecha_as, duracaoSlot);
+
   return prisma.horarioQuadra.create({
     data: {
       quadra_id: quadraId,
       dia_semana: data.dia_semana,
       abre_as: data.abre_as,
       fecha_as: data.fecha_as,
-      duracao_slot_minutos: data.duracao_slot_minutos ?? 60,
+      duracao_slot_minutos: duracaoSlot,
       ativo: data.ativo ?? true,
     },
   });
@@ -75,6 +79,12 @@ export async function updateHorarioQuadra(
   }
 
   await verificarPermissaoPorQuadra(usuarioId, horario.quadra_id);
+
+  validarJanelaDeSlots(
+    data.abre_as ?? horario.abre_as,
+    data.fecha_as ?? horario.fecha_as,
+    data.duracao_slot_minutos ?? horario.duracao_slot_minutos
+  );
 
   return prisma.horarioQuadra.update({
     where: { id: horarioId },

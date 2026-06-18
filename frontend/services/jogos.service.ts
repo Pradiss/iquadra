@@ -62,8 +62,9 @@ export async function criarJogo(data: {
   academia_id: string;
   quadra_id: string;
   tipo_jogo: "SIMPLES" | "DUPLA";
-  inicio_em: string;
-  fim_em: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
   observacoes?: string;
 }) {
   const response = await api.post("/jogos", data);

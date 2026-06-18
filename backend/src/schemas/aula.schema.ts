@@ -3,20 +3,35 @@ import {
   dateOnlySchema,
   dateTimeSchema,
   optionalMediumTextSchema,
+  timeSchema,
   uuidSchema,
 } from "./common";
 
-export const createAulaSchema = z
+const createAulaBaseSchema = z
   .object({
     academia_id: uuidSchema,
     quadra_id: uuidSchema,
     professor_id: uuidSchema.optional(),
     cliente_id: uuidSchema.optional(),
-    inicio_em: dateTimeSchema,
-    fim_em: dateTimeSchema,
     observacoes: optionalMediumTextSchema,
   })
   .strict();
+
+export const createAulaSchema = z.union([
+  createAulaBaseSchema
+    .extend({
+      data: dateOnlySchema,
+      hora_inicio: timeSchema,
+      hora_fim: timeSchema,
+    })
+    .strict(),
+  createAulaBaseSchema
+    .extend({
+      inicio_em: dateTimeSchema,
+      fim_em: dateTimeSchema,
+    })
+    .strict(),
+]);
 
 export const listAulasQuerySchema = z
   .object({

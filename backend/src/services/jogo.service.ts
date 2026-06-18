@@ -3,6 +3,13 @@ import {
   AdicionarParticipanteJogoData,
   CreateJogoData,
 } from "../schemas/jogo.schema";
+import {
+  formatInAppTimeZone,
+  getDiaSemana,
+  getLocalDayRange,
+  resolvePeriod,
+  timeToMinutes,
+} from "../utils/date-time";
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -100,6 +107,69 @@ async function validarConflitoAgenda(
   }
 }
 
+async function validarHorarioFuncionamento(
+  quadraId: string,
+  inicio: Date,
+  fim: Date
+) {
+  const inicioLocal = formatInAppTimeZone(inicio);
+  const fimLocal = formatInAppTimeZone(fim);
+
+  if (inicioLocal.data !== fimLocal.data) {
+    throw new Error("Horario deve iniciar e terminar no mesmo dia");
+  }
+
+  const { inicio: inicioDia, fim: fimDia } = getLocalDayRange(inicioLocal.data);
+  const diaSemana = getDiaSemana(inicioLocal.data);
+
+  const [horarioPadrao, horarioEspecial] = await Promise.all([
+    prisma.horarioQuadra.findFirst({
+      where: {
+        quadra_id: quadraId,
+        dia_semana: diaSemana,
+        ativo: true,
+      },
+    }),
+    prisma.horarioEspecialQuadra.findFirst({
+      where: {
+        quadra_id: quadraId,
+        data: {
+          gte: inicioDia,
+          lt: fimDia,
+        },
+      },
+    }),
+  ]);
+
+  if (!horarioPadrao) {
+    throw new Error("Quadra sem horario configurado para esta data");
+  }
+
+  if (horarioEspecial?.fechada) {
+    throw new Error("Quadra fechada nesta data");
+  }
+
+  const abreAs = horarioEspecial?.abre_as || horarioPadrao.abre_as;
+  const fechaAs = horarioEspecial?.fecha_as || horarioPadrao.fecha_as;
+  const duracao = horarioPadrao.duracao_slot_minutos;
+  const abreMinutos = timeToMinutes(abreAs);
+  const fechaMinutos = timeToMinutes(fechaAs);
+  const inicioMinutos = timeToMinutes(inicioLocal.hora);
+  const fimMinutos = timeToMinutes(fimLocal.hora);
+
+  if (inicioMinutos < abreMinutos || fimMinutos > fechaMinutos) {
+    throw new Error("Horario fora do funcionamento da quadra");
+  }
+
+  if (fimMinutos - inicioMinutos !== duracao) {
+    throw new Error(`Horario deve ter ${duracao} minutos`);
+  }
+
+  if ((inicioMinutos - abreMinutos) % duracao !== 0) {
+    throw new Error("Horario nao corresponde a um slot configurado");
+  }
+}
+
 async function validarPermissaoGerenciarParticipantes(
   usuarioId: string,
   jogo: {
@@ -132,8 +202,7 @@ function getStatusPorTotalParticipantes(total: number, maximo: number) {
 }
 
 export async function createJogo(usuarioId: string, data: CreateJogoData) {
-  const inicio = new Date(data.inicio_em);
-  const fim = new Date(data.fim_em);
+  const { inicio, fim } = resolvePeriod(data);
 
   validarPeriodo(inicio, fim);
 
@@ -155,6 +224,7 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
     throw new Error("Quadra não pertence à academia informada");
   }
 
+  await validarHorarioFuncionamento(data.quadra_id, inicio, fim);
   await validarConflitoAgenda(data.quadra_id, inicio, fim);
 
   const maximoParticipantes = getMaximoParticipantes(data.tipo_jogo, quadra);
@@ -207,9 +277,11 @@ export async function listJogos(params: {
   }
 
   if (params.data) {
+    const { inicio, fim } = getLocalDayRange(params.data);
+
     where.inicio_em = {
-      gte: new Date(`${params.data}T00:00:00`),
-      lte: new Date(`${params.data}T23:59:59`),
+      gte: inicio,
+      lt: fim,
     };
   }
 

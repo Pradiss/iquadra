@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { CreateBloqueioData } from "../schemas/bloqueio.schema";
+import { resolvePeriod } from "../utils/date-time";
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -83,8 +84,7 @@ export async function createBloqueio(
 ) {
   await verificarPermissaoPorQuadra(usuarioId, quadraId);
 
-  const inicio = new Date(data.inicio_em);
-  const fim = new Date(data.fim_em);
+  const { inicio, fim } = resolvePeriod(data);
 
   validarPeriodo(inicio, fim);
   await validarConflitos(quadraId, inicio, fim);

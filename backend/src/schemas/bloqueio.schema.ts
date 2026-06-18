@@ -1,15 +1,34 @@
 import { z } from "zod";
-import { dateTimeSchema, mediumTextSchema } from "./common";
+import {
+  dateOnlySchema,
+  dateTimeSchema,
+  mediumTextSchema,
+  timeSchema,
+} from "./common";
 
-export const createBloqueioSchema = z
+const createBloqueioBaseSchema = z
   .object({
-    inicio_em: dateTimeSchema,
-    fim_em: dateTimeSchema,
     tipo_bloqueio: z
       .enum(["MANUTENCAO", "EVENTO", "FERIADO", "PARTICULAR", "OUTRO"])
       .optional(),
     motivo: mediumTextSchema,
   })
   .strict();
+
+export const createBloqueioSchema = z.union([
+  createBloqueioBaseSchema
+    .extend({
+      data: dateOnlySchema,
+      hora_inicio: timeSchema,
+      hora_fim: timeSchema,
+    })
+    .strict(),
+  createBloqueioBaseSchema
+    .extend({
+      inicio_em: dateTimeSchema,
+      fim_em: dateTimeSchema,
+    })
+    .strict(),
+]);
 
 export type CreateBloqueioData = z.infer<typeof createBloqueioSchema>;

@@ -1,24 +1,10 @@
 import { prisma } from "../lib/prisma";
-
-function getDiaSemana(data: string) {
-  const date = new Date(`${data}T00:00:00`);
-  return date.getDay(); // 0 domingo, 1 segunda...
-}
-
-function timeToMinutes(time: string) {
-  const [hours = 0, minutes = 0] = time.split(":").map(Number);
-  return hours * 60 + minutes;
-}
-
-function minutesToTime(minutes: number) {
-  const h = Math.floor(minutes / 60).toString().padStart(2, "0");
-  const m = (minutes % 60).toString().padStart(2, "0");
-  return `${h}:${m}`;
-}
-
-function buildDateTime(data: string, time: string) {
-  return new Date(`${data}T${time}:00`);
-}
+import {
+  buildDateTime,
+  generateTimeSlots,
+  getDiaSemana,
+  getLocalDayRange,
+} from "../utils/date-time";
 
 function montarResumoQuadra(quadra: {
   id: string;
@@ -87,15 +73,14 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
     };
   }
 
-  const inicioDia = new Date(`${data}T00:00:00`);
-  const fimDia = new Date(`${data}T23:59:59`);
+  const { inicio: inicioDia, fim: fimDia } = getLocalDayRange(data);
 
   const horarioEspecial = await prisma.horarioEspecialQuadra.findFirst({
     where: {
       quadra_id: quadraId,
       data: {
         gte: inicioDia,
-        lte: fimDia,
+        lt: fimDia,
       },
     },
   });
@@ -191,15 +176,9 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
 
   const slots = [];
 
-  let atual = timeToMinutes(abreAs);
-  const fim = timeToMinutes(fechaAs);
-
-  while (atual + duracao <= fim) {
-    const inicio = minutesToTime(atual);
-    const fimSlot = minutesToTime(atual + duracao);
-
-    const slotInicio = buildDateTime(data, inicio);
-    const slotFim = buildDateTime(data, fimSlot);
+  for (const slot of generateTimeSlots(abreAs, fechaAs, duracao)) {
+    const slotInicio = buildDateTime(data, slot.inicio);
+    const slotFim = buildDateTime(data, slot.fim);
 
     const conflitoBloqueio = bloqueios.find((bloqueio) =>
       hasConflict(slotInicio, slotFim, bloqueio.inicio_em, bloqueio.fim_em)
@@ -231,8 +210,8 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
       : 0;
 
     slots.push({
-      inicio,
-      fim: fimSlot,
+      inicio: slot.inicio,
+      fim: slot.fim,
       disponivel,
       capacidade_minima: quadra.capacidade_minima,
       capacidade_maxima: quadra.capacidade_maxima,
@@ -277,7 +256,6 @@ export async function getDisponibilidadeQuadra(quadraId: string, data: string) {
         : null,
     });
 
-    atual += duracao;
   }
 
   return {

@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { CreateAulaData } from "../schemas/aula.schema";
+import { getLocalDayRange, resolvePeriod } from "../utils/date-time";
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -67,8 +68,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
 }
 
 export async function createAula(usuarioId: string, data: CreateAulaData) {
-  const inicio = new Date(data.inicio_em);
-  const fim = new Date(data.fim_em);
+  const { inicio, fim } = resolvePeriod(data);
 
   validarPeriodo(inicio, fim);
 
@@ -139,9 +139,11 @@ export async function listAulas(params: {
   if (params.cliente_id) where.cliente_id = params.cliente_id;
 
   if (params.data) {
+    const { inicio, fim } = getLocalDayRange(params.data);
+
     where.inicio_em = {
-      gte: new Date(`${params.data}T00:00:00`),
-      lte: new Date(`${params.data}T23:59:59`),
+      gte: inicio,
+      lt: fim,
     };
   }
 
