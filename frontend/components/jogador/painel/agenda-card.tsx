@@ -37,6 +37,12 @@ function inicial(nome: string) {
   return nome.charAt(0).toUpperCase();
 }
 
+function inicialCategoria(categoria?: string | null) {
+  if (!categoria) return "";
+
+  return categoria.charAt(0).toUpperCase();
+}
+
 function corLinha(horario: Horario) {
   if (horario.motivo === "AULA" || horario.motivo === "BLOQUEADO") {
     return "bg-zinc-300 hover:bg-zinc-300";
@@ -55,6 +61,7 @@ function corLinha(horario: Horario) {
 
 function Jogador({ jogador, label }: { jogador?: Participante; label: string }) {
   const fotoPerfil = getSafeImageUrl(jogador?.foto_perfil);
+  const categoria = inicialCategoria(jogador?.categoria);
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -69,9 +76,9 @@ function Jogador({ jogador, label }: { jogador?: Participante; label: string }) 
           </AvatarFallback>
         </Avatar>
 
-        {jogador?.categoria && (
+        {categoria && (
           <span className="absolute -bottom-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-white px-1 text-[8px] font-black text-zinc-900">
-            {jogador.categoria}
+            {categoria}
           </span>
         )}
       </div>
@@ -80,9 +87,7 @@ function Jogador({ jogador, label }: { jogador?: Participante; label: string }) 
         <p className="truncate text-[10px] font-black text-zinc-950">
           {jogador?.nome ?? label}
         </p>
-        <p className="truncate text-[8px] font-bold text-zinc-700">
-          {jogador?.categoria ?? "Livre"}
-        </p>
+        
       </div>
     </div>
   );
@@ -90,10 +95,7 @@ function Jogador({ jogador, label }: { jogador?: Participante; label: string }) 
 
 export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
   const jogadores = horario.jogo?.participantes ?? [];
-  const totalJogadores = Math.max(
-    Math.min(horario.jogo?.maximo_participantes ?? horario.capacidadeMaxima, 4),
-    2,
-  );
+  const totalJogadores = Math.min(Math.max(jogadores.length, 2), 4);
   const jogadoresSlots = Array.from(
     { length: totalJogadores },
     (_, index) => jogadores[index],

@@ -70,7 +70,7 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
           type="button"
           onClick={voltarSemana}
           disabled={!podeSelecionar(addDays(dataAtual, -7))}
-          className="flex h-8 w-5 shrink-0 items-center justify-center rounded-lg bg-white disabled:opacity-30"
+          className=""
         >
           <ChevronLeft className="h-3 w-3" />
         </button>
@@ -86,12 +86,12 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
                 disabled={item.bloqueado}
                 onClick={() => onSelectData(item.value)}
                 className={[
-                  "flex h-9 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs font-black leading-none transition",
+                  "flex h-12 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs font-black leading-none transition",
                   item.bloqueado
-                    ? "cursor-not-allowed bg-zinc-100 text-zinc-300"
+                    ? "cursor-not-allowed  text-zinc-300"
                     : ativo
-                      ? "bg-zinc-200 text-zinc-950"
-                      : "bg-white text-zinc-900",
+                      ? "bg-white text-zinc-950"
+                      : " text-zinc-900",
                 ].join(" ")}
               >
                 <span>{item.semana}</span>
@@ -104,7 +104,7 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
         <button
           type="button"
           onClick={avancarSemana}
-          className="flex h-8 w-5 shrink-0 items-center justify-center rounded-lg bg-white"
+          
         >
           <ChevronRight className="h-3 w-3" />
         </button>

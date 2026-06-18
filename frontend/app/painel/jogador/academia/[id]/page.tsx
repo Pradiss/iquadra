@@ -365,7 +365,7 @@ export default function AcademiaAgendaPage() {
           </div>
         </div>
 
-        <section className="rounded-[28px] bg-white p-4 shadow-sm">
+        <section >
           <AgendaCalendar
             dataSelecionada={dataSelecionada}
             onSelectData={setDataSelecionada}
