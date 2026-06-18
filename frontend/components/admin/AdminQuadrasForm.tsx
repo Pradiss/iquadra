@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminField } from "@/components/admin/AdminField";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  atualizarQuadra,
   atualizarStatusQuadra,
   criarQuadra,
   excluirQuadra,
@@ -33,6 +34,17 @@ const tiposPiso: { value: TipoPiso; label: string }[] = [
   { value: "OUTRO", label: "Outro" },
 ];
 
+const formInicial = {
+  nome: "",
+  descricao: "",
+  tipo_piso: "SINTETICA" as TipoPiso,
+  coberta: false,
+  capacidade_minima: "2",
+  capacidade_maxima: "4",
+  permite_simples: true,
+  permite_dupla: true,
+};
+
 export function AdminQuadrasForm() {
   const academia = useAdminAcademia();
 
@@ -40,18 +52,9 @@ export function AdminQuadrasForm() {
   const [loading, setLoading] = useState(Boolean(academia));
   const [saving, setSaving] = useState(false);
   const [acaoQuadraId, setAcaoQuadraId] = useState<string | null>(null);
+  const [quadraEditandoId, setQuadraEditandoId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-
-  const [form, setForm] = useState({
-    nome: "",
-    descricao: "",
-    tipo_piso: "SINTETICA" as TipoPiso,
-    coberta: false,
-    capacidade_minima: "2",
-    capacidade_maxima: "4",
-    permite_simples: true,
-    permite_dupla: true,
-  });
+  const [form, setForm] = useState(formInicial);
 
   const carregar = useCallback(async () => {
     if (!academia) return;
@@ -79,6 +82,33 @@ export function AdminQuadrasForm() {
     return () => window.clearTimeout(timeoutId);
   }, [carregar]);
 
+  function limparFormulario() {
+    setQuadraEditandoId(null);
+    setForm(formInicial);
+  }
+
+  function preencherFormularioParaEditar(quadra: QuadraAdmin) {
+    setQuadraEditandoId(quadra.id);
+
+    setForm({
+      nome: quadra.nome ?? "",
+      descricao: quadra.descricao ?? "",
+      tipo_piso: (quadra.tipo_piso ?? "SINTETICA") as TipoPiso,
+      coberta: Boolean(quadra.coberta),
+      capacidade_minima: String(quadra.capacidade_minima ?? 2),
+      capacidade_maxima: String(quadra.capacidade_maxima ?? 4),
+      permite_simples: quadra.permite_simples ?? true,
+      permite_dupla: quadra.permite_dupla ?? true,
+    });
+
+    setFeedback({
+      type: "success",
+      message: `Editando a quadra "${quadra.nome}".`,
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -94,7 +124,7 @@ export function AdminQuadrasForm() {
     try {
       setSaving(true);
 
-      await criarQuadra(academia.id, {
+      const payload = {
         nome: form.nome.trim(),
         descricao: form.descricao.trim() || undefined,
         tipo_piso: form.tipo_piso,
@@ -103,25 +133,35 @@ export function AdminQuadrasForm() {
         capacidade_maxima: Number(form.capacidade_maxima),
         permite_simples: form.permite_simples,
         permite_dupla: form.permite_dupla,
-      });
+      };
 
-      setForm({
-        nome: "",
-        descricao: "",
-        tipo_piso: "SINTETICA",
-        coberta: false,
-        capacidade_minima: "2",
-        capacidade_maxima: "4",
-        permite_simples: true,
-        permite_dupla: true,
-      });
+      if (quadraEditandoId) {
+        await atualizarQuadra(quadraEditandoId, payload);
 
-      setFeedback({ type: "success", message: "Quadra cadastrada com sucesso." });
+        setFeedback({
+          type: "success",
+          message: "Quadra atualizada com sucesso.",
+        });
+      } else {
+        await criarQuadra(academia.id, payload);
+
+        setFeedback({
+          type: "success",
+          message: "Quadra cadastrada com sucesso.",
+        });
+      }
+
+      limparFormulario();
       await carregar();
     } catch (error) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(error, "Não foi possível cadastrar a quadra."),
+        message: getErrorMessage(
+          error,
+          quadraEditandoId
+            ? "Não foi possível atualizar a quadra."
+            : "Não foi possível cadastrar a quadra."
+        ),
       });
     } finally {
       setSaving(false);
@@ -153,7 +193,7 @@ export function AdminQuadrasForm() {
 
   async function excluirQuadraSelecionada(quadra: QuadraAdmin) {
     const confirmou = window.confirm(
-      `Excluir a quadra "${quadra.nome}"? Se ela tiver jogos ou aulas vinculados, use Inativar.`,
+      `Excluir a quadra "${quadra.nome}"? Se ela tiver jogos ou aulas vinculados, use Inativar.`
     );
 
     if (!confirmou) return;
@@ -163,6 +203,10 @@ export function AdminQuadrasForm() {
 
     try {
       await excluirQuadra(quadra.id);
+
+      if (quadraEditandoId === quadra.id) {
+        limparFormulario();
+      }
 
       setFeedback({
         type: "success",
@@ -193,8 +237,12 @@ export function AdminQuadrasForm() {
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_1.4fr]">
       <AdminCard
-        title="Cadastrar quadra"
-        description="Adicione uma nova quadra da academia."
+        title={quadraEditandoId ? "Editar quadra" : "Cadastrar quadra"}
+        description={
+          quadraEditandoId
+            ? "Atualize os dados da quadra selecionada."
+            : "Adicione uma nova quadra da academia."
+        }
       >
         <AdminFeedback feedback={feedback} />
 
@@ -293,14 +341,29 @@ export function AdminQuadrasForm() {
             disabled={saving}
             className="h-[50px] rounded-xl bg-gray-900 text-white"
           >
-            {saving ? "Salvando..." : "Cadastrar quadra"}
+            {saving
+              ? "Salvando..."
+              : quadraEditandoId
+                ? "Salvar alterações"
+                : "Cadastrar quadra"}
           </Button>
+
+          {quadraEditandoId && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={limparFormulario}
+              className="h-[50px] rounded-xl bg-white"
+            >
+              Cancelar edição
+            </Button>
+          )}
         </form>
       </AdminCard>
 
       <AdminCard
         title="Quadras cadastradas"
-        description="Inative quadras em uso ou exclua quadras sem agenda vinculada."
+        description="Edite, inative ou exclua quadras sem agenda vinculada."
       >
         {loading ? (
           <p className="text-sm text-zinc-500">Carregando quadras...</p>
@@ -324,7 +387,7 @@ export function AdminQuadrasForm() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={[
                       "rounded-full px-3 py-1 text-xs font-bold",
@@ -335,6 +398,17 @@ export function AdminQuadrasForm() {
                   >
                     {quadra.ativa ? "Ativa" : "Inativa"}
                   </span>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={acaoQuadraId === quadra.id}
+                    onClick={() => preencherFormularioParaEditar(quadra)}
+                    className="h-9 gap-1 rounded-xl bg-white"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
 
                   <Button
                     type="button"

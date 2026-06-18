@@ -72,6 +72,23 @@ export async function listarHorariosQuadra(quadraId: string) {
   return getData(response);
 }
 
+export async function atualizarQuadra(
+  quadraId: string,
+  data: {
+    nome: string;
+    descricao?: string;
+    tipo_piso?: TipoPiso;
+    coberta?: boolean;
+    capacidade_minima?: number;
+    capacidade_maxima?: number;
+    permite_simples?: boolean;
+    permite_dupla?: boolean;
+  }
+) {
+  const response = await api.put(`/quadras/${quadraId}`, data);
+  return getData<QuadraAdmin>(response);
+}
+
 export async function gerarHorarioQuadra(
   quadraId: string,
   data: {

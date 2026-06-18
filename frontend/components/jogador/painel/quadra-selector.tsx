@@ -64,7 +64,7 @@ export function QuadraSelector({ quadras, selected, onSelect }: Props) {
                       : "bg-zinc-100 text-zinc-600",
                   ].join(" ")}
                 >
-                  {quadra.tipo_piso}
+                  Piso: {quadra.tipo_piso}
                 </span>
               )}
 

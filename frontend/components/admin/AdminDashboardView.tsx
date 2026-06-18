@@ -62,8 +62,6 @@ export function AdminDashboardView() {
         </p>
       )}
 
-     
-
       <section className="grid gap-4 lg:grid-cols-3">
         <AdminCard
           title="Quadras"
@@ -103,8 +101,8 @@ export function AdminDashboardView() {
             Ver agenda
           </Button>
         </AdminCard>
-
-         <section className="grid gap-3 sm:grid-cols-3">
+      </section>
+      <section className="grid gap-3 sm:grid-cols-3">
         <AdminCard>
           <p className="text-sm font-semibold text-zinc-500">
             Total de quadras
@@ -127,7 +125,6 @@ export function AdminDashboardView() {
             90min
           </strong>
         </AdminCard>
-      </section>
       </section>
     </div>
   );
