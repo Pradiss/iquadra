@@ -185,8 +185,8 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
         </FiltroGrupo>
       </FilterChip>
 
-      <FilterChip label="Preco" active={filtros.preco !== "TODOS"}>
-        <FiltroGrupo title="Preco">
+      <FilterChip label="Preço" active={filtros.preco !== "TODOS"}>
+        <FiltroGrupo title="Preço">
           {precos.map((item) => (
             <FiltroOpcao
               key={item.value}
