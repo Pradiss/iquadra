@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { listarAcademias } from "@/services/jogador.service";
+import {
+  buscarUltimaAcademia,
+  limparUltimaAcademia,
+  salvarUltimaAcademia,
+} from "@/lib/last-academia";
 
 import { AcademiaSearch } from "@/components/jogador/painel/academia-search";
 import { AcademiaCardMini } from "@/components/jogador/painel/academia-card-mini";
@@ -49,7 +54,27 @@ export default function PainelJogadorPage() {
     carregarAcademias();
   }, []);
 
+  useEffect(() => {
+    if (loading || academias.length === 0) return;
+
+    const ultimaAcademiaId = buscarUltimaAcademia();
+
+    if (!ultimaAcademiaId) return;
+
+    const academiaExiste = academias.some(
+      (academia) => academia.id === ultimaAcademiaId
+    );
+
+    if (!academiaExiste) {
+      limparUltimaAcademia();
+      return;
+    }
+
+    router.replace(`/painel/jogador/academia/${ultimaAcademiaId}`);
+  }, [academias, loading, router]);
+
   function selecionarAcademia(academia: Academia) {
+    salvarUltimaAcademia(academia.id);
     router.push(`/painel/jogador/academia/${academia.id}`);
   }
 

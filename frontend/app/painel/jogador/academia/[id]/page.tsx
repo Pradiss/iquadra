@@ -3,19 +3,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, MapPin } from "lucide-react";
+import { MapPin, Search, X } from "lucide-react";
 
+import {
+  QuadraFilter,
+  type QuadraFiltros,
+} from "@/components/jogador/painel/filter";
 import { Button } from "@/components/ui/button";
-import { QuadraSelector } from "@/components/jogador/painel/quadra-selector";
 import { AgendaList } from "@/components/jogador/painel/agenda-list";
 import { AgendarJogoDialog } from "@/components/jogador/painel/agendar-jogo-dialog";
 import { AgendaCalendar } from "@/components/jogador/painel/agenda-calendar";
+import { AcademiaSearch } from "@/components/jogador/painel/academia-search";
 
 import {
+  listarAcademias,
   listarQuadrasDaAcademia,
   obterDisponibilidadeQuadra,
 } from "@/services/jogador.service";
 import api from "@/services/api";
+import { salvarUltimaAcademia } from "@/lib/last-academia";
 
 type Academia = {
   id: string;
@@ -27,6 +33,8 @@ type Academia = {
 type Quadra = {
   id: string;
   nome: string;
+  tipo_piso?: string | null;
+  coberta?: boolean | null;
   capacidade_minima?: number;
   capacidade_maxima?: number;
   permite_simples?: boolean;
@@ -148,6 +156,7 @@ function montarHorariosDaQuadra(
         slot.jogo?.jogadores_confirmados ??
         participantes.length
     );
+
     const maximoParticipantesJogo =
       slot.jogo?.maximo_participantes ?? capacidadeMaxima;
 
@@ -190,19 +199,25 @@ function montarHorariosDaQuadra(
 }
 
 export default function AcademiaAgendaPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ id?: string }>();
   const router = useRouter();
-
-  const academiaId = params.id;
-
   const carregandoRef = useRef(false);
+
+  const [busca, setBusca] = useState("");
+  const [mostrarBuscaAcademias, setMostrarBuscaAcademias] = useState(false);
+  const [academias, setAcademias] = useState<Academia[]>([]);
 
   const [academia, setAcademia] = useState<Academia | null>(null);
   const [quadras, setQuadras] = useState<Quadra[]>([]);
   const [horarios, setHorarios] = useState<HorarioAgenda[]>([]);
-  const [quadraSelecionadaId, setQuadraSelecionadaId] = useState("");
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+
+  const [filtrosQuadra, setFiltrosQuadra] = useState<QuadraFiltros>({
+    tipo_piso: "TODOS",
+    cobertura: "TODAS",
+    jogadores: "TODOS",
+  });
 
   const [dataSelecionada, setDataSelecionada] = useState(
     format(new Date(), "yyyy-MM-dd")
@@ -212,11 +227,60 @@ export default function AcademiaAgendaPage() {
   const [horarioSelecionado, setHorarioSelecionado] =
     useState<HorarioSelecionado | null>(null);
 
-  const horariosFiltrados = useMemo(() => {
-    if (!quadraSelecionadaId) return horarios;
+  const academiaId = academia?.id ?? params.id ?? "";
 
-    return horarios.filter((horario) => horario.quadraId === quadraSelecionadaId);
-  }, [horarios, quadraSelecionadaId]);
+  const academiasFiltradas = useMemo(() => {
+    const termo = busca.toLowerCase().trim();
+
+    if (!termo) return [];
+
+    return academias.filter((item) =>
+      `${item.nome} ${item.cidade ?? ""} ${item.estado ?? ""}`
+        .toLowerCase()
+        .includes(termo)
+    );
+  }, [academias, busca]);
+
+  const quadrasFiltradas = useMemo(() => {
+    return quadras.filter((quadra) => {
+      const filtroPiso =
+        filtrosQuadra.tipo_piso === "TODOS" ||
+        quadra.tipo_piso === filtrosQuadra.tipo_piso;
+
+      const filtroCobertura =
+        filtrosQuadra.cobertura === "TODAS" ||
+        (filtrosQuadra.cobertura === "COBERTA" && quadra.coberta) ||
+        (filtrosQuadra.cobertura === "DESCOBERTA" && !quadra.coberta);
+
+      const filtroJogadores =
+        filtrosQuadra.jogadores === "TODOS" ||
+        (filtrosQuadra.jogadores === "2" && quadra.permite_simples) ||
+        (filtrosQuadra.jogadores === "4" && quadra.permite_dupla);
+
+      return filtroPiso && filtroCobertura && filtroJogadores;
+    });
+  }, [quadras, filtrosQuadra]);
+
+  const horariosFiltrados = useMemo(() => {
+    if (quadrasFiltradas.length === 0) return [];
+
+    const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
+
+    return horarios.filter((horario) => idsPermitidos.has(horario.quadraId));
+  }, [horarios, quadrasFiltradas]);
+
+  useEffect(() => {
+    async function carregarAcademias() {
+      try {
+        const data = await listarAcademias();
+        setAcademias(Array.isArray(data) ? data : []);
+      } catch {
+        setAcademias([]);
+      }
+    }
+
+    void carregarAcademias();
+  }, []);
 
   const carregarAgenda = useCallback(async () => {
     if (!academiaId || !dataSelecionada || carregandoRef.current) return;
@@ -236,6 +300,7 @@ export default function AcademiaAgendaPage() {
         ? (quadrasResponse as Quadra[])
         : [];
 
+      salvarUltimaAcademia(academiaApi?.id ?? academiaId);
       setAcademia(academiaApi);
       setQuadras(quadrasApi);
 
@@ -293,28 +358,46 @@ export default function AcademiaAgendaPage() {
     return () => window.clearTimeout(timeoutId);
   }, [carregarAgenda]);
 
-  function selecionarHorario(horario: HorarioAgenda) {
-  setHorarioSelecionado({
-    id: horario.id,
-    hora: horario.hora,
-    fim: horario.horaFim,
-    quadraId: horario.quadraId,
-    quadraNome: horario.quadraNome,
-    capacidadeMaxima: horario.capacidadeMaxima,
-    permiteSimples: horario.permiteSimples,
-    permiteDupla: horario.permiteDupla,
-    jogoId: horario.jogo?.id,
-    criadorUsuarioId: horario.jogo?.criador_usuario_id,
-    status: horario.jogo?.status,
-    tipoJogo: horario.jogo?.tipo_jogo,
-    maximoParticipantes: horario.jogo?.maximo_participantes,
-    jogadoresConfirmados: horario.jogadoresConfirmados,
-    vagasDisponiveis: horario.vagasDisponiveis,
-    participantes: horario.jogo?.participantes ?? [],
-  });
+  function trocarAcademia(item: Academia) {
+    salvarUltimaAcademia(item.id);
+    setAcademia(item);
+    setMostrarBuscaAcademias(false);
+    setBusca("");
+    setQuadras([]);
+    setHorarios([]);
+    setHorarioSelecionado(null);
+    setDialogOpen(false);
+    setErro("");
+    setFiltrosQuadra({
+      tipo_piso: "TODOS",
+      cobertura: "TODAS",
+      jogadores: "TODOS",
+    });
+    router.replace(`/painel/jogador/academia/${item.id}`);
+  }
 
-  setDialogOpen(true);
-}
+  function selecionarHorario(horario: HorarioAgenda) {
+    setHorarioSelecionado({
+      id: horario.id,
+      hora: horario.hora,
+      fim: horario.horaFim,
+      quadraId: horario.quadraId,
+      quadraNome: horario.quadraNome,
+      capacidadeMaxima: horario.capacidadeMaxima,
+      permiteSimples: horario.permiteSimples,
+      permiteDupla: horario.permiteDupla,
+      jogoId: horario.jogo?.id,
+      criadorUsuarioId: horario.jogo?.criador_usuario_id,
+      status: horario.jogo?.status,
+      tipoJogo: horario.jogo?.tipo_jogo,
+      maximoParticipantes: horario.jogo?.maximo_participantes,
+      jogadoresConfirmados: horario.jogadoresConfirmados,
+      vagasDisponiveis: horario.vagasDisponiveis,
+      participantes: horario.jogo?.participantes ?? [],
+    });
+
+    setDialogOpen(true);
+  }
 
   function fecharDialog(open: boolean) {
     setDialogOpen(open);
@@ -343,31 +426,75 @@ export default function AcademiaAgendaPage() {
                 </div>
               )}
             </div>
-            
 
+            <div className="shrink-0">
+              {mostrarBuscaAcademias ? (
+                <div className="relative w-[260px]">
+                  <AcademiaSearch value={busca} onChange={setBusca} />
 
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/painel/jogador")}
-              className="h-8 shrink-0 gap-1 px-2 text-xs font-bold text-green-700"
-            >
-              <ChevronLeft className="h-3 w-3" />
-              Academias
-            </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMostrarBuscaAcademias(false);
+                      setBusca("");
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMostrarBuscaAcademias(true)}
+                  className="h-8 shrink-0 gap-1 px-2 text-xs font-bold text-green-700"
+                >
+                  <Search className="h-3 w-3" />
+                  Buscar Academias
+                </Button>
+              )}
+            </div>
           </div>
 
-          <div className="mt-4">
-            <QuadraSelector
+          {mostrarBuscaAcademias && busca.trim().length > 0 && (
+            <div className="mt-3 grid gap-2 rounded-2xl bg-white p-3 shadow-sm">
+              {academiasFiltradas.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  Nenhuma academia encontrada.
+                </p>
+              ) : (
+                academiasFiltradas.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => trocarAcademia(item)}
+                    className="rounded-xl px-3 py-2 text-left hover:bg-zinc-50"
+                  >
+                    <p className="text-sm font-bold text-zinc-950">
+                      {item.nome}
+                    </p>
+
+                    <p className="text-xs text-zinc-500">
+                      {item.cidade} {item.estado ? `- ${item.estado}` : ""}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center gap-2">
+            <QuadraFilter
               quadras={quadras}
-              selected={quadraSelecionadaId}
-              onSelect={setQuadraSelecionadaId}
+              filtros={filtrosQuadra}
+              onChange={setFiltrosQuadra}
             />
           </div>
         </div>
 
-        <section >
+        <section>
           <AgendaCalendar
             dataSelecionada={dataSelecionada}
             onSelectData={setDataSelecionada}
@@ -383,10 +510,13 @@ export default function AcademiaAgendaPage() {
             <p className="text-sm text-zinc-500">Carregando agenda...</p>
           ) : horariosFiltrados.length === 0 ? (
             <p className="rounded-2xl bg-zinc-50 p-4 text-sm text-zinc-500">
-              Nenhum horário encontrado.
+              Nenhum horário encontrado para os filtros selecionados.
             </p>
           ) : (
-            <AgendaList horarios={horariosFiltrados} onSelect={selecionarHorario} />
+            <AgendaList
+              horarios={horariosFiltrados}
+              onSelect={selecionarHorario}
+            />
           )}
         </section>
       </section>

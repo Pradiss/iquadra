@@ -9,6 +9,7 @@ import AuthCard from "./AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { UsuarioLogado } from "@/lib/auth-storage";
+import { buscarUltimaAcademia } from "@/lib/last-academia";
 import { getPainelHomeByRole, getUserRole } from "@/lib/user-role";
 
 function getSuccessMessage(created?: string | null) {
@@ -68,6 +69,14 @@ export default function FormLogin() {
       const role = getUserRole(usuario);
 
       if (role) {
+        const ultimaAcademiaId =
+          role === "jogador" ? buscarUltimaAcademia() : null;
+
+        if (ultimaAcademiaId) {
+          router.replace(`/painel/jogador/academia/${ultimaAcademiaId}`);
+          return;
+        }
+
         router.replace(getPainelHomeByRole(role));
         return;
       }
