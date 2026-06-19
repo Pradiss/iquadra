@@ -282,7 +282,7 @@ function AcademiaItem({
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-black text-zinc-950">
+        <span className="block truncate text-sm font-medium text-zinc-950">
           {academia.nome}
         </span>
 

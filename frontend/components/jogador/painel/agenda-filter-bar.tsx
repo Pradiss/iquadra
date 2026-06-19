@@ -110,7 +110,7 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2">
+    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
       <FilterChip
         label="Filtros"
         icon={<SlidersHorizontal className="h-5 w-5" />}
@@ -119,10 +119,10 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
       >
         <div className="grid gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-zinc-400">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
               Filtros
             </p>
-            <p className="mt-1 text-sm font-bold text-zinc-900">
+            <p className="mt-2 text-sm font-medium text-zinc-900">
               {totalAtivos > 0
                 ? `${totalAtivos} filtro${totalAtivos > 1 ? "s" : ""} ativo${
                     totalAtivos > 1 ? "s" : ""
@@ -225,7 +225,7 @@ function FiltroGrupo({
 }) {
   return (
     <div>
-      <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-zinc-400">
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
         {title}
       </p>
 
@@ -248,7 +248,7 @@ function FiltroOpcao({
       type="button"
       onClick={onClick}
       className={[
-        "min-h-11 rounded-full px-5 py-2 text-sm font-black transition",
+        "min-h-5 rounded-full px-4 py-2 text-sm font-medium transition",
         active
           ? "bg-zinc-950 text-white"
           : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200",

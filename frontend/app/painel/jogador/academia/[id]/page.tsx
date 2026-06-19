@@ -425,16 +425,16 @@ export default function AcademiaAgendaPage() {
 
   return (
     <>
-      <section className="max-w-5xl">
-        <div className="mb-6">
+      <section >
+        <div className="mb-2">
           <button
             type="button"
             onClick={() => setModalAcademiasOpen(true)}
-            className="flex h-16 w-full items-center gap-3 rounded-[28px] border border-zinc-200 bg-white px-5 text-left shadow-sm transition hover:border-zinc-300"
+            className="flex h-12 w-full items-center gap-3 rounded-[30px] border border-zinc-200 bg-white px-5 text-left shadow-sm transition hover:border-zinc-300"
           >
             <MapPin className="h-6 w-6 shrink-0 text-green-700" />
 
-            <span className="min-w-0 flex-1 truncate text-base font-black text-zinc-950 sm:text-lg">
+            <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-zinc-950 sm:text-lg">
               {formatarAcademiaAtual(academia)}
             </span>
 

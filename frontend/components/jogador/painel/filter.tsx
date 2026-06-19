@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type Quadra = {
   id: string;
@@ -27,8 +31,6 @@ type Props = {
 };
 
 export function QuadraFilter({ quadras, filtros, onChange }: Props) {
-  const [open, setOpen] = useState(false);
-
   const tipos = Array.from(
     new Set(quadras.map((quadra) => quadra.tipo_piso).filter(Boolean))
   ) as string[];
@@ -57,116 +59,114 @@ export function QuadraFilter({ quadras, filtros, onChange }: Props) {
   }
 
   return (
-    <div className="relative">
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setOpen((current) => !current)}
-        className="h-10 rounded-full bg-white px-4 text-sm font-bold"
-      >
-        <SlidersHorizontal className="mr-2 h-4 w-4" />
-        Filtro
-        {totalFiltros > 0 && (
-          <span className="ml-2 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-black text-white">
-            {totalFiltros}
-          </span>
-        )}
-      </Button>
-
-      {open && (
-        <div className="absolute left-0 z-50 mt-2 w-[300px] rounded-3xl border border-zinc-100 bg-white p-4 shadow-xl">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm font-black text-zinc-950">Filtrar quadras</p>
-
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="text-zinc-400 hover:text-zinc-700"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="grid gap-4">
-            <FiltroGrupo title="Tipo de piso">
-              <FiltroBotao
-                active={filtros.tipo_piso === "TODOS"}
-                onClick={() => atualizarFiltro("tipo_piso", "TODOS")}
-              >
-                Todos
-              </FiltroBotao>
-
-              {tipos.map((tipo) => (
-                <FiltroBotao
-                  key={tipo}
-                  active={filtros.tipo_piso === tipo}
-                  onClick={() => atualizarFiltro("tipo_piso", tipo)}
-                >
-                  {tipo}
-                </FiltroBotao>
-              ))}
-            </FiltroGrupo>
-
-            <FiltroGrupo title="Área">
-              <FiltroBotao
-                active={filtros.cobertura === "TODAS"}
-                onClick={() => atualizarFiltro("cobertura", "TODAS")}
-              >
-                Todas
-              </FiltroBotao>
-
-              <FiltroBotao
-                active={filtros.cobertura === "COBERTA"}
-                onClick={() => atualizarFiltro("cobertura", "COBERTA")}
-              >
-                Coberta
-              </FiltroBotao>
-
-              <FiltroBotao
-                active={filtros.cobertura === "DESCOBERTA"}
-                onClick={() => atualizarFiltro("cobertura", "DESCOBERTA")}
-              >
-                Descoberta
-              </FiltroBotao>
-            </FiltroGrupo>
-
-            <FiltroGrupo title="Jogadores">
-              <FiltroBotao
-                active={filtros.jogadores === "TODOS"}
-                onClick={() => atualizarFiltro("jogadores", "TODOS")}
-              >
-                Todos
-              </FiltroBotao>
-
-              <FiltroBotao
-                active={filtros.jogadores === "2"}
-                onClick={() => atualizarFiltro("jogadores", "2")}
-              >
-                2 jogadores
-              </FiltroBotao>
-
-              <FiltroBotao
-                active={filtros.jogadores === "4"}
-                onClick={() => atualizarFiltro("jogadores", "4")}
-              >
-                4 jogadores
-              </FiltroBotao>
-            </FiltroGrupo>
-          </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 rounded-full bg-white px-4 text-sm font-bold shadow-sm"
+        >
+          <SlidersHorizontal className="mr-2 h-4 w-4" />
+          Filtro
 
           {totalFiltros > 0 && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={limparFiltros}
-              className="mt-4 h-10 w-full rounded-xl text-green-700"
-            >
-              Limpar filtros
-            </Button>
+            <span className="ml-2 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-black text-white">
+              {totalFiltros}
+            </span>
           )}
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="start"
+        className="w-[320px] rounded-3xl border border-zinc-100 bg-white p-4 shadow-xl"
+      >
+        <div className="mb-4">
+          <p className="text-sm font-black text-zinc-950">Filtrar quadras</p>
+          <p className="mt-1 text-xs font-semibold text-zinc-400">
+            Escolha as preferências da quadra
+          </p>
         </div>
-      )}
-    </div>
+
+        <div className="grid gap-4">
+          <FiltroGrupo title="Tipo de piso">
+            <FiltroBotao
+              active={filtros.tipo_piso === "TODOS"}
+              onClick={() => atualizarFiltro("tipo_piso", "TODOS")}
+            >
+              Todos
+            </FiltroBotao>
+
+            {tipos.map((tipo) => (
+              <FiltroBotao
+                key={tipo}
+                active={filtros.tipo_piso === tipo}
+                onClick={() => atualizarFiltro("tipo_piso", tipo)}
+              >
+                {tipo}
+              </FiltroBotao>
+            ))}
+          </FiltroGrupo>
+
+          <FiltroGrupo title="Área">
+            <FiltroBotao
+              active={filtros.cobertura === "TODAS"}
+              onClick={() => atualizarFiltro("cobertura", "TODAS")}
+            >
+              Todas
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.cobertura === "COBERTA"}
+              onClick={() => atualizarFiltro("cobertura", "COBERTA")}
+            >
+              Coberta
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.cobertura === "DESCOBERTA"}
+              onClick={() => atualizarFiltro("cobertura", "DESCOBERTA")}
+            >
+              Descoberta
+            </FiltroBotao>
+          </FiltroGrupo>
+
+          <FiltroGrupo title="Jogadores">
+            <FiltroBotao
+              active={filtros.jogadores === "TODOS"}
+              onClick={() => atualizarFiltro("jogadores", "TODOS")}
+            >
+              Todos
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.jogadores === "2"}
+              onClick={() => atualizarFiltro("jogadores", "2")}
+            >
+              2 jogadores
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.jogadores === "4"}
+              onClick={() => atualizarFiltro("jogadores", "4")}
+            >
+              4 jogadores
+            </FiltroBotao>
+          </FiltroGrupo>
+        </div>
+
+        {totalFiltros > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={limparFiltros}
+            className="mt-4 h-10 w-full rounded-xl text-green-700"
+          >
+            Limpar filtros
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -202,7 +202,7 @@ function FiltroBotao({
       type="button"
       onClick={onClick}
       className={[
-        "rounded-full px-3 py-2 text-xs font-bold transition",
+        "rounded-full px-3 py-1.5 text-xs font-bold transition",
         active
           ? "bg-zinc-950 text-white"
           : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200",

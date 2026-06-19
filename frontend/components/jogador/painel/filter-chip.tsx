@@ -31,7 +31,7 @@ export function FilterChip({
           type="button"
           aria-label={iconOnly ? label : undefined}
           className={[
-            "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full border px-5 text-sm font-black shadow-sm transition",
+            "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-[20px] border px-3 text-[13px] font-bold shadow-sm transition",
             iconOnly ? "w-12 px-0" : "",
             active
               ? "border-green-100 bg-green-50 text-green-800"
@@ -46,9 +46,10 @@ export function FilterChip({
 
       <PopoverContent
         align="start"
-        className="w-auto min-w-[260px] rounded-3xl border border-zinc-100 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.14)]"
+        sideOffset={10}
+        className="max-w-[calc(100vw-32px)] rounded-3xl border border-zinc-100 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.14)] sm:min-w-[260px]"
       >
-        {children}
+        <div className="max-w-full overflow-hidden">{children}</div>
       </PopoverContent>
     </Popover>
   );
