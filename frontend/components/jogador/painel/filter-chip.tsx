@@ -47,9 +47,9 @@ export function FilterChip({
       <PopoverContent
         align="start"
         sideOffset={10}
-        className="max-w-[calc(100vw-32px)] rounded-3xl border border-zinc-100 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.14)] sm:min-w-[260px]"
+        className="w-fit min-w-[150px] max-w-[calc(100vw-32px)] rounded-3xl border border-zinc-100 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.14)]"
       >
-        <div className="max-w-full overflow-hidden">{children}</div>
+        <div className="w-fit max-w-[240px] overflow-hidden">{children}</div>
       </PopoverContent>
     </Popover>
   );

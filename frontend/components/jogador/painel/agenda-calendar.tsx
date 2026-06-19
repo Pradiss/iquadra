@@ -111,7 +111,7 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
       </div>
 
       {mostrarCalendario && (
-        <div className=" w-fit rounded-2xl border border-zinc-200 bg-white  shadow-sm">
+        <div className=" w-fit rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm">
           <Calendar
             mode="single"
             selected={dataAtual}
