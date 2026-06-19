@@ -123,7 +123,7 @@ export default function FormLogin() {
           <Input
             name="email"
             type="email"
-            className="h-[50px] rounded-xl bg-gray-50 px-4 text-[15px]"
+            className="h-[50px] rounded-xl bg-gray-50 px-4 text-base"
           />
         </label>
 
@@ -135,7 +135,7 @@ export default function FormLogin() {
           <Input
             name="senha"
             type="password"
-            className="h-[50px] rounded-xl bg-gray-50 px-4 text-[15px]"
+            className="h-[50px] rounded-xl bg-gray-50 px-4 text-base"
           />
         </label>
 

@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Sistema para reservas de quadras",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

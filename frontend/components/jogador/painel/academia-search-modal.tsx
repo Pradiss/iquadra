@@ -139,7 +139,7 @@ export function AcademiaSearchModal({
               value={busca}
               onChange={(event) => setBusca(event.target.value)}
               placeholder="Buscar academia..."
-              className="h-12 rounded-2xl border-zinc-200 bg-white pl-11 pr-11 text-sm font-semibold shadow-sm"
+              className="h-12 rounded-2xl border-zinc-200 bg-white pl-11 pr-11 text-base font-semibold shadow-sm"
             />
 
             {busca && (
