@@ -61,11 +61,11 @@ function corLinha(horario: Horario) {
 
 function corHorario(horario: Horario) {
   if (horario.motivo === "AULA" || horario.motivo === "BLOQUEADO") {
-    return "bg-zinc-400";
+    return "bg-[#C7C7CF]";
   }
 
   if (!horario.jogo) {
-    return "bg-zinc-400";
+    return "bg-[#C7C7CF]";
   }
 
   if (horario.vagasDisponiveis > 0) {
@@ -74,6 +74,7 @@ function corHorario(horario: Horario) {
 
   return "bg-[#8DCE87]";
 }
+
 function Jogador({
   jogador,
   label,
