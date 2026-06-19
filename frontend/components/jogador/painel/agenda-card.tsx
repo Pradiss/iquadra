@@ -105,21 +105,21 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
     <TableRow
       onClick={canSelect ? onSelect : undefined}
       className={[
-        "relative border-b-4 rounded-[20px] border-white",
+        "relative border-b-4 rounded-[20px] ",
         corLinha(horario),
         canSelect ? "cursor-pointer" : "cursor-default",
       ].join(" ")}
     >
-      <TableCell className="w-[55px] bg-black/5 px-2 text-zinc-950">
+      <TableCell className="w-[40px] bg-black/5 px-2 text-zinc-950">
         <div className="grid gap-0.5 leading-none">
-          <span className="text-[10px] font-black">{horario.hora}</span>
-          <span className="text-[8px] font-bold text-zinc-700">
+          <span className="text-[13px] font-bold">{horario.hora}</span>
+          <span className="text-[10px] font-medium text-zinc-700">
             até {horario.horaFim}
           </span>
         </div>
       </TableCell>
 
-      <TableCell className="w-[34px] bg-green px-2 text-center text-[10px] font-black text-zinc-950">
+      <TableCell className="w-[10px] bg-green px-2 text-center text-[10px] font-black text-zinc-950">
         {horario.quadraNome}
       </TableCell>
 
