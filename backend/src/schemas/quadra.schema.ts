@@ -6,6 +6,10 @@ export const createQuadraSchema = z
     nome: z.string().trim().min(2, "Nome da quadra e obrigatorio").max(120),
     descricao: optionalMediumTextSchema,
     tipo_piso: z.enum(["SAIBRO", "HARD", "GRAMA", "SINTETICA", "AREIA", "OUTRO"]),
+    modalidade: z
+      .enum(["TENIS", "BEACH_TENNIS", "PADEL", "PICKLEBALL", "OUTRO"])
+      .optional(),
+    valor_hora: z.number().min(0).max(100000).optional(),
     coberta: z.boolean().optional(),
     ordem_exibicao: z.number().int().min(0).max(1000).optional(),
     capacidade_minima: z.number().int().min(2).max(4).optional(),

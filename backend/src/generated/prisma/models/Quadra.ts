@@ -27,12 +27,14 @@ export type AggregateQuadra = {
 }
 
 export type QuadraAvgAggregateOutputType = {
+  valor_hora: number | null
   ordem_exibicao: number | null
   capacidade_minima: number | null
   capacidade_maxima: number | null
 }
 
 export type QuadraSumAggregateOutputType = {
+  valor_hora: number | null
   ordem_exibicao: number | null
   capacidade_minima: number | null
   capacidade_maxima: number | null
@@ -44,6 +46,8 @@ export type QuadraMinAggregateOutputType = {
   nome: string | null
   descricao: string | null
   tipo_piso: $Enums.TipoPiso | null
+  modalidade: $Enums.ModalidadeQuadra | null
+  valor_hora: number | null
   coberta: boolean | null
   ativa: boolean | null
   ordem_exibicao: number | null
@@ -61,6 +65,8 @@ export type QuadraMaxAggregateOutputType = {
   nome: string | null
   descricao: string | null
   tipo_piso: $Enums.TipoPiso | null
+  modalidade: $Enums.ModalidadeQuadra | null
+  valor_hora: number | null
   coberta: boolean | null
   ativa: boolean | null
   ordem_exibicao: number | null
@@ -78,6 +84,8 @@ export type QuadraCountAggregateOutputType = {
   nome: number
   descricao: number
   tipo_piso: number
+  modalidade: number
+  valor_hora: number
   coberta: number
   ativa: number
   ordem_exibicao: number
@@ -92,12 +100,14 @@ export type QuadraCountAggregateOutputType = {
 
 
 export type QuadraAvgAggregateInputType = {
+  valor_hora?: true
   ordem_exibicao?: true
   capacidade_minima?: true
   capacidade_maxima?: true
 }
 
 export type QuadraSumAggregateInputType = {
+  valor_hora?: true
   ordem_exibicao?: true
   capacidade_minima?: true
   capacidade_maxima?: true
@@ -109,6 +119,8 @@ export type QuadraMinAggregateInputType = {
   nome?: true
   descricao?: true
   tipo_piso?: true
+  modalidade?: true
+  valor_hora?: true
   coberta?: true
   ativa?: true
   ordem_exibicao?: true
@@ -126,6 +138,8 @@ export type QuadraMaxAggregateInputType = {
   nome?: true
   descricao?: true
   tipo_piso?: true
+  modalidade?: true
+  valor_hora?: true
   coberta?: true
   ativa?: true
   ordem_exibicao?: true
@@ -143,6 +157,8 @@ export type QuadraCountAggregateInputType = {
   nome?: true
   descricao?: true
   tipo_piso?: true
+  modalidade?: true
+  valor_hora?: true
   coberta?: true
   ativa?: true
   ordem_exibicao?: true
@@ -247,6 +263,8 @@ export type QuadraGroupByOutputType = {
   nome: string
   descricao: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade: $Enums.ModalidadeQuadra | null
+  valor_hora: number | null
   coberta: boolean
   ativa: boolean
   ordem_exibicao: number
@@ -287,6 +305,8 @@ export type QuadraWhereInput = {
   nome?: Prisma.StringFilter<"Quadra"> | string
   descricao?: Prisma.StringNullableFilter<"Quadra"> | string | null
   tipo_piso?: Prisma.EnumTipoPisoFilter<"Quadra"> | $Enums.TipoPiso
+  modalidade?: Prisma.EnumModalidadeQuadraNullableFilter<"Quadra"> | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.FloatNullableFilter<"Quadra"> | number | null
   coberta?: Prisma.BoolFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntFilter<"Quadra"> | number
@@ -311,6 +331,8 @@ export type QuadraOrderByWithRelationInput = {
   nome?: Prisma.SortOrder
   descricao?: Prisma.SortOrderInput | Prisma.SortOrder
   tipo_piso?: Prisma.SortOrder
+  modalidade?: Prisma.SortOrderInput | Prisma.SortOrder
+  valor_hora?: Prisma.SortOrderInput | Prisma.SortOrder
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
@@ -338,6 +360,8 @@ export type QuadraWhereUniqueInput = Prisma.AtLeast<{
   nome?: Prisma.StringFilter<"Quadra"> | string
   descricao?: Prisma.StringNullableFilter<"Quadra"> | string | null
   tipo_piso?: Prisma.EnumTipoPisoFilter<"Quadra"> | $Enums.TipoPiso
+  modalidade?: Prisma.EnumModalidadeQuadraNullableFilter<"Quadra"> | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.FloatNullableFilter<"Quadra"> | number | null
   coberta?: Prisma.BoolFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntFilter<"Quadra"> | number
@@ -362,6 +386,8 @@ export type QuadraOrderByWithAggregationInput = {
   nome?: Prisma.SortOrder
   descricao?: Prisma.SortOrderInput | Prisma.SortOrder
   tipo_piso?: Prisma.SortOrder
+  modalidade?: Prisma.SortOrderInput | Prisma.SortOrder
+  valor_hora?: Prisma.SortOrderInput | Prisma.SortOrder
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
@@ -387,6 +413,8 @@ export type QuadraScalarWhereWithAggregatesInput = {
   nome?: Prisma.StringWithAggregatesFilter<"Quadra"> | string
   descricao?: Prisma.StringNullableWithAggregatesFilter<"Quadra"> | string | null
   tipo_piso?: Prisma.EnumTipoPisoWithAggregatesFilter<"Quadra"> | $Enums.TipoPiso
+  modalidade?: Prisma.EnumModalidadeQuadraNullableWithAggregatesFilter<"Quadra"> | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.FloatNullableWithAggregatesFilter<"Quadra"> | number | null
   coberta?: Prisma.BoolWithAggregatesFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolWithAggregatesFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntWithAggregatesFilter<"Quadra"> | number
@@ -403,6 +431,8 @@ export type QuadraCreateInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -427,6 +457,8 @@ export type QuadraUncheckedCreateInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -449,6 +481,8 @@ export type QuadraUpdateInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -473,6 +507,8 @@ export type QuadraUncheckedUpdateInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -496,6 +532,8 @@ export type QuadraCreateManyInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -512,6 +550,8 @@ export type QuadraUpdateManyMutationInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -529,6 +569,8 @@ export type QuadraUncheckedUpdateManyInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -556,6 +598,8 @@ export type QuadraCountOrderByAggregateInput = {
   nome?: Prisma.SortOrder
   descricao?: Prisma.SortOrder
   tipo_piso?: Prisma.SortOrder
+  modalidade?: Prisma.SortOrder
+  valor_hora?: Prisma.SortOrder
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
@@ -568,6 +612,7 @@ export type QuadraCountOrderByAggregateInput = {
 }
 
 export type QuadraAvgOrderByAggregateInput = {
+  valor_hora?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
   capacidade_minima?: Prisma.SortOrder
   capacidade_maxima?: Prisma.SortOrder
@@ -579,6 +624,8 @@ export type QuadraMaxOrderByAggregateInput = {
   nome?: Prisma.SortOrder
   descricao?: Prisma.SortOrder
   tipo_piso?: Prisma.SortOrder
+  modalidade?: Prisma.SortOrder
+  valor_hora?: Prisma.SortOrder
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
@@ -596,6 +643,8 @@ export type QuadraMinOrderByAggregateInput = {
   nome?: Prisma.SortOrder
   descricao?: Prisma.SortOrder
   tipo_piso?: Prisma.SortOrder
+  modalidade?: Prisma.SortOrder
+  valor_hora?: Prisma.SortOrder
   coberta?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
@@ -608,6 +657,7 @@ export type QuadraMinOrderByAggregateInput = {
 }
 
 export type QuadraSumOrderByAggregateInput = {
+  valor_hora?: Prisma.SortOrder
   ordem_exibicao?: Prisma.SortOrder
   capacidade_minima?: Prisma.SortOrder
   capacidade_maxima?: Prisma.SortOrder
@@ -662,6 +712,18 @@ export type QuadraUncheckedUpdateManyWithoutAcademiaNestedInput = {
 
 export type EnumTipoPisoFieldUpdateOperationsInput = {
   set?: $Enums.TipoPiso
+}
+
+export type NullableEnumModalidadeQuadraFieldUpdateOperationsInput = {
+  set?: $Enums.ModalidadeQuadra | null
+}
+
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type BoolFieldUpdateOperationsInput = {
@@ -757,6 +819,8 @@ export type QuadraCreateWithoutAcademiaInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -779,6 +843,8 @@ export type QuadraUncheckedCreateWithoutAcademiaInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -831,6 +897,8 @@ export type QuadraScalarWhereInput = {
   nome?: Prisma.StringFilter<"Quadra"> | string
   descricao?: Prisma.StringNullableFilter<"Quadra"> | string | null
   tipo_piso?: Prisma.EnumTipoPisoFilter<"Quadra"> | $Enums.TipoPiso
+  modalidade?: Prisma.EnumModalidadeQuadraNullableFilter<"Quadra"> | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.FloatNullableFilter<"Quadra"> | number | null
   coberta?: Prisma.BoolFilter<"Quadra"> | boolean
   ativa?: Prisma.BoolFilter<"Quadra"> | boolean
   ordem_exibicao?: Prisma.IntFilter<"Quadra"> | number
@@ -847,6 +915,8 @@ export type QuadraCreateWithoutHorariosInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -870,6 +940,8 @@ export type QuadraUncheckedCreateWithoutHorariosInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -907,6 +979,8 @@ export type QuadraUpdateWithoutHorariosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -930,6 +1004,8 @@ export type QuadraUncheckedUpdateWithoutHorariosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -951,6 +1027,8 @@ export type QuadraCreateWithoutHorarios_especiaisInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -974,6 +1052,8 @@ export type QuadraUncheckedCreateWithoutHorarios_especiaisInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1011,6 +1091,8 @@ export type QuadraUpdateWithoutHorarios_especiaisInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1034,6 +1116,8 @@ export type QuadraUncheckedUpdateWithoutHorarios_especiaisInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1055,6 +1139,8 @@ export type QuadraCreateWithoutBloqueiosInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1078,6 +1164,8 @@ export type QuadraUncheckedCreateWithoutBloqueiosInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1115,6 +1203,8 @@ export type QuadraUpdateWithoutBloqueiosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1138,6 +1228,8 @@ export type QuadraUncheckedUpdateWithoutBloqueiosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1159,6 +1251,8 @@ export type QuadraCreateWithoutJogosInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1182,6 +1276,8 @@ export type QuadraUncheckedCreateWithoutJogosInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1219,6 +1315,8 @@ export type QuadraUpdateWithoutJogosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1242,6 +1340,8 @@ export type QuadraUncheckedUpdateWithoutJogosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1263,6 +1363,8 @@ export type QuadraCreateWithoutAulasInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1286,6 +1388,8 @@ export type QuadraUncheckedCreateWithoutAulasInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1323,6 +1427,8 @@ export type QuadraUpdateWithoutAulasInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1346,6 +1452,8 @@ export type QuadraUncheckedUpdateWithoutAulasInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1367,6 +1475,8 @@ export type QuadraCreateWithoutRecorrencias_aulasInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1390,6 +1500,8 @@ export type QuadraUncheckedCreateWithoutRecorrencias_aulasInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1427,6 +1539,8 @@ export type QuadraUpdateWithoutRecorrencias_aulasInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1450,6 +1564,8 @@ export type QuadraUncheckedUpdateWithoutRecorrencias_aulasInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1471,6 +1587,8 @@ export type QuadraCreateManyAcademiaInput = {
   nome: string
   descricao?: string | null
   tipo_piso: $Enums.TipoPiso
+  modalidade?: $Enums.ModalidadeQuadra | null
+  valor_hora?: number | null
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: number
@@ -1487,6 +1605,8 @@ export type QuadraUpdateWithoutAcademiaInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1509,6 +1629,8 @@ export type QuadraUncheckedUpdateWithoutAcademiaInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1531,6 +1653,8 @@ export type QuadraUncheckedUpdateManyWithoutAcademiaInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo_piso?: Prisma.EnumTipoPisoFieldUpdateOperationsInput | $Enums.TipoPiso
+  modalidade?: Prisma.NullableEnumModalidadeQuadraFieldUpdateOperationsInput | $Enums.ModalidadeQuadra | null
+  valor_hora?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   coberta?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ordem_exibicao?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1624,6 +1748,8 @@ export type QuadraSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   nome?: boolean
   descricao?: boolean
   tipo_piso?: boolean
+  modalidade?: boolean
+  valor_hora?: boolean
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
@@ -1649,6 +1775,8 @@ export type QuadraSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   nome?: boolean
   descricao?: boolean
   tipo_piso?: boolean
+  modalidade?: boolean
+  valor_hora?: boolean
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
@@ -1667,6 +1795,8 @@ export type QuadraSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   nome?: boolean
   descricao?: boolean
   tipo_piso?: boolean
+  modalidade?: boolean
+  valor_hora?: boolean
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
@@ -1685,6 +1815,8 @@ export type QuadraSelectScalar = {
   nome?: boolean
   descricao?: boolean
   tipo_piso?: boolean
+  modalidade?: boolean
+  valor_hora?: boolean
   coberta?: boolean
   ativa?: boolean
   ordem_exibicao?: boolean
@@ -1696,7 +1828,7 @@ export type QuadraSelectScalar = {
   atualizado_em?: boolean
 }
 
-export type QuadraOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "academia_id" | "nome" | "descricao" | "tipo_piso" | "coberta" | "ativa" | "ordem_exibicao" | "capacidade_minima" | "capacidade_maxima" | "permite_simples" | "permite_dupla" | "criado_em" | "atualizado_em", ExtArgs["result"]["quadra"]>
+export type QuadraOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "academia_id" | "nome" | "descricao" | "tipo_piso" | "modalidade" | "valor_hora" | "coberta" | "ativa" | "ordem_exibicao" | "capacidade_minima" | "capacidade_maxima" | "permite_simples" | "permite_dupla" | "criado_em" | "atualizado_em", ExtArgs["result"]["quadra"]>
 export type QuadraInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   academia?: boolean | Prisma.AcademiaDefaultArgs<ExtArgs>
   horarios?: boolean | Prisma.Quadra$horariosArgs<ExtArgs>
@@ -1731,6 +1863,8 @@ export type $QuadraPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     nome: string
     descricao: string | null
     tipo_piso: $Enums.TipoPiso
+    modalidade: $Enums.ModalidadeQuadra | null
+    valor_hora: number | null
     coberta: boolean
     ativa: boolean
     ordem_exibicao: number
@@ -2175,6 +2309,8 @@ export interface QuadraFieldRefs {
   readonly nome: Prisma.FieldRef<"Quadra", 'String'>
   readonly descricao: Prisma.FieldRef<"Quadra", 'String'>
   readonly tipo_piso: Prisma.FieldRef<"Quadra", 'TipoPiso'>
+  readonly modalidade: Prisma.FieldRef<"Quadra", 'ModalidadeQuadra'>
+  readonly valor_hora: Prisma.FieldRef<"Quadra", 'Float'>
   readonly coberta: Prisma.FieldRef<"Quadra", 'Boolean'>
   readonly ativa: Prisma.FieldRef<"Quadra", 'Boolean'>
   readonly ordem_exibicao: Prisma.FieldRef<"Quadra", 'Int'>

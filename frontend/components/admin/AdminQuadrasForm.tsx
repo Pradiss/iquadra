@@ -16,6 +16,7 @@ import {
   criarQuadra,
   excluirQuadra,
   listarQuadras,
+  type ModalidadeQuadra,
   type QuadraAdmin,
   type TipoPiso,
 } from "@/services/admin.service";
@@ -34,16 +35,42 @@ const tiposPiso: { value: TipoPiso; label: string }[] = [
   { value: "OUTRO", label: "Outro" },
 ];
 
+const modalidades: { value: ModalidadeQuadra; label: string }[] = [
+  { value: "TENIS", label: "Tenis" },
+  { value: "BEACH_TENNIS", label: "Beach Tennis" },
+  { value: "PADEL", label: "Padel" },
+  { value: "PICKLEBALL", label: "Pickleball" },
+  { value: "OUTRO", label: "Outro" },
+];
+
 const formInicial = {
   nome: "",
   descricao: "",
   tipo_piso: "SINTETICA" as TipoPiso,
+  modalidade: "TENIS" as ModalidadeQuadra,
+  valor_hora: "",
   coberta: false,
   capacidade_minima: "2",
   capacidade_maxima: "4",
   permite_simples: true,
   permite_dupla: true,
 };
+
+function getModalidadeLabel(value?: string | null) {
+  return (
+    modalidades.find((modalidade) => modalidade.value === value)?.label ??
+    "Sem modalidade"
+  );
+}
+
+function formatarValor(value?: number | null) {
+  if (value === null || value === undefined) return "Sem valor";
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
 
 export function AdminQuadrasForm() {
   const academia = useAdminAcademia();
@@ -94,6 +121,11 @@ export function AdminQuadrasForm() {
       nome: quadra.nome ?? "",
       descricao: quadra.descricao ?? "",
       tipo_piso: (quadra.tipo_piso ?? "SINTETICA") as TipoPiso,
+      modalidade: (quadra.modalidade ?? "TENIS") as ModalidadeQuadra,
+      valor_hora:
+        quadra.valor_hora !== null && quadra.valor_hora !== undefined
+          ? String(quadra.valor_hora)
+          : "",
       coberta: Boolean(quadra.coberta),
       capacidade_minima: String(quadra.capacidade_minima ?? 2),
       capacidade_maxima: String(quadra.capacidade_maxima ?? 4),
@@ -128,6 +160,11 @@ export function AdminQuadrasForm() {
         nome: form.nome.trim(),
         descricao: form.descricao.trim() || undefined,
         tipo_piso: form.tipo_piso,
+        modalidade: form.modalidade,
+        valor_hora:
+          form.valor_hora.trim() === ""
+            ? undefined
+            : Number(form.valor_hora.replace(",", ".")),
         coberta: form.coberta,
         capacidade_minima: Number(form.capacidade_minima),
         capacidade_maxima: Number(form.capacidade_maxima),
@@ -290,6 +327,44 @@ export function AdminQuadrasForm() {
           </AdminField>
 
           <div className="grid gap-3 sm:grid-cols-2">
+            <AdminField label="Modalidade">
+              <select
+                value={form.modalidade}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    modalidade: event.target.value as ModalidadeQuadra,
+                  }))
+                }
+                className="h-[50px] w-full rounded-xl border border-input bg-gray-50 px-3 text-sm"
+              >
+                {modalidades.map((modalidade) => (
+                  <option key={modalidade.value} value={modalidade.value}>
+                    {modalidade.label}
+                  </option>
+                ))}
+              </select>
+            </AdminField>
+
+            <AdminField label="Valor da quadra">
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.valor_hora}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    valor_hora: event.target.value,
+                  }))
+                }
+                placeholder="Ex: 80"
+                className="h-[50px] rounded-xl bg-gray-50"
+              />
+            </AdminField>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             <AdminField label="Capacidade mínima">
               <Input
                 type="number"
@@ -384,6 +459,10 @@ export function AdminQuadrasForm() {
                   </p>
                   <p className="text-xs font-medium text-zinc-500">
                     {quadra.tipo_piso} - {quadra.coberta ? "Coberta" : "Aberta"}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-zinc-500">
+                    {getModalidadeLabel(quadra.modalidade)} -{" "}
+                    {formatarValor(quadra.valor_hora)}
                   </p>
                 </div>
 

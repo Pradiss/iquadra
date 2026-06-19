@@ -13,11 +13,20 @@ export type TipoPiso =
   | "AREIA"
   | "OUTRO";
 
+export type ModalidadeQuadra =
+  | "TENIS"
+  | "BEACH_TENNIS"
+  | "PADEL"
+  | "PICKLEBALL"
+  | "OUTRO";
+
 export type QuadraAdmin = {
   id: string;
   nome: string;
   descricao?: string | null;
   tipo_piso?: TipoPiso;
+  modalidade?: ModalidadeQuadra | null;
+  valor_hora?: number | null;
   coberta?: boolean;
   ativa: boolean;
   capacidade_minima?: number;
@@ -46,6 +55,8 @@ export async function criarQuadra(
     nome: string;
     descricao?: string;
     tipo_piso?: TipoPiso;
+    modalidade?: ModalidadeQuadra;
+    valor_hora?: number;
     coberta?: boolean;
     capacidade_minima?: number;
     capacidade_maxima?: number;
@@ -78,6 +89,8 @@ export async function atualizarQuadra(
     nome: string;
     descricao?: string;
     tipo_piso?: TipoPiso;
+    modalidade?: ModalidadeQuadra;
+    valor_hora?: number;
     coberta?: boolean;
     capacidade_minima?: number;
     capacidade_maxima?: number;

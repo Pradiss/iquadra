@@ -37,6 +37,14 @@ enum TipoPiso {
   OUTRO
 }
 
+enum ModalidadeQuadra {
+  TENIS
+  BEACH_TENNIS
+  PADEL
+  PICKLEBALL
+  OUTRO
+}
+
 enum TipoJogo {
   SIMPLES
   DUPLA
@@ -265,6 +273,8 @@ model Quadra {
   nome           String
   descricao      String?
   tipo_piso      TipoPiso
+  modalidade     ModalidadeQuadra?
+  valor_hora     Float?
   coberta        Boolean  @default(false)
   ativa          Boolean  @default(true)
   ordem_exibicao Int      @default(0)

@@ -2,18 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { useParams, useRouter } from "next/navigation";
-import { MapPin, Search, X } from "lucide-react";
+import { useParams } from "next/navigation";
+import { MapPin, Search } from "lucide-react";
 
 import {
-  QuadraFilter,
-  type QuadraFiltros,
-} from "@/components/jogador/painel/filter";
-import { Button } from "@/components/ui/button";
+  AgendaFilterBar,
+  agendaFiltroInicial,
+  type AgendaFiltros,
+} from "@/components/jogador/painel/agenda-filter-bar";
+import {
+  AcademiaSearchModal,
+  type AcademiaBusca,
+} from "@/components/jogador/painel/academia-search-modal";
 import { AgendaList } from "@/components/jogador/painel/agenda-list";
 import { AgendarJogoDialog } from "@/components/jogador/painel/agendar-jogo-dialog";
 import { AgendaCalendar } from "@/components/jogador/painel/agenda-calendar";
-import { AcademiaSearch } from "@/components/jogador/painel/academia-search";
 
 import {
   listarAcademias,
@@ -23,17 +26,14 @@ import {
 import api from "@/services/api";
 import { salvarUltimaAcademia } from "@/lib/last-academia";
 
-type Academia = {
-  id: string;
-  nome: string;
-  cidade?: string;
-  estado?: string;
-};
+type Academia = AcademiaBusca;
 
 type Quadra = {
   id: string;
   nome: string;
   tipo_piso?: string | null;
+  modalidade?: string | null;
+  valor_hora?: number | null;
   coberta?: boolean | null;
   capacidade_minima?: number;
   capacidade_maxima?: number;
@@ -198,13 +198,21 @@ function montarHorariosDaQuadra(
   });
 }
 
+function formatarAcademiaAtual(academia?: Academia | null) {
+  if (!academia) return "Selecionar academia";
+
+  const cidade = academia.cidade?.trim();
+  const estado = academia.estado?.trim();
+  const local = cidade && estado ? `${cidade} - ${estado}` : cidade || estado;
+
+  return local ? `${academia.nome} • ${local}` : academia.nome;
+}
+
 export default function AcademiaAgendaPage() {
   const params = useParams<{ id?: string }>();
-  const router = useRouter();
-  const carregandoRef = useRef(false);
+  const agendaRequestIdRef = useRef(0);
 
-  const [busca, setBusca] = useState("");
-  const [mostrarBuscaAcademias, setMostrarBuscaAcademias] = useState(false);
+  const [modalAcademiasOpen, setModalAcademiasOpen] = useState(false);
   const [academias, setAcademias] = useState<Academia[]>([]);
 
   const [academia, setAcademia] = useState<Academia | null>(null);
@@ -213,11 +221,8 @@ export default function AcademiaAgendaPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
-  const [filtrosQuadra, setFiltrosQuadra] = useState<QuadraFiltros>({
-    tipo_piso: "TODOS",
-    cobertura: "TODAS",
-    jogadores: "TODOS",
-  });
+  const [filtrosQuadra, setFiltrosQuadra] =
+    useState<AgendaFiltros>(agendaFiltroInicial);
 
   const [dataSelecionada, setDataSelecionada] = useState(
     format(new Date(), "yyyy-MM-dd")
@@ -229,23 +234,10 @@ export default function AcademiaAgendaPage() {
 
   const academiaId = academia?.id ?? params.id ?? "";
 
-  const academiasFiltradas = useMemo(() => {
-    const termo = busca.toLowerCase().trim();
-
-    if (!termo) return [];
-
-    return academias.filter((item) =>
-      `${item.nome} ${item.cidade ?? ""} ${item.estado ?? ""}`
-        .toLowerCase()
-        .includes(termo)
-    );
-  }, [academias, busca]);
-
   const quadrasFiltradas = useMemo(() => {
     return quadras.filter((quadra) => {
       const filtroPiso =
-        filtrosQuadra.tipo_piso === "TODOS" ||
-        quadra.tipo_piso === filtrosQuadra.tipo_piso;
+        filtrosQuadra.piso === "TODOS" || quadra.tipo_piso === filtrosQuadra.piso;
 
       const filtroCobertura =
         filtrosQuadra.cobertura === "TODAS" ||
@@ -257,7 +249,27 @@ export default function AcademiaAgendaPage() {
         (filtrosQuadra.jogadores === "2" && quadra.permite_simples) ||
         (filtrosQuadra.jogadores === "4" && quadra.permite_dupla);
 
-      return filtroPiso && filtroCobertura && filtroJogadores;
+      const filtroModalidade =
+        filtrosQuadra.modalidade === "TODAS" ||
+        quadra.modalidade === filtrosQuadra.modalidade;
+
+      const valorHora = quadra.valor_hora ?? null;
+      const filtroPreco =
+        filtrosQuadra.preco === "TODOS" ||
+        (valorHora !== null &&
+          ((filtrosQuadra.preco === "ATE_50" && valorHora <= 50) ||
+            (filtrosQuadra.preco === "50_100" &&
+              valorHora > 50 &&
+              valorHora <= 100) ||
+            (filtrosQuadra.preco === "ACIMA_100" && valorHora > 100)));
+
+      return (
+        filtroPiso &&
+        filtroCobertura &&
+        filtroJogadores &&
+        filtroModalidade &&
+        filtroPreco
+      );
     });
   }, [quadras, filtrosQuadra]);
 
@@ -283,9 +295,10 @@ export default function AcademiaAgendaPage() {
   }, []);
 
   const carregarAgenda = useCallback(async () => {
-    if (!academiaId || !dataSelecionada || carregandoRef.current) return;
+    if (!academiaId || !dataSelecionada) return;
 
-    carregandoRef.current = true;
+    const requestId = agendaRequestIdRef.current + 1;
+    agendaRequestIdRef.current = requestId;
     setLoading(true);
     setErro("");
 
@@ -300,11 +313,12 @@ export default function AcademiaAgendaPage() {
         ? (quadrasResponse as Quadra[])
         : [];
 
-      salvarUltimaAcademia(academiaApi?.id ?? academiaId);
-      setAcademia(academiaApi);
-      setQuadras(quadrasApi);
-
       if (quadrasApi.length === 0) {
+        if (requestId !== agendaRequestIdRef.current) return;
+
+        salvarUltimaAcademia(academiaApi?.id ?? academiaId);
+        setAcademia(academiaApi);
+        setQuadras(quadrasApi);
         setHorarios([]);
         return;
       }
@@ -330,6 +344,12 @@ export default function AcademiaAgendaPage() {
           return a.quadraNome.localeCompare(b.quadraNome);
         });
 
+      if (requestId !== agendaRequestIdRef.current) return;
+
+      salvarUltimaAcademia(academiaApi?.id ?? academiaId);
+      setAcademia(academiaApi);
+      setQuadras(quadrasApi);
+
       const teveErro = resultados.some(
         (resultado) => resultado.status === "rejected"
       );
@@ -340,13 +360,16 @@ export default function AcademiaAgendaPage() {
 
       setHorarios(agenda);
     } catch {
+      if (requestId !== agendaRequestIdRef.current) return;
+
       setAcademia(null);
       setQuadras([]);
       setHorarios([]);
       setErro("Não foi possível carregar a agenda.");
     } finally {
-      carregandoRef.current = false;
-      setLoading(false);
+      if (requestId === agendaRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [academiaId, dataSelecionada]);
 
@@ -361,19 +384,12 @@ export default function AcademiaAgendaPage() {
   function trocarAcademia(item: Academia) {
     salvarUltimaAcademia(item.id);
     setAcademia(item);
-    setMostrarBuscaAcademias(false);
-    setBusca("");
     setQuadras([]);
     setHorarios([]);
     setHorarioSelecionado(null);
     setDialogOpen(false);
     setErro("");
-    setFiltrosQuadra({
-      tipo_piso: "TODOS",
-      cobertura: "TODAS",
-      jogadores: "TODOS",
-    });
-    router.replace(`/painel/jogador/academia/${item.id}`);
+    setFiltrosQuadra(agendaFiltroInicial);
   }
 
   function selecionarHorario(horario: HorarioAgenda) {
@@ -411,83 +427,22 @@ export default function AcademiaAgendaPage() {
     <>
       <section className="max-w-5xl">
         <div className="mb-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-black tracking-[-0.03em] text-black">
-                {academia?.nome ?? "Agenda da academia"}
-              </h1>
+          <button
+            type="button"
+            onClick={() => setModalAcademiasOpen(true)}
+            className="flex h-16 w-full items-center gap-3 rounded-[28px] border border-zinc-200 bg-white px-5 text-left shadow-sm transition hover:border-zinc-300"
+          >
+            <MapPin className="h-6 w-6 shrink-0 text-green-700" />
 
-              {academia && (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
-                  <MapPin className="h-3 w-3" />
-                  <span>
-                    {academia.cidade} - {academia.estado}
-                  </span>
-                </div>
-              )}
-            </div>
+            <span className="min-w-0 flex-1 truncate text-base font-black text-zinc-950 sm:text-lg">
+              {formatarAcademiaAtual(academia)}
+            </span>
 
-            <div className="shrink-0">
-              {mostrarBuscaAcademias ? (
-                <div className="relative w-[260px]">
-                  <AcademiaSearch value={busca} onChange={setBusca} />
+            <Search className="h-6 w-6 shrink-0 text-green-700" />
+          </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarBuscaAcademias(false);
-                      setBusca("");
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMostrarBuscaAcademias(true)}
-                  className="h-8 shrink-0 gap-1 px-2 text-xs font-bold text-green-700"
-                >
-                  <Search className="h-3 w-3" />
-                  Buscar Academias
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {mostrarBuscaAcademias && busca.trim().length > 0 && (
-            <div className="mt-3 grid gap-2 rounded-2xl bg-white p-3 shadow-sm">
-              {academiasFiltradas.length === 0 ? (
-                <p className="text-sm text-zinc-500">
-                  Nenhuma academia encontrada.
-                </p>
-              ) : (
-                academiasFiltradas.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => trocarAcademia(item)}
-                    className="rounded-xl px-3 py-2 text-left hover:bg-zinc-50"
-                  >
-                    <p className="text-sm font-bold text-zinc-950">
-                      {item.nome}
-                    </p>
-
-                    <p className="text-xs text-zinc-500">
-                      {item.cidade} {item.estado ? `- ${item.estado}` : ""}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-
-          <div className="mt-4 flex items-center gap-2">
-            <QuadraFilter
-              quadras={quadras}
+          <div className="mt-4">
+            <AgendaFilterBar
               filtros={filtrosQuadra}
               onChange={setFiltrosQuadra}
             />
@@ -520,6 +475,14 @@ export default function AcademiaAgendaPage() {
           )}
         </section>
       </section>
+
+      <AcademiaSearchModal
+        open={modalAcademiasOpen}
+        academias={academias}
+        selectedAcademia={academia}
+        onOpenChange={setModalAcademiasOpen}
+        onSelect={trocarAcademia}
+      />
 
       <AgendarJogoDialog
         open={dialogOpen}

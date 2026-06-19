@@ -119,6 +119,8 @@ export async function createQuadra(
       academia_id: academiaId,
       nome: data.nome,
       tipo_piso: data.tipo_piso,
+      modalidade: data.modalidade,
+      valor_hora: data.valor_hora,
       coberta: data.coberta ?? false,
       ordem_exibicao: data.ordem_exibicao ?? 0,
       ...(data.descricao !== undefined ? { descricao: data.descricao } : {}),
@@ -190,6 +192,8 @@ export async function updateQuadra(
       ...(data.nome !== undefined ? { nome: data.nome } : {}),
       ...(data.descricao !== undefined ? { descricao: data.descricao } : {}),
       ...(data.tipo_piso !== undefined ? { tipo_piso: data.tipo_piso } : {}),
+      ...(data.modalidade !== undefined ? { modalidade: data.modalidade } : {}),
+      ...(data.valor_hora !== undefined ? { valor_hora: data.valor_hora } : {}),
       ...(data.coberta !== undefined ? { coberta: data.coberta } : {}),
       ...(data.ordem_exibicao !== undefined
         ? { ordem_exibicao: data.ordem_exibicao }

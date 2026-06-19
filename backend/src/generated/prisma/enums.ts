@@ -51,6 +51,17 @@ export const TipoPiso = {
 export type TipoPiso = (typeof TipoPiso)[keyof typeof TipoPiso]
 
 
+export const ModalidadeQuadra = {
+  TENIS: 'TENIS',
+  BEACH_TENNIS: 'BEACH_TENNIS',
+  PADEL: 'PADEL',
+  PICKLEBALL: 'PICKLEBALL',
+  OUTRO: 'OUTRO'
+} as const
+
+export type ModalidadeQuadra = (typeof ModalidadeQuadra)[keyof typeof ModalidadeQuadra]
+
+
 export const TipoJogo = {
   SIMPLES: 'SIMPLES',
   DUPLA: 'DUPLA'

@@ -1888,6 +1888,8 @@ export const QuadraScalarFieldEnum = {
   nome: 'nome',
   descricao: 'descricao',
   tipo_piso: 'tipo_piso',
+  modalidade: 'modalidade',
+  valor_hora: 'valor_hora',
   coberta: 'coberta',
   ativa: 'ativa',
   ordem_exibicao: 'ordem_exibicao',
@@ -2245,6 +2247,34 @@ export type ListEnumTipoPisoFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
+ * Reference to a field of type 'ModalidadeQuadra'
+ */
+export type EnumModalidadeQuadraFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModalidadeQuadra'>
+    
+
+
+/**
+ * Reference to a field of type 'ModalidadeQuadra[]'
+ */
+export type ListEnumModalidadeQuadraFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModalidadeQuadra[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -2416,20 +2446,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
- * Reference to a field of type 'Float'
- */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-/**
- * Reference to a field of type 'Float[]'
- */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**

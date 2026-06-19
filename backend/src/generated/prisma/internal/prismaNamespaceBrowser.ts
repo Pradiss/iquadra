@@ -183,6 +183,8 @@ export const QuadraScalarFieldEnum = {
   nome: 'nome',
   descricao: 'descricao',
   tipo_piso: 'tipo_piso',
+  modalidade: 'modalidade',
+  valor_hora: 'valor_hora',
   coberta: 'coberta',
   ativa: 'ativa',
   ordem_exibicao: 'ordem_exibicao',
