@@ -93,7 +93,7 @@ function Jogador({
             <AvatarImage src={fotoPerfil} alt={jogador?.nome ?? label} />
           )}
 
-          <AvatarFallback className="bg-white text-[10px] font-black text-zinc-800">
+          <AvatarFallback className="bg-white text-[13px] font-black text-zinc-800">
             {jogador ? inicial(jogador.nome) : <Plus className="h-3.5 w-3.5" />}
           </AvatarFallback>
         </Avatar>
@@ -106,7 +106,7 @@ function Jogador({
       </div>
 
       <div className="min-w-0">
-        <p className="truncate text-[10px] font-black text-zinc-950">
+        <p className="truncate text-[12.5px] font-bold text-zinc-950">
           {jogador?.nome ?? label}
         </p>
       </div>
@@ -129,13 +129,13 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
 >
       <TableCell
         className={[
-          "w-[45px] rounded-l-[14px] bg-black/5 px-2 text-zinc-950",
+          "w-[20px] rounded-l-[14px] bg-black/5 px-2 text-zinc-950",
           corHorario(horario),
         ].join(" ")}
       >
         <div className="grid gap-0.5 leading-none">
-          <span className="text-[13px] font-bold">{horario.hora}</span>
-          <span className="text-[10px] font-medium text-zinc-700">
+          <span className="text-[12px] font-bold">{horario.hora}</span>
+          <span className="text-[11px] font-medium text-zinc-700">
             até {horario.horaFim}
           </span>
         </div>
@@ -143,7 +143,7 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
 
       <TableCell
         className={[
-          "w-[50px] px-2 text-center text-[10px] font-black text-zinc-950",
+          "w-[30px] px-2 text-center text-[10px] font-bold text-zinc-950",
           corLinha(horario),
         ].join(" ")}
       >
