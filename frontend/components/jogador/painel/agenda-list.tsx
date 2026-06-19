@@ -58,7 +58,7 @@ export function AgendaList({ horarios, onSelect }: Props) {
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody >
           {horarios.map((horario) => {
             const usuarioParticipa = Boolean(
               usuarioLogado?.id &&
@@ -80,6 +80,7 @@ export function AgendaList({ horarios, onSelect }: Props) {
 
             return (
               <AgendaCard
+             
                 key={horario.id}
                 horario={horario}
                 canSelect={podeSelecionar}

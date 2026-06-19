@@ -45,28 +45,49 @@ function inicialCategoria(categoria?: string | null) {
 
 function corLinha(horario: Horario) {
   if (horario.motivo === "AULA" || horario.motivo === "BLOQUEADO") {
-    return "bg-zinc-300 hover:bg-zinc-300";
+    return "bg-zinc-300";
   }
 
   if (!horario.jogo) {
-    return "bg-zinc-300 hover:bg-zinc-300";
+    return "bg-zinc-300";
   }
 
   if (horario.vagasDisponiveis > 0) {
-    return "bg-blue-300 hover:bg-blue-300";
+    return "bg-[#71A8E8]";
   }
 
-  return "bg-green-300 hover:bg-green-300";
+  return "bg-[#A4DD9F]";
 }
 
-function Jogador({ jogador, label }: { jogador?: Participante; label: string }) {
+function corHorario(horario: Horario) {
+  if (horario.motivo === "AULA" || horario.motivo === "BLOQUEADO") {
+    return "bg-zinc-400";
+  }
+
+  if (!horario.jogo) {
+    return "bg-zinc-400";
+  }
+
+  if (horario.vagasDisponiveis > 0) {
+    return "bg-[#5C98DC]";
+  }
+
+  return "bg-[#8DCE87]";
+}
+function Jogador({
+  jogador,
+  label,
+}: {
+  jogador?: Participante;
+  label: string;
+}) {
   const fotoPerfil = getSafeImageUrl(jogador?.foto_perfil);
   const categoria = inicialCategoria(jogador?.categoria);
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+    <div className="flex min-w-0 flex-1 items-center gap-2">
       <div className="relative shrink-0">
-        <Avatar className="h-7 w-7 bg-white">
+        <Avatar className="h-9 w-9 bg-white">
           {fotoPerfil && (
             <AvatarImage src={fotoPerfil} alt={jogador?.nome ?? label} />
           )}
@@ -87,7 +108,6 @@ function Jogador({ jogador, label }: { jogador?: Participante; label: string }) 
         <p className="truncate text-[10px] font-black text-zinc-950">
           {jogador?.nome ?? label}
         </p>
-        
       </div>
     </div>
   );
@@ -103,14 +123,15 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
 
   return (
     <TableRow
-      onClick={canSelect ? onSelect : undefined}
-      className={[
-        "relative border-b-4 rounded-[20px] ",
-        corLinha(horario),
-        canSelect ? "cursor-pointer" : "cursor-default",
-      ].join(" ")}
-    >
-      <TableCell className="w-[40px] bg-black/5 px-2 text-zinc-950">
+  onClick={canSelect ? onSelect : undefined}
+  className={canSelect ? "cursor-pointer" : "cursor-default"}
+>
+      <TableCell
+        className={[
+          "w-[45px] rounded-l-[14px] bg-black/5 px-2 text-zinc-950",
+          corHorario(horario),
+        ].join(" ")}
+      >
         <div className="grid gap-0.5 leading-none">
           <span className="text-[13px] font-bold">{horario.hora}</span>
           <span className="text-[10px] font-medium text-zinc-700">
@@ -119,19 +140,34 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
         </div>
       </TableCell>
 
-      <TableCell className="w-[10px] bg-green px-2 text-center text-[10px] font-black text-zinc-950">
+      <TableCell
+        className={[
+          "w-[50px] px-2 text-center text-[10px] font-black text-zinc-950",
+          corLinha(horario),
+        ].join(" ")}
+      >
         {horario.quadraNome}
       </TableCell>
 
-      <TableCell className="px-2">
-        <div className="grid w-full grid-cols-2 gap-2">
-          {jogadoresSlots.map((jogador, index) => (
-            <Jogador
-              key={`${horario.id}-jogador-${index}`}
-              jogador={jogador}
-              label={`Jogador ${index + 1}`}
-            />
-          ))}
+      <TableCell
+        className={["rounded-r-2xl px-2", corLinha(horario)].join(" ")}
+      >
+        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <Jogador jogador={jogadoresSlots[0]} label="Jogador 1" />
+
+          <span className="text-xs font-black text-zinc-950">X</span>
+
+          <Jogador jogador={jogadoresSlots[1]} label="Jogador 2" />
+
+          {jogadoresSlots.length > 2 && (
+            <>
+              <Jogador jogador={jogadoresSlots[2]} label="Jogador 3" />
+
+              <span className="text-xs font-medium text-zinc-950 ">X</span>
+
+              <Jogador jogador={jogadoresSlots[3]} label="Jogador 4" />
+            </>
+          )}
         </div>
       </TableCell>
     </TableRow>
