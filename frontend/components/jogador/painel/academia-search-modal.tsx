@@ -119,7 +119,7 @@ export function AcademiaSearchModal({
   const digitando = busca.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center">
+    <div className="fixed inset-0 z-[80] flex items-start justify-center">
       <button
         type="button"
         aria-label="Fechar busca de academias"
@@ -127,8 +127,8 @@ export function AcademiaSearchModal({
         onClick={() => onOpenChange(false)}
       />
 
-      <div className="relative z-10 flex max-h-[88vh] w-full max-w-xl flex-col rounded-t-[34px] bg-white px-5 pb-6 pt-3 shadow-[0_-20px_60px_rgba(15,23,42,0.22)]">
-        <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-zinc-200" />
+      <div className="relative z-10 flex max-h-[88vh] w-full max-w-xl flex-col rounded-b-[34px] bg-white px-5 pb-6 pt-6 shadow-[0_-20px_60px_rgba(15,23,42,0.22)]">
+        
 
         <div className="flex items-center gap-3">
           <div className="relative min-w-0 flex-1">
@@ -236,6 +236,7 @@ export function AcademiaSearchModal({
             </div>
           )}
         </div>
+        <div className="mx-auto mt-5 h-1.5 w-14 rounded-full bg-zinc-200" />
       </div>
     </div>
   );
