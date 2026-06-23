@@ -14,14 +14,19 @@ function cookieOptions(maxAge: number): CookieOptions {
     env.AUTH_COOKIE_SECURE ?? env.NODE_ENV === "production";
   const secure = configuredSecure || env.AUTH_COOKIE_SAME_SITE === "none";
 
-  return {
+  const options: CookieOptions = {
     httpOnly: true,
     secure,
     sameSite: env.AUTH_COOKIE_SAME_SITE,
     path: "/",
     maxAge,
-    domain: env.AUTH_COOKIE_DOMAIN,
   };
+
+  if (env.AUTH_COOKIE_DOMAIN) {
+    options.domain = env.AUTH_COOKIE_DOMAIN;
+  }
+
+  return options;
 }
 
 function csrfCookieOptions(maxAge: number): CookieOptions {
