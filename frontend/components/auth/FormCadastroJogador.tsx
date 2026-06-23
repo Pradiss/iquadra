@@ -7,6 +7,16 @@ import { useRouter } from "next/navigation";
 import api from "@/services/api";
 import AuthCard from "./AuthCard";
 import { maskCep, maskPhone, onlyNumbers } from "@/lib/masks";
+import {
+  AVATAR_ACCEPT,
+  uploadAvatarFile,
+  validateAvatarFile,
+} from "@/lib/avatar-upload";
+import {
+  getRedirectAfterAuth,
+  persistAuthenticatedUsuario,
+} from "@/lib/auth-flow";
+import type { UsuarioLogado } from "@/lib/auth-storage";
 
 import {
   CATEGORIAS_USUARIO,
@@ -32,6 +42,14 @@ type CadastroData = {
   categoria: CategoriaUsuario | "";
   email: string;
   senha: string;
+};
+
+type CadastroResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    usuario: UsuarioLogado;
+  };
 };
 
 const initialData: CadastroData = {
@@ -75,6 +93,7 @@ export default function FormCadastroJogador() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<CadastroData>(initialData);
+  const [avatar, setAvatar] = useState<File | null>(null);
 
   function updateField<K extends keyof CadastroData>(
     field: K,
@@ -125,6 +144,27 @@ export default function FormCadastroJogador() {
     setStep((current) => current - 1);
   }
 
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setAvatar(null);
+      return;
+    }
+
+    const error = validateAvatarFile(file);
+
+    if (error) {
+      setErro(error);
+      event.target.value = "";
+      setAvatar(null);
+      return;
+    }
+
+    setErro("");
+    setAvatar(file);
+  }
+
   async function handleSubmit() {
     const error = validateStep();
 
@@ -137,9 +177,27 @@ export default function FormCadastroJogador() {
     setLoading(true);
 
     try {
-      await api.post("/auth/register/cliente", cleanPayload(data));
+      const response = await api.post<CadastroResponse>(
+        "/auth/register/cliente",
+        cleanPayload(data)
+      );
+      let usuario = response.data.data.usuario;
 
-      router.push("/login?created=jogador");
+      if (avatar) {
+        try {
+          usuario = await uploadAvatarFile(avatar);
+        } catch {
+          persistAuthenticatedUsuario(usuario);
+          setErro(
+            "Conta criada, mas nao foi possivel enviar a foto de perfil."
+          );
+          router.replace(getRedirectAfterAuth(usuario));
+          return;
+        }
+      }
+
+      persistAuthenticatedUsuario(usuario);
+      router.replace(getRedirectAfterAuth(usuario));
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(
@@ -213,6 +271,21 @@ export default function FormCadastroJogador() {
                 }
                 className="h-[50px] rounded-xl bg-gray-50"
               />
+            </Campo>
+
+            <Campo label="Foto de perfil (opcional)">
+              <Input
+                type="file"
+                accept={AVATAR_ACCEPT}
+                onChange={handleAvatarChange}
+                className="h-[50px] rounded-xl bg-gray-50 pt-3"
+              />
+
+              {avatar && (
+                <span className="mt-1 block truncate text-xs font-medium text-gray-500">
+                  {avatar.name}
+                </span>
+              )}
             </Campo>
           </>
         )}

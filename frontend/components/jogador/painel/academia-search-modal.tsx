@@ -32,13 +32,9 @@ export function AcademiaSearchModal({
   onSelect,
 }: Props) {
   const [busca, setBusca] = useState("");
-  const [recentes, setRecentes] = useState<AcademiaBusca[]>([]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    setRecentes(carregarRecentes());
-  }, [open]);
+  const [recentes, setRecentes] = useState<AcademiaBusca[]>(() =>
+    carregarRecentes()
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +47,7 @@ export function AcademiaSearchModal({
     };
   }, [open]);
 
-  const usuario = useMemo(() => getUsuario(), [open]);
+  const usuario = useMemo(() => getUsuario(), []);
   const perfilCliente = usuario?.perfil_cliente as
     | { cidade?: string | null; estado?: string | null }
     | null

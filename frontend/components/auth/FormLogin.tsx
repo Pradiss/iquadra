@@ -9,8 +9,10 @@ import AuthCard from "./AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { UsuarioLogado } from "@/lib/auth-storage";
-import { buscarUltimaAcademia } from "@/lib/last-academia";
-import { getPainelHomeByRole, getUserRole } from "@/lib/user-role";
+import {
+  getRedirectAfterAuth,
+  persistAuthenticatedUsuario,
+} from "@/lib/auth-flow";
 
 function getSuccessMessage(created?: string | null) {
   if (created === "jogador") {
@@ -32,7 +34,6 @@ type LoginResponse = {
   success: boolean;
   message: string;
   data: {
-    token: string;
     usuario: UsuarioLogado;
   };
 };
@@ -61,27 +62,12 @@ export default function FormLogin() {
 
     try {
       const response = await api.post<LoginResponse>("/auth/login", dados);
-      const { token, usuario } = response.data.data;
+      const { usuario } = response.data.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("usuario", JSON.stringify(usuario));
-
-      const role = getUserRole(usuario);
-
-      if (role) {
-        const ultimaAcademiaId =
-          role === "jogador" ? buscarUltimaAcademia() : null;
-
-        if (ultimaAcademiaId) {
-          router.replace(`/painel/jogador/academia/${ultimaAcademiaId}`);
-          return;
-        }
-
-        router.replace(getPainelHomeByRole(role));
-        return;
-      }
-
-      router.replace("/login");
+      persistAuthenticatedUsuario(usuario);
+      router.replace(
+        getRedirectAfterAuth(usuario, searchParams.get("redirect"))
+      );
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(

@@ -39,7 +39,7 @@ export function PainelRoleGuard({
       if (!mounted) return;
 
       if (!validatedSession) {
-        router.replace("/login");
+        router.replace(getLoginRedirectUrl());
         return;
       }
 
@@ -86,7 +86,7 @@ export function ProfessorGuard({ children }: ProfessorGuardProps) {
       if (!mounted) return;
 
       if (!validatedSession) {
-        router.replace("/login");
+        router.replace(getLoginRedirectUrl());
         return;
       }
 
@@ -110,4 +110,9 @@ export function ProfessorGuard({ children }: ProfessorGuardProps) {
   }
 
   return <>{children}</>;
+}
+
+function getLoginRedirectUrl() {
+  const path = `${window.location.pathname}${window.location.search}`;
+  return `/login?redirect=${encodeURIComponent(path)}`;
 }

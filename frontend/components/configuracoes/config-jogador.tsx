@@ -1,7 +1,7 @@
 "use client";
 
-import { Save } from "lucide-react";
-import { useState } from "react";
+import { ImagePlus, Save, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import api from "@/services/api";
@@ -9,6 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSafeImageUrl } from "@/lib/safe-image";
+import {
+  AVATAR_ACCEPT,
+  removeAvatarFile,
+  uploadAvatarFile,
+  validateAvatarFile,
+} from "@/lib/avatar-upload";
 
 type Usuario = {
   id: string;
@@ -16,6 +22,8 @@ type Usuario = {
   email: string;
   telefone?: string | null;
   foto_perfil?: string | null;
+  fotoUrl?: string | null;
+  fotoPath?: string | null;
   perfil_cliente?: {
     categoria?: string;
     cidade?: string;
@@ -47,26 +55,64 @@ export function ConfigJogador({ usuario }: Props) {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     nome: usuario.nome ?? "",
     email: usuario.email ?? "",
     telefone: usuario.telefone ?? "",
     foto_perfil: usuario.foto_perfil ?? "",
+    fotoUrl: usuario.fotoUrl ?? "",
     cidade: usuario.perfil_cliente?.cidade ?? "",
     cep: usuario.perfil_cliente?.cep ?? "",
     categoria: usuario.perfil_cliente?.categoria ?? "",
   });
 
-  const fotoSegura = getSafeImageUrl(form.foto_perfil);
+  const avatarPreview = useMemo(
+    () => (avatarFile ? URL.createObjectURL(avatarFile) : ""),
+    [avatarFile]
+  );
+  const fotoSegura =
+    avatarPreview || getSafeImageUrl(form.foto_perfil || form.fotoUrl);
+
+  useEffect(() => {
+    if (!avatarPreview) return;
+
+    return () => {
+      URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
 
   function updateField(field: keyof typeof form, value: string) {
     setForm((current) => ({
       ...current,
       [field]: value,
     }));
+  }
+
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setAvatarFile(null);
+      return;
+    }
+
+    const error = validateAvatarFile(file);
+
+    if (error) {
+      setErro(error);
+      event.target.value = "";
+      setAvatarFile(null);
+      return;
+    }
+
+    setErro("");
+    setSucesso("");
+    setAvatarFile(file);
   }
 
   async function salvar() {
@@ -79,7 +125,6 @@ export function ConfigJogador({ usuario }: Props) {
         nome: form.nome.trim(),
         email: form.email.trim().toLowerCase(),
         telefone: form.telefone.trim(),
-        foto_perfil: form.foto_perfil.trim() || undefined,
         perfil_cliente: {
           cidade: form.cidade.trim(),
           cep: form.cep.trim(),
@@ -87,9 +132,14 @@ export function ConfigJogador({ usuario }: Props) {
         },
       });
 
-      const usuarioAtualizado = getData<Usuario>(response);
+      let usuarioAtualizado = getData<Usuario>(response);
+
+      if (avatarFile) {
+        usuarioAtualizado = await uploadAvatarFile<Usuario>(avatarFile);
+      }
 
       localStorage.setItem("usuario", JSON.stringify(usuarioAtualizado));
+      setAvatarFile(null);
 
       setSucesso("Dados atualizados com sucesso.");
 
@@ -100,6 +150,29 @@ export function ConfigJogador({ usuario }: Props) {
       setErro("Não foi possível atualizar as informações do perfil.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function removerFoto() {
+    setErro("");
+    setSucesso("");
+    setRemovingAvatar(true);
+
+    try {
+      const usuarioAtualizado = await removeAvatarFile<Usuario>();
+
+      localStorage.setItem("usuario", JSON.stringify(usuarioAtualizado));
+      setAvatarFile(null);
+      setForm((current) => ({
+        ...current,
+        foto_perfil: "",
+        fotoUrl: "",
+      }));
+      setSucesso("Foto removida com sucesso.");
+    } catch {
+      setErro("Nao foi possivel remover a foto de perfil.");
+    } finally {
+      setRemovingAvatar(false);
     }
   }
 
@@ -137,6 +210,39 @@ export function ConfigJogador({ usuario }: Props) {
             {getInitials(form.nome)}
           </AvatarFallback>
         </Avatar>
+
+        <div className="mt-5 grid w-full gap-3 sm:grid-cols-[1fr_auto]">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-bold text-zinc-700">
+              Foto de perfil
+            </span>
+
+            <Input
+              type="file"
+              accept={AVATAR_ACCEPT}
+              onChange={handleAvatarChange}
+              className="h-[50px] rounded-xl bg-white pt-3"
+            />
+          </label>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={removingAvatar || loading || !fotoSegura}
+            onClick={removerFoto}
+            className="self-end h-[50px] rounded-xl border-red-100 bg-white font-bold text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {removingAvatar ? "Removendo..." : "Remover"}
+          </Button>
+        </div>
+
+        {avatarFile && (
+          <span className="mt-2 flex max-w-full items-center text-xs font-semibold text-zinc-500">
+            <ImagePlus className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{avatarFile.name}</span>
+          </span>
+        )}
       </div>
 
       <div className="mt-6 grid gap-4">
@@ -161,15 +267,6 @@ export function ConfigJogador({ usuario }: Props) {
           <Input
             value={form.telefone}
             onChange={(event) => updateField("telefone", event.target.value)}
-            className="h-[50px] rounded-xl bg-zinc-50"
-          />
-        </Campo>
-
-        <Campo label="URL da foto">
-          <Input
-            value={form.foto_perfil}
-            onChange={(event) => updateField("foto_perfil", event.target.value)}
-            placeholder="https://..."
             className="h-[50px] rounded-xl bg-zinc-50"
           />
         </Campo>
@@ -209,7 +306,7 @@ export function ConfigJogador({ usuario }: Props) {
 
         <Button
           type="button"
-          disabled={loading}
+          disabled={loading || removingAvatar}
           onClick={salvar}
           className="mt-2 h-[50px] rounded-2xl bg-zinc-950 font-bold text-white hover:bg-black"
         >

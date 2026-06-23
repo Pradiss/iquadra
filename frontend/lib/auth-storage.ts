@@ -16,19 +16,17 @@ export type AcademiaUsuarioLogado = {
 
 export type UsuarioLogado = {
   id: string;
+  supabaseUserId?: string | null;
   nome: string;
   email: string;
   telefone?: string;
   foto_perfil?: string | null;
+  fotoUrl?: string | null;
+  fotoPath?: string | null;
   perfil_cliente?: unknown | null;
   perfil_professor?: unknown | null;
   academias?: AcademiaUsuarioLogado[];
 };
-
-export function getToken() {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
-}
 
 export function getUsuario(): UsuarioLogado | null {
   if (typeof window === "undefined") return null;
@@ -45,6 +43,7 @@ export function getUsuario(): UsuarioLogado | null {
 }
 
 export function clearAuthStorage() {
-  localStorage.removeItem("token");
+  if (typeof window === "undefined") return;
+
   localStorage.removeItem("usuario");
 }

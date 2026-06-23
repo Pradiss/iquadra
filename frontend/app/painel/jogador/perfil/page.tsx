@@ -134,7 +134,13 @@ export default function PerfilPage() {
     void carregarPerfil();
   }, []);
 
-  function sair() {
+  async function sair() {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // The local session cache should be cleared even if the server is offline.
+    }
+
     clearAuthStorage();
     router.push("/login");
   }

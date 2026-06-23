@@ -10,6 +10,16 @@ import { maskCep, maskPhone, onlyNumbers } from "@/lib/masks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/services/api";
+import {
+  AVATAR_ACCEPT,
+  uploadAvatarFile,
+  validateAvatarFile,
+} from "@/lib/avatar-upload";
+import {
+  getRedirectAfterAuth,
+  persistAuthenticatedUsuario,
+} from "@/lib/auth-flow";
+import type { UsuarioLogado } from "@/lib/auth-storage";
 
 type AcademiaData = {
   nomeDono: string;
@@ -23,6 +33,14 @@ type AcademiaData = {
   cidade: string;
   estado: string;
   cep: string;
+};
+
+type CadastroResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    usuario: UsuarioLogado;
+  };
 };
 
 const initialData: AcademiaData = {
@@ -77,6 +95,7 @@ export default function FormCadastroAcademia() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AcademiaData>(initialData);
+  const [avatar, setAvatar] = useState<File | null>(null);
 
   function updateField<K extends keyof AcademiaData>(
     field: K,
@@ -143,6 +162,27 @@ export default function FormCadastroAcademia() {
     setStep((current) => current - 1);
   }
 
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setAvatar(null);
+      return;
+    }
+
+    const error = validateAvatarFile(file);
+
+    if (error) {
+      setErro(error);
+      event.target.value = "";
+      setAvatar(null);
+      return;
+    }
+
+    setErro("");
+    setAvatar(file);
+  }
+
   async function handleSubmit() {
     const error = validateStep();
 
@@ -155,9 +195,27 @@ export default function FormCadastroAcademia() {
     setLoading(true);
 
     try {
-      await api.post("/auth/register/academia", cleanPayload(data));
+      const response = await api.post<CadastroResponse>(
+        "/auth/register/academia",
+        cleanPayload(data)
+      );
+      let usuario = response.data.data.usuario;
 
-      router.push("/login?created=academia");
+      if (avatar) {
+        try {
+          usuario = await uploadAvatarFile(avatar);
+        } catch {
+          persistAuthenticatedUsuario(usuario);
+          setErro(
+            "Academia cadastrada, mas nao foi possivel enviar a foto de perfil."
+          );
+          router.replace(getRedirectAfterAuth(usuario));
+          return;
+        }
+      }
+
+      persistAuthenticatedUsuario(usuario);
+      router.replace(getRedirectAfterAuth(usuario));
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(
@@ -213,6 +271,21 @@ export default function FormCadastroAcademia() {
                 }
                 className="h-[50px] rounded-xl bg-gray-50"
               />
+            </Campo>
+
+            <Campo label="Foto do responsavel (opcional)">
+              <Input
+                type="file"
+                accept={AVATAR_ACCEPT}
+                onChange={handleAvatarChange}
+                className="h-[50px] rounded-xl bg-gray-50 pt-3"
+              />
+
+              {avatar && (
+                <span className="mt-1 block truncate text-xs font-medium text-gray-500">
+                  {avatar.name}
+                </span>
+              )}
             </Campo>
           </>
         )}

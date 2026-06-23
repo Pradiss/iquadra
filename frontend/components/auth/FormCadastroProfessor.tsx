@@ -11,6 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/services/api";
+import {
+  AVATAR_ACCEPT,
+  uploadAvatarFile,
+  validateAvatarFile,
+} from "@/lib/avatar-upload";
+import {
+  getRedirectAfterAuth,
+  persistAuthenticatedUsuario,
+} from "@/lib/auth-flow";
+import type { UsuarioLogado } from "@/lib/auth-storage";
 
 type ProfessorData = {
   nome: string;
@@ -20,6 +30,14 @@ type ProfessorData = {
   especialidades: string;
   email: string;
   senha: string;
+};
+
+type CadastroResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    usuario: UsuarioLogado;
+  };
 };
 
 const initialData: ProfessorData = {
@@ -55,6 +73,7 @@ export default function FormCadastroProfessor() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ProfessorData>(initialData);
+  const [avatar, setAvatar] = useState<File | null>(null);
 
   function updateField<K extends keyof ProfessorData>(
     field: K,
@@ -107,6 +126,27 @@ export default function FormCadastroProfessor() {
     setStep((current) => current - 1);
   }
 
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setAvatar(null);
+      return;
+    }
+
+    const error = validateAvatarFile(file);
+
+    if (error) {
+      setErro(error);
+      event.target.value = "";
+      setAvatar(null);
+      return;
+    }
+
+    setErro("");
+    setAvatar(file);
+  }
+
   async function handleSubmit() {
     const error = validateStep();
 
@@ -119,9 +159,27 @@ export default function FormCadastroProfessor() {
     setLoading(true);
 
     try {
-      await api.post("/auth/register/professor", cleanPayload(data));
+      const response = await api.post<CadastroResponse>(
+        "/auth/register/professor",
+        cleanPayload(data)
+      );
+      let usuario = response.data.data.usuario;
 
-      router.push("/login?created=professor");
+      if (avatar) {
+        try {
+          usuario = await uploadAvatarFile(avatar);
+        } catch {
+          persistAuthenticatedUsuario(usuario);
+          setErro(
+            "Cadastro criado, mas nao foi possivel enviar a foto de perfil."
+          );
+          router.replace(getRedirectAfterAuth(usuario));
+          return;
+        }
+      }
+
+      persistAuthenticatedUsuario(usuario);
+      router.replace(getRedirectAfterAuth(usuario));
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(
@@ -186,6 +244,21 @@ export default function FormCadastroProfessor() {
                 onChange={(event) => updateField("cidade", event.target.value)}
                 className="h-[50px] rounded-xl bg-gray-50"
               />
+            </Campo>
+
+            <Campo label="Foto de perfil (opcional)">
+              <Input
+                type="file"
+                accept={AVATAR_ACCEPT}
+                onChange={handleAvatarChange}
+                className="h-[50px] rounded-xl bg-gray-50 pt-3"
+              />
+
+              {avatar && (
+                <span className="mt-1 block truncate text-xs font-medium text-gray-500">
+                  {avatar.name}
+                </span>
+              )}
             </Campo>
           </>
         )}

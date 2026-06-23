@@ -1,4 +1,4 @@
-import { clearAuthStorage, getToken, type UsuarioLogado } from "@/lib/auth-storage";
+import { clearAuthStorage, type UsuarioLogado } from "@/lib/auth-storage";
 import { getUserRole, type PainelRole } from "@/lib/user-role";
 import api from "@/services/api";
 
@@ -18,13 +18,6 @@ function getData<T>(response: { data: unknown }): T {
 }
 
 export async function validateSession(): Promise<ValidatedSession | null> {
-  const token = getToken();
-
-  if (!token) {
-    clearAuthStorage();
-    return null;
-  }
-
   try {
     const response = await api.get("/users/me");
     const usuario = getData<UsuarioLogado>(response);
