@@ -32,8 +32,23 @@ export async function obterDisponibilidadeQuadra(quadraId: string, data: string)
   return getData(response);
 }
 
-export async function listarUsuarios() {
-  const response = await api.get("/users");
+export async function obterDisponibilidadeAcademia(
+  academiaId: string,
+  data: string,
+) {
+  const response = await api.get(`/academias/${academiaId}/disponibilidade`, {
+    params: { data },
+  });
+  return getData(response);
+}
+
+export async function listarUsuarios(q: string) {
+  const response = await api.get("/users", {
+    params: {
+      q,
+      limit: 10,
+    },
+  });
   return getData(response);
 }
 

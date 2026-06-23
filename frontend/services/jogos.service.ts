@@ -11,8 +11,18 @@ export async function buscarUsuarioLogado() {
   return getData<Usuario>(response);
 }
 
-export async function listarJogos() {
-  const response = await api.get("/jogos");
+export async function listarJogos(params?: {
+  meus?: boolean;
+  limit?: number;
+  cursor?: string;
+}) {
+  const response = await api.get("/jogos", {
+    params: {
+      ...(params?.meus !== undefined ? { meus: String(params.meus) } : {}),
+      ...(params?.limit !== undefined ? { limit: params.limit } : {}),
+      ...(params?.cursor ? { cursor: params.cursor } : {}),
+    },
+  });
   return getData<Jogo[]>(response);
 }
 

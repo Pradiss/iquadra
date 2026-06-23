@@ -24,67 +24,89 @@ export async function authMiddleware(
   next: NextFunction
 ) {
   try {
-    const supabaseUser = await resolveSupabaseUser(req, res);
-
-    if (!supabaseUser?.id || !supabaseUser.email) {
-      return next(unauthorized("Sessao invalida"));
-    }
-
-    const usuario = await prisma.usuario.findFirst({
-      where: {
-        OR: [
-          {
-            supabaseUserId: supabaseUser.id,
-          },
-          {
-            email: supabaseUser.email,
-          },
-        ],
-      },
-      select: {
-        id: true,
-        email: true,
-        supabaseUserId: true,
-        status: true,
-      },
-    });
-
-    if (!usuario || usuario.status !== "ATIVO") {
-      return next(unauthorized("Usuario inativo ou nao encontrado"));
-    }
-
-    let supabaseUserId = usuario.supabaseUserId;
-
-    if (!supabaseUserId) {
-      const updated = await prisma.usuario.update({
-        where: {
-          id: usuario.id,
-        },
-        data: {
-          supabaseUserId: supabaseUser.id,
-        },
-        select: {
-          supabaseUserId: true,
-        },
-      });
-
-      supabaseUserId = updated.supabaseUserId;
-    }
-
-    if (!supabaseUserId) {
-      return next(unauthorized("Usuario sem vinculo Supabase"));
-    }
-
-    req.user = {
-      id: usuario.id,
-      email: usuario.email,
-      supabaseUserId,
-    };
+    req.user = await resolveAuthUser(req, res);
 
     return next();
   } catch (error) {
     return next(error);
   }
+}
+
+export async function optionalAuthMiddleware(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  if (!hasAuthCredentials(req)) {
+    return next();
+  }
+
+  try {
+    req.user = await resolveAuthUser(req, res);
+  } catch {
+    req.user = undefined;
+  }
+
+  return next();
+}
+
+async function resolveAuthUser(req: Request, res: Response) {
+  const supabaseUser = await resolveSupabaseUser(req, res);
+
+  if (!supabaseUser?.id || !supabaseUser.email) {
+    throw unauthorized("Sessao invalida");
+  }
+
+  const usuario = await prisma.usuario.findFirst({
+    where: {
+      OR: [
+        {
+          supabaseUserId: supabaseUser.id,
+        },
+        {
+          email: supabaseUser.email,
+        },
+      ],
+    },
+    select: {
+      id: true,
+      email: true,
+      supabaseUserId: true,
+      status: true,
+    },
+  });
+
+  if (!usuario || usuario.status !== "ATIVO") {
+    throw unauthorized("Usuario inativo ou nao encontrado");
+  }
+
+  let supabaseUserId = usuario.supabaseUserId;
+
+  if (!supabaseUserId) {
+    const updated = await prisma.usuario.update({
+      where: {
+        id: usuario.id,
+      },
+      data: {
+        supabaseUserId: supabaseUser.id,
+      },
+      select: {
+        supabaseUserId: true,
+      },
+    });
+
+    supabaseUserId = updated.supabaseUserId;
+  }
+
+  if (!supabaseUserId) {
+    throw unauthorized("Usuario sem vinculo Supabase");
+  }
+
+  return {
+    id: usuario.id,
+    email: usuario.email,
+    supabaseUserId,
+  };
 }
 
 async function resolveSupabaseUser(req: Request, res: Response) {
@@ -130,4 +152,12 @@ function getBearerToken(req: Request) {
   }
 
   return token;
+}
+
+function hasAuthCredentials(req: Request) {
+  return Boolean(
+    getBearerToken(req) ||
+      getAuthCookie(req, ACCESS_TOKEN_COOKIE) ||
+      getAuthCookie(req, REFRESH_TOKEN_COOKIE)
+  );
 }

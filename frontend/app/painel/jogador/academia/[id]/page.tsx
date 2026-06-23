@@ -20,10 +20,8 @@ import { AgendaCalendar } from "@/components/jogador/painel/agenda-calendar";
 
 import {
   listarAcademias,
-  listarQuadrasDaAcademia,
-  obterDisponibilidadeQuadra,
+  obterDisponibilidadeAcademia,
 } from "@/services/jogador.service";
-import api from "@/services/api";
 import { salvarUltimaAcademia } from "@/lib/last-academia";
 
 type Academia = AcademiaBusca;
@@ -120,12 +118,23 @@ type SlotDisponibilidade = {
 
 type DisponibilidadeResponse = {
   quadra?: {
+    id?: string;
+    nome?: string;
+    tipo_piso?: string | null;
+    modalidade?: string | null;
+    valor_hora?: number | null;
+    coberta?: boolean | null;
     capacidade_minima?: number;
     capacidade_maxima?: number;
     permite_simples?: boolean;
     permite_dupla?: boolean;
   };
   slots?: SlotDisponibilidade[];
+};
+
+type DisponibilidadeAcademiaResponse = {
+  academia?: Academia;
+  quadras?: DisponibilidadeResponse[];
 };
 
 function montarHorariosDaQuadra(
@@ -303,40 +312,49 @@ export default function AcademiaAgendaPage() {
     setErro("");
 
     try {
-      const [academiaResponse, quadrasResponse] = await Promise.all([
-        api.get(`/academias/${academiaId}`),
-        listarQuadrasDaAcademia(academiaId),
-      ]);
-
-      const academiaApi = academiaResponse.data.data ?? academiaResponse.data;
-      const quadrasApi = Array.isArray(quadrasResponse)
-        ? (quadrasResponse as Quadra[])
+      const disponibilidade = (await obterDisponibilidadeAcademia(
+        academiaId,
+        dataSelecionada
+      )) as DisponibilidadeAcademiaResponse;
+      const academiaApi = disponibilidade.academia;
+      const quadrasDisponibilidade = Array.isArray(disponibilidade.quadras)
+        ? disponibilidade.quadras
         : [];
+      const quadrasApi = quadrasDisponibilidade
+        .map((item) => item.quadra)
+        .filter(Boolean)
+        .map((quadra) => ({
+          id: String(quadra?.id ?? ""),
+          nome: String(quadra?.nome ?? "Quadra"),
+          tipo_piso: quadra?.tipo_piso ?? null,
+          modalidade: quadra?.modalidade ?? null,
+          valor_hora: quadra?.valor_hora ?? null,
+          coberta: quadra?.coberta ?? null,
+          capacidade_minima: quadra?.capacidade_minima,
+          capacidade_maxima: quadra?.capacidade_maxima,
+          permite_simples: quadra?.permite_simples,
+          permite_dupla: quadra?.permite_dupla,
+        }))
+        .filter((quadra) => Boolean(quadra.id)) as Quadra[];
 
       if (quadrasApi.length === 0) {
         if (requestId !== agendaRequestIdRef.current) return;
 
         salvarUltimaAcademia(academiaApi?.id ?? academiaId);
-        setAcademia(academiaApi);
+        setAcademia(academiaApi ?? null);
         setQuadras(quadrasApi);
         setHorarios([]);
         return;
       }
 
-      const resultados = await Promise.allSettled(
-        quadrasApi.map(async (quadra) => {
-          const response = (await obterDisponibilidadeQuadra(
-            quadra.id,
-            dataSelecionada
-          )) as DisponibilidadeResponse;
+      const quadrasById = new Map(quadrasApi.map((quadra) => [quadra.id, quadra]));
+      const agenda = quadrasDisponibilidade
+        .flatMap((item) => {
+          const quadraId = item.quadra?.id;
+          const quadra = quadraId ? quadrasById.get(quadraId) : null;
 
-          return montarHorariosDaQuadra(quadra, response);
+          return quadra ? montarHorariosDaQuadra(quadra, item) : [];
         })
-      );
-
-      const agenda = resultados
-        .filter((resultado) => resultado.status === "fulfilled")
-        .flatMap((resultado) => resultado.value)
         .sort((a, b) => {
           const porHora = a.hora.localeCompare(b.hora);
           if (porHora !== 0) return porHora;
@@ -347,16 +365,8 @@ export default function AcademiaAgendaPage() {
       if (requestId !== agendaRequestIdRef.current) return;
 
       salvarUltimaAcademia(academiaApi?.id ?? academiaId);
-      setAcademia(academiaApi);
+      setAcademia(academiaApi ?? null);
       setQuadras(quadrasApi);
-
-      const teveErro = resultados.some(
-        (resultado) => resultado.status === "rejected"
-      );
-
-      if (teveErro) {
-        setErro("Alguns horários não puderam ser carregados.");
-      }
 
       setHorarios(agenda);
     } catch {

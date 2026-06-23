@@ -328,16 +328,7 @@ export function AgendarJogoDialog({
       setJogadores([null, null, null]);
       setParticipantesAtuais(horario.participantes ?? []);
       setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
-
-      if (!horario.jogoId || podeGerenciarParticipantes) {
-        listarUsuarios()
-          .then((res) => {
-            if (ativo) setUsuarios(normalizarUsuarios(res));
-          })
-          .catch(() => {
-            if (ativo) setUsuarios([]);
-          });
-      }
+      setUsuarios([]);
     }, 0);
 
     return () => {
@@ -345,6 +336,33 @@ export function AgendarJogoDialog({
       window.clearTimeout(timeoutId);
     };
   }, [open, horario, podeGerenciarParticipantes]);
+
+  useEffect(() => {
+    if (!open || !horario || buscandoIndex === null) return;
+    if (horario.jogoId && !podeGerenciarParticipantes) return;
+
+    const termo = busca.trim();
+
+    if (termo.length < 2) {
+      return;
+    }
+
+    let ativo = true;
+    const timeoutId = window.setTimeout(() => {
+      listarUsuarios(termo)
+        .then((res) => {
+          if (ativo) setUsuarios(normalizarUsuarios(res));
+        })
+        .catch(() => {
+          if (ativo) setUsuarios([]);
+        });
+    }, 250);
+
+    return () => {
+      ativo = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [busca, buscandoIndex, horario, open, podeGerenciarParticipantes]);
 
   function abrirBusca(index: number | "existente") {
     setBuscandoIndex(index);

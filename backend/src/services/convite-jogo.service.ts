@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { lockJogo } from "../lib/advisory-lock";
+import { invalidateQuadraCache } from "../lib/cache";
 import { ConvidarJogadorData } from "../schemas/convite-jogo.schema";
 
 const conviteJogoInclude = {
@@ -33,96 +35,102 @@ export async function convidarJogadorParaJogo(
     throw new Error("Você não pode convidar você mesmo");
   }
 
-  const jogo = await prisma.jogo.findUnique({
-    where: { id: jogoId },
-    include: {
-      participantes: {
-        where: { status: "CONFIRMADO" },
+  const convite = await prisma.$transaction(async (tx) => {
+    await lockJogo(tx, jogoId);
+
+    const jogo = await tx.jogo.findUnique({
+      where: { id: jogoId },
+      include: {
+        participantes: {
+          where: { status: "CONFIRMADO" },
+        },
+        convites: {
+          where: { status: "PENDENTE" },
+        },
       },
-      convites: {
-        where: { status: "PENDENTE" },
+    });
+
+    if (!jogo) {
+      throw new Error("Jogo não encontrado");
+    }
+
+    if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
+      throw new Error("Este jogo não está aberto para convites");
+    }
+
+    const ehParticipante = jogo.participantes.some(
+      (participante) => participante.usuario_id === usuarioId
+    );
+
+    if (!ehParticipante) {
+      throw new Error("Você precisa participar do jogo para convidar alguém");
+    }
+
+    if (jogo.participantes.length >= jogo.maximo_participantes) {
+      throw new Error("Este jogo já está completo");
+    }
+
+    const convidado = await tx.usuario.findUnique({
+      where: { id: data.convidado_usuario_id },
+    });
+
+    if (!convidado) {
+      throw new Error("Usuário convidado não encontrado");
+    }
+
+    const jaParticipa = jogo.participantes.some(
+      (participante) => participante.usuario_id === data.convidado_usuario_id
+    );
+
+    if (jaParticipa) {
+      throw new Error("Este usuário já participa do jogo");
+    }
+
+    const conviteExistente = await tx.conviteJogo.findUnique({
+      where: {
+        jogo_id_convidado_usuario_id: {
+          jogo_id: jogoId,
+          convidado_usuario_id: data.convidado_usuario_id,
+        },
       },
-    },
-  });
+    });
 
-  if (!jogo) {
-    throw new Error("Jogo não encontrado");
-  }
+    if (conviteExistente && conviteExistente.status === "PENDENTE") {
+      throw new Error("Este usuário já foi convidado para este jogo");
+    }
 
-  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
-    throw new Error("Este jogo não está aberto para convites");
-  }
+    if (
+      jogo.participantes.length + jogo.convites.length >=
+      jogo.maximo_participantes
+    ) {
+      throw new Error("Todas as vagas deste jogo já estão ocupadas ou convidadas");
+    }
 
-  const ehParticipante = jogo.participantes.some(
-    (participante) => participante.usuario_id === usuarioId
-  );
+    if (conviteExistente) {
+      return tx.conviteJogo.update({
+        where: {
+          id: conviteExistente.id,
+        },
+        data: {
+          enviado_por_id: usuarioId,
+          status: "PENDENTE",
+        },
+        include: conviteJogoInclude,
+      });
+    }
 
-  if (!ehParticipante) {
-    throw new Error("Você precisa participar do jogo para convidar alguém");
-  }
-
-  if (jogo.participantes.length >= jogo.maximo_participantes) {
-    throw new Error("Este jogo já está completo");
-  }
-
-  const convidado = await prisma.usuario.findUnique({
-    where: { id: data.convidado_usuario_id },
-  });
-
-  if (!convidado) {
-    throw new Error("Usuário convidado não encontrado");
-  }
-
-  const jaParticipa = jogo.participantes.some(
-    (participante) => participante.usuario_id === data.convidado_usuario_id
-  );
-
-  if (jaParticipa) {
-    throw new Error("Este usuário já participa do jogo");
-  }
-
-  const conviteExistente = await prisma.conviteJogo.findUnique({
-    where: {
-      jogo_id_convidado_usuario_id: {
+    return tx.conviteJogo.create({
+      data: {
         jogo_id: jogoId,
         convidado_usuario_id: data.convidado_usuario_id,
-      },
-    },
-  });
-
-  if (conviteExistente && conviteExistente.status === "PENDENTE") {
-    throw new Error("Este usuário já foi convidado para este jogo");
-  }
-
-  if (
-    jogo.participantes.length + jogo.convites.length >=
-    jogo.maximo_participantes
-  ) {
-    throw new Error("Todas as vagas deste jogo já estão ocupadas ou convidadas");
-  }
-
-  if (conviteExistente) {
-    return prisma.conviteJogo.update({
-      where: {
-        id: conviteExistente.id,
-      },
-      data: {
         enviado_por_id: usuarioId,
         status: "PENDENTE",
       },
       include: conviteJogoInclude,
     });
-  }
-
-  return prisma.conviteJogo.create({
-    data: {
-      jogo_id: jogoId,
-      convidado_usuario_id: data.convidado_usuario_id,
-      enviado_por_id: usuarioId,
-      status: "PENDENTE",
-    },
-    include: conviteJogoInclude,
   });
+
+  return convite;
 }
 
 export async function listarConvitesJogos(usuarioId: string) {
@@ -164,58 +172,77 @@ export async function listarConvitesJogos(usuarioId: string) {
 }
 
 export async function aceitarConviteJogo(usuarioId: string, conviteId: string) {
-  const convite = await prisma.conviteJogo.findUnique({
+  const conviteBase = await prisma.conviteJogo.findUnique({
     where: { id: conviteId },
-    include: {
-      jogo: {
-        include: {
-          participantes: {
-            where: {
-              status: {
-                in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+    select: {
+      id: true,
+      jogo_id: true,
+      convidado_usuario_id: true,
+    },
+  });
+
+  if (!conviteBase) {
+    throw new Error("Convite não encontrado");
+  }
+
+  if (conviteBase.convidado_usuario_id !== usuarioId) {
+    throw new Error("Você não pode aceitar este convite");
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    await lockJogo(tx, conviteBase.jogo_id);
+
+    const convite = await tx.conviteJogo.findUnique({
+      where: { id: conviteId },
+      include: {
+        jogo: {
+          include: {
+            participantes: {
+              where: {
+                status: {
+                  in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+                },
               },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!convite) {
-    throw new Error("Convite não encontrado");
-  }
+    if (!convite) {
+      throw new Error("Convite não encontrado");
+    }
 
-  if (convite.convidado_usuario_id !== usuarioId) {
-    throw new Error("Você não pode aceitar este convite");
-  }
+    if (convite.convidado_usuario_id !== usuarioId) {
+      throw new Error("Você não pode aceitar este convite");
+    }
 
-  if (convite.status !== "PENDENTE") {
-    throw new Error("Este convite não está pendente");
-  }
+    if (convite.status !== "PENDENTE") {
+      throw new Error("Este convite não está pendente");
+    }
 
-  if (!["ABERTO", "COMPLETO"].includes(convite.jogo.status)) {
-    throw new Error("Este jogo não está mais aberto");
-  }
+    if (!["ABERTO", "COMPLETO"].includes(convite.jogo.status)) {
+      throw new Error("Este jogo não está mais aberto");
+    }
 
-  const participantesConfirmados = convite.jogo.participantes.filter(
-    (participante) => participante.status === "CONFIRMADO"
-  );
+    const participantesConfirmados = convite.jogo.participantes.filter(
+      (participante) => participante.status === "CONFIRMADO"
+    );
 
-  const participanteExistente = convite.jogo.participantes.find(
-    (participante) => participante.usuario_id === usuarioId
-  );
+    const participanteExistente = convite.jogo.participantes.find(
+      (participante) => participante.usuario_id === usuarioId
+    );
 
-  if (participanteExistente?.status === "CONFIRMADO") {
-    throw new Error("Você já participa deste jogo");
-  }
+    if (participanteExistente?.status === "CONFIRMADO") {
+      throw new Error("Você já participa deste jogo");
+    }
 
-  if (participantesConfirmados.length >= convite.jogo.maximo_participantes) {
-    throw new Error("Este jogo já está completo");
-  }
+    if (participantesConfirmados.length >= convite.jogo.maximo_participantes) {
+      throw new Error("Este jogo já está completo");
+    }
 
-  const totalAposAceitar = participantesConfirmados.length + 1;
+    const totalAposAceitar = participantesConfirmados.length + 1;
 
-  const result = await prisma.$transaction(async (tx) => {
     if (participanteExistente) {
       await tx.participanteJogo.update({
         where: {
@@ -269,6 +296,20 @@ export async function aceitarConviteJogo(usuarioId: string, conviteId: string) {
 
     return conviteAtualizado;
   });
+
+  const jogo = await prisma.jogo.findUnique({
+    where: {
+      id: conviteBase.jogo_id,
+    },
+    select: {
+      quadra_id: true,
+      academia_id: true,
+    },
+  });
+
+  if (jogo) {
+    invalidateQuadraCache(jogo.quadra_id, jogo.academia_id);
+  }
 
   return result;
 }

@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { prisma } from "../lib/prisma";
+import { invalidateAcademiaCache } from "../lib/cache";
 import { supabaseAdmin, supabaseAuth } from "../lib/supabase";
 import {
   LoginData,
@@ -386,6 +387,8 @@ export async function registerAcademia(data: RegisterAcademiaData) {
         academia,
       };
     });
+
+    invalidateAcademiaCache(result.academia.id);
 
     return {
       session: auth.session,

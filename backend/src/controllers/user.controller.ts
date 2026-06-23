@@ -44,6 +44,14 @@ export async function listUsersController(req: AuthRequest, res: Response) {
   const query = listUsersQuerySchema.parse(req.query);
   const termo = query.q?.trim();
 
+  if (!termo || termo.length < 2) {
+    return res.json({
+      success: true,
+      total: 0,
+      data: [],
+    });
+  }
+
   const where: any = {
     status: "ATIVO",
     perfil_cliente: {

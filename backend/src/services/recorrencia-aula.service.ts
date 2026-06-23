@@ -1,4 +1,9 @@
 import { prisma } from "../lib/prisma";
+import {
+  lockAgendaSlot,
+  type TransactionClient,
+} from "../lib/advisory-lock";
+import { invalidateQuadraCache } from "../lib/cache";
 import { CreateRecorrenciaAulaData } from "../schemas/recorrencia-aula.schema";
 import {
   addDaysToDateOnly,
@@ -6,6 +11,8 @@ import {
   formatInAppTimeZone,
   getDiaSemana,
 } from "../utils/date-time";
+
+type DbClient = typeof prisma | TransactionClient;
 
 function formatarConflito(date: Date) {
   const { data, hora } = formatInAppTimeZone(date);
@@ -30,8 +37,13 @@ async function verificarPermissaoAcademia(usuarioId: string, academiaId: string)
   }
 }
 
-async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
-  const jogo = await prisma.jogo.findFirst({
+async function validarConflitos(
+  db: DbClient,
+  quadraId: string,
+  inicio: Date,
+  fim: Date
+) {
+  const jogo = await db.jogo.findFirst({
     where: {
       quadra_id: quadraId,
       status: { in: ["ABERTO", "COMPLETO"] },
@@ -42,7 +54,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
 
   if (jogo) throw new Error(`Conflito com jogo em ${formatarConflito(inicio)}`);
 
-  const aula = await prisma.aula.findFirst({
+  const aula = await db.aula.findFirst({
     where: {
       quadra_id: quadraId,
       status: "CONFIRMADA",
@@ -53,7 +65,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
 
   if (aula) throw new Error(`Conflito com aula em ${formatarConflito(inicio)}`);
 
-  const bloqueio = await prisma.bloqueioQuadra.findFirst({
+  const bloqueio = await db.bloqueioQuadra.findFirst({
     where: {
       quadra_id: quadraId,
       inicio_em: { lt: fim },
@@ -104,8 +116,6 @@ export async function createRecorrenciaAula(
         throw new Error("Horário final deve ser maior que o horário inicial");
       }
 
-      await validarConflitos(data.quadra_id, inicio, fim);
-
       aulasParaCriar.push({
         inicio_em: inicio,
         fim_em: fim,
@@ -120,6 +130,19 @@ export async function createRecorrenciaAula(
   }
 
   const result = await prisma.$transaction(async (tx) => {
+    for (const aula of aulasParaCriar) {
+      await lockAgendaSlot(tx, data.quadra_id, aula.inicio_em);
+    }
+
+    for (const aula of aulasParaCriar) {
+      await validarConflitos(
+        tx,
+        data.quadra_id,
+        aula.inicio_em,
+        aula.fim_em
+      );
+    }
+
     const recorrencia = await tx.recorrenciaAula.create({
       data: {
         academia_id: data.academia_id,
@@ -148,6 +171,8 @@ export async function createRecorrenciaAula(
 
     return recorrencia;
   });
+
+  invalidateQuadraCache(data.quadra_id, data.academia_id);
 
   return getRecorrenciaAulaById(result.id);
 }
@@ -222,6 +247,8 @@ export async function cancelarRecorrenciaAula(
       },
     }),
   ]);
+
+  invalidateQuadraCache(recorrencia.quadra_id, recorrencia.academia_id);
 
   return getRecorrenciaAulaById(recorrenciaId);
 }

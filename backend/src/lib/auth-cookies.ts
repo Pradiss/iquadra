@@ -1,9 +1,11 @@
 import type { CookieOptions, Request, Response } from "express";
 import type { Session } from "@supabase/supabase-js";
+import { randomBytes } from "node:crypto";
 import { env } from "../config/env";
 
 export const ACCESS_TOKEN_COOKIE = "playfy_sb_access_token";
 export const REFRESH_TOKEN_COOKIE = "playfy_sb_refresh_token";
+export const CSRF_TOKEN_COOKIE = "playfy_csrf_token";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -22,6 +24,13 @@ function cookieOptions(maxAge: number): CookieOptions {
   };
 }
 
+function csrfCookieOptions(maxAge: number): CookieOptions {
+  return {
+    ...cookieOptions(maxAge),
+    httpOnly: false,
+  };
+}
+
 export function setAuthCookies(res: Response, session: Session) {
   res.cookie(
     ACCESS_TOKEN_COOKIE,
@@ -34,6 +43,12 @@ export function setAuthCookies(res: Response, session: Session) {
     session.refresh_token,
     cookieOptions(THIRTY_DAYS_MS)
   );
+
+  res.cookie(
+    CSRF_TOKEN_COOKIE,
+    randomBytes(32).toString("hex"),
+    csrfCookieOptions(THIRTY_DAYS_MS)
+  );
 }
 
 export function clearAuthCookies(res: Response) {
@@ -41,6 +56,7 @@ export function clearAuthCookies(res: Response) {
 
   res.clearCookie(ACCESS_TOKEN_COOKIE, options);
   res.clearCookie(REFRESH_TOKEN_COOKIE, options);
+  res.clearCookie(CSRF_TOKEN_COOKIE, csrfCookieOptions(0));
 }
 
 export function getAuthCookie(req: Request, name: string) {

@@ -1,6 +1,13 @@
 import { prisma } from "../lib/prisma";
+import {
+  lockAgendaSlot,
+  type TransactionClient,
+} from "../lib/advisory-lock";
+import { invalidateQuadraCache } from "../lib/cache";
 import { CreateBloqueioData } from "../schemas/bloqueio.schema";
 import { resolvePeriod } from "../utils/date-time";
+
+type DbClient = typeof prisma | TransactionClient;
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -35,8 +42,13 @@ async function verificarPermissaoPorQuadra(usuarioId: string, quadraId: string) 
   return quadra;
 }
 
-async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
-  const jogoConflitante = await prisma.jogo.findFirst({
+async function validarConflitos(
+  db: DbClient,
+  quadraId: string,
+  inicio: Date,
+  fim: Date
+) {
+  const jogoConflitante = await db.jogo.findFirst({
     where: {
       quadra_id: quadraId,
       status: {
@@ -51,7 +63,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     throw new Error("Não é possível bloquear: já existe jogo nesse período");
   }
 
-  const aulaConflitante = await prisma.aula.findFirst({
+  const aulaConflitante = await db.aula.findFirst({
     where: {
       quadra_id: quadraId,
       status: "CONFIRMADA",
@@ -64,7 +76,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     throw new Error("Não é possível bloquear: já existe aula nesse período");
   }
 
-  const bloqueioConflitante = await prisma.bloqueioQuadra.findFirst({
+  const bloqueioConflitante = await db.bloqueioQuadra.findFirst({
     where: {
       quadra_id: quadraId,
       inicio_em: { lt: fim },
@@ -82,23 +94,31 @@ export async function createBloqueio(
   quadraId: string,
   data: CreateBloqueioData
 ) {
-  await verificarPermissaoPorQuadra(usuarioId, quadraId);
+  const quadra = await verificarPermissaoPorQuadra(usuarioId, quadraId);
 
   const { inicio, fim } = resolvePeriod(data);
 
   validarPeriodo(inicio, fim);
-  await validarConflitos(quadraId, inicio, fim);
 
-  return prisma.bloqueioQuadra.create({
-    data: {
-      quadra_id: quadraId,
-      inicio_em: inicio,
-      fim_em: fim,
-      tipo_bloqueio: data.tipo_bloqueio ?? "OUTRO",
-      motivo: data.motivo,
-      criado_por_usuario_id: usuarioId,
-    },
+  const bloqueio = await prisma.$transaction(async (tx) => {
+    await lockAgendaSlot(tx, quadraId, inicio);
+    await validarConflitos(tx, quadraId, inicio, fim);
+
+    return tx.bloqueioQuadra.create({
+      data: {
+        quadra_id: quadraId,
+        inicio_em: inicio,
+        fim_em: fim,
+        tipo_bloqueio: data.tipo_bloqueio ?? "OUTRO",
+        motivo: data.motivo,
+        criado_por_usuario_id: usuarioId,
+      },
+    });
   });
+
+  invalidateQuadraCache(quadraId, quadra.academia_id);
+
+  return bloqueio;
 }
 
 export async function listBloqueiosByQuadra(quadraId: string) {
@@ -134,6 +154,17 @@ export async function deleteBloqueio(usuarioId: string, bloqueioId: string) {
   await prisma.bloqueioQuadra.delete({
     where: { id: bloqueioId },
   });
+
+  const quadra = await prisma.quadra.findUnique({
+    where: {
+      id: bloqueio.quadra_id,
+    },
+    select: {
+      academia_id: true,
+    },
+  });
+
+  invalidateQuadraCache(bloqueio.quadra_id, quadra?.academia_id);
 
   return true;
 }

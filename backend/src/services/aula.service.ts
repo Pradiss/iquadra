@@ -1,6 +1,13 @@
 import { prisma } from "../lib/prisma";
+import {
+  lockAgendaSlot,
+  type TransactionClient,
+} from "../lib/advisory-lock";
+import { invalidateQuadraCache } from "../lib/cache";
 import { CreateAulaData } from "../schemas/aula.schema";
 import { getLocalDayRange, resolvePeriod } from "../utils/date-time";
+
+type DbClient = typeof prisma | TransactionClient;
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -25,8 +32,13 @@ async function verificarPermissaoAcademia(usuarioId: string, academiaId: string)
   }
 }
 
-async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
-  const jogoConflitante = await prisma.jogo.findFirst({
+async function validarConflitos(
+  db: DbClient,
+  quadraId: string,
+  inicio: Date,
+  fim: Date
+) {
+  const jogoConflitante = await db.jogo.findFirst({
     where: {
       quadra_id: quadraId,
       status: {
@@ -41,7 +53,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     throw new Error("Já existe um jogo nesse horário");
   }
 
-  const aulaConflitante = await prisma.aula.findFirst({
+  const aulaConflitante = await db.aula.findFirst({
     where: {
       quadra_id: quadraId,
       status: "CONFIRMADA",
@@ -54,7 +66,7 @@ async function validarConflitos(quadraId: string, inicio: Date, fim: Date) {
     throw new Error("Já existe uma aula nesse horário");
   }
 
-  const bloqueioConflitante = await prisma.bloqueioQuadra.findFirst({
+  const bloqueioConflitante = await db.bloqueioQuadra.findFirst({
     where: {
       quadra_id: quadraId,
       inicio_em: { lt: fim },
@@ -72,56 +84,65 @@ export async function createAula(usuarioId: string, data: CreateAulaData) {
 
   validarPeriodo(inicio, fim);
 
-  const quadra = await prisma.quadra.findUnique({
-    where: {
-      id: data.quadra_id,
-    },
-  });
-
-  if (!quadra) {
-    throw new Error("Quadra não encontrada");
-  }
-
-  if (!quadra.ativa) {
-    throw new Error("Quadra inativa");
-  }
-
-  if (quadra.academia_id !== data.academia_id) {
-    throw new Error("Quadra não pertence à academia informada");
-  }
-
   await verificarPermissaoAcademia(usuarioId, data.academia_id);
-  await validarConflitos(data.quadra_id, inicio, fim);
 
-  return prisma.aula.create({
-    data: {
-      academia_id: data.academia_id,
-      quadra_id: data.quadra_id,
-      professor_id: data.professor_id,
-      cliente_id: data.cliente_id,
-      inicio_em: inicio,
-      fim_em: fim,
-      observacoes: data.observacoes,
-    },
-    include: {
-      academia: true,
-      quadra: true,
-      professor: {
-        select: {
-          id: true,
-          nome: true,
-          foto_perfil: true,
+  const aula = await prisma.$transaction(async (tx) => {
+    await lockAgendaSlot(tx, data.quadra_id, inicio);
+
+    const quadra = await tx.quadra.findUnique({
+      where: {
+        id: data.quadra_id,
+      },
+    });
+
+    if (!quadra) {
+      throw new Error("Quadra não encontrada");
+    }
+
+    if (!quadra.ativa) {
+      throw new Error("Quadra inativa");
+    }
+
+    if (quadra.academia_id !== data.academia_id) {
+      throw new Error("Quadra não pertence à academia informada");
+    }
+
+    await validarConflitos(tx, data.quadra_id, inicio, fim);
+
+    return tx.aula.create({
+      data: {
+        academia_id: data.academia_id,
+        quadra_id: data.quadra_id,
+        professor_id: data.professor_id,
+        cliente_id: data.cliente_id,
+        inicio_em: inicio,
+        fim_em: fim,
+        observacoes: data.observacoes,
+      },
+      include: {
+        academia: true,
+        quadra: true,
+        professor: {
+          select: {
+            id: true,
+            nome: true,
+            foto_perfil: true,
+          },
+        },
+        cliente: {
+          select: {
+            id: true,
+            nome: true,
+            foto_perfil: true,
+          },
         },
       },
-      cliente: {
-        select: {
-          id: true,
-          nome: true,
-          foto_perfil: true,
-        },
-      },
-    },
+    });
   });
+
+  invalidateQuadraCache(data.quadra_id, data.academia_id);
+
+  return aula;
 }
 
 export async function listAulas(params: {
@@ -224,6 +245,8 @@ export async function cancelarAula(usuarioId: string, aulaId: string) {
       status: "CANCELADA",
     },
   });
+
+  invalidateQuadraCache(aula.quadra_id, aula.academia_id);
 
   return getAulaById(aulaId);
 }

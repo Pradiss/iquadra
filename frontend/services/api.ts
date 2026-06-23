@@ -7,6 +7,15 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined" && isMutatingMethod(config.method)) {
+    const csrfToken = getCookie("playfy_csrf_token");
+
+    if (csrfToken) {
+      config.headers = config.headers ?? {};
+      (config.headers as Record<string, string>)["X-CSRF-Token"] = csrfToken;
+    }
+  }
+
   return config;
 });
 
@@ -34,3 +43,23 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+function isMutatingMethod(method?: string) {
+  return ["post", "put", "patch", "delete"].includes(
+    method?.toLowerCase() ?? ""
+  );
+}
+
+function getCookie(name: string) {
+  const prefix = `${name}=`;
+  const cookie = document.cookie
+    .split(";")
+    .map((chunk) => chunk.trim())
+    .find((chunk) => chunk.startsWith(prefix));
+
+  if (!cookie) {
+    return "";
+  }
+
+  return decodeURIComponent(cookie.slice(prefix.length));
+}

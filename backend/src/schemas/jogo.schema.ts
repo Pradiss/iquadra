@@ -37,6 +37,12 @@ export const listJogosQuerySchema = z
     academia_id: uuidSchema.optional(),
     data: dateOnlySchema.optional(),
     status: z.enum(["ABERTO", "COMPLETO", "CANCELADO", "CONCLUIDO"]).optional(),
+    meus: z
+      .enum(["true", "false"])
+      .transform((value) => value === "true")
+      .optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+    cursor: uuidSchema.optional(),
   })
   .strict();
 

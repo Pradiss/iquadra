@@ -1,4 +1,9 @@
 import { prisma } from "../lib/prisma";
+import {
+  CACHE_TTL,
+  getOrSetCache,
+  invalidateQuadraCache,
+} from "../lib/cache";
 import { CreateQuadraData, UpdateQuadraData } from "../schemas/quadra.schema";
 
 type CapacidadeQuadraInput = {
@@ -114,7 +119,7 @@ export async function createQuadra(
 
   const capacidade = montarCapacidadeQuadra(data);
 
-  return prisma.quadra.create({
+  const quadra = await prisma.quadra.create({
     data: {
       academia_id: academiaId,
       nome: data.nome,
@@ -127,21 +132,30 @@ export async function createQuadra(
       ...capacidade,
     },
   });
+
+  invalidateQuadraCache(quadra.id, academiaId);
+
+  return quadra;
 }
 
 export async function listQuadrasByAcademia(
   academiaId: string,
   incluirInativas = false
 ) {
-  return prisma.quadra.findMany({
-    where: {
-      academia_id: academiaId,
-      ...(incluirInativas ? {} : { ativa: true }),
-    },
-    orderBy: {
-      ordem_exibicao: "asc",
-    },
-  });
+  return getOrSetCache(
+    `quadras:${academiaId}:inativas:${incluirInativas}`,
+    CACHE_TTL.quadras,
+    () =>
+      prisma.quadra.findMany({
+        where: {
+          academia_id: academiaId,
+          ...(incluirInativas ? {} : { ativa: true }),
+        },
+        orderBy: {
+          ordem_exibicao: "asc",
+        },
+      })
+  );
 }
 
 export async function getQuadraById(id: string) {
@@ -186,7 +200,7 @@ export async function updateQuadra(
 
   const capacidade = montarCapacidadeQuadra(data, quadra);
 
-  return prisma.quadra.update({
+  const updated = await prisma.quadra.update({
     where: { id: quadraId },
     data: {
       ...(data.nome !== undefined ? { nome: data.nome } : {}),
@@ -201,6 +215,10 @@ export async function updateQuadra(
       ...capacidade,
     },
   });
+
+  invalidateQuadraCache(quadraId, quadra.academia_id);
+
+  return updated;
 }
 
 export async function updateStatusQuadra(
@@ -218,10 +236,14 @@ export async function updateStatusQuadra(
 
   await verificarPermissaoAcademia(usuarioId, quadra.academia_id);
 
-  return prisma.quadra.update({
+  const updated = await prisma.quadra.update({
     where: { id: quadraId },
     data: { ativa },
   });
+
+  invalidateQuadraCache(quadraId, quadra.academia_id);
+
+  return updated;
 }
 
 export async function deleteQuadra(usuarioId: string, quadraId: string) {
@@ -267,6 +289,8 @@ export async function deleteQuadra(usuarioId: string, quadraId: string) {
       where: { id: quadraId },
     }),
   ]);
+
+  invalidateQuadraCache(quadraId, quadra.academia_id);
 
   return quadra;
 }

@@ -24,6 +24,7 @@ import {
   notFoundMiddleware,
 } from "./middlewares/error.middleware";
 import { generalRateLimiter } from "./middlewares/rate-limit.middleware";
+import { csrfMiddleware } from "./middlewares/csrf.middleware";
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use(
   })
 );
 app.use(express.json({ limit: "100kb" }));
+app.use(csrfMiddleware);
 
 app.use(
   "/uploads",

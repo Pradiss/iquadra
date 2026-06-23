@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { invalidateQuadraCache } from "../lib/cache";
 import {
   CreateHorarioQuadraData,
   UpdateHorarioQuadraData,
@@ -37,12 +38,12 @@ export async function createHorarioQuadra(
   quadraId: string,
   data: CreateHorarioQuadraData
 ) {
-  await verificarPermissaoPorQuadra(usuarioId, quadraId);
+  const quadra = await verificarPermissaoPorQuadra(usuarioId, quadraId);
 
   const duracaoSlot = data.duracao_slot_minutos ?? 90;
   validarJanelaDeSlots(data.abre_as, data.fecha_as, duracaoSlot);
 
-  return prisma.horarioQuadra.create({
+  const horario = await prisma.horarioQuadra.create({
     data: {
       quadra_id: quadraId,
       dia_semana: data.dia_semana,
@@ -52,6 +53,10 @@ export async function createHorarioQuadra(
       ativo: data.ativo ?? true,
     },
   });
+
+  invalidateQuadraCache(quadraId, quadra.academia_id);
+
+  return horario;
 }
 
 export async function listHorariosQuadra(quadraId: string) {
@@ -86,10 +91,23 @@ export async function updateHorarioQuadra(
     data.duracao_slot_minutos ?? horario.duracao_slot_minutos
   );
 
-  return prisma.horarioQuadra.update({
+  const updated = await prisma.horarioQuadra.update({
     where: { id: horarioId },
     data,
   });
+
+  const quadra = await prisma.quadra.findUnique({
+    where: {
+      id: horario.quadra_id,
+    },
+    select: {
+      academia_id: true,
+    },
+  });
+
+  invalidateQuadraCache(horario.quadra_id, quadra?.academia_id);
+
+  return updated;
 }
 
 export async function deleteHorarioQuadra(
@@ -109,6 +127,17 @@ export async function deleteHorarioQuadra(
   await prisma.horarioQuadra.delete({
     where: { id: horarioId },
   });
+
+  const quadra = await prisma.quadra.findUnique({
+    where: {
+      id: horario.quadra_id,
+    },
+    select: {
+      academia_id: true,
+    },
+  });
+
+  invalidateQuadraCache(horario.quadra_id, quadra?.academia_id);
 
   return true;
 }

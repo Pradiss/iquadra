@@ -1,5 +1,11 @@
 import { prisma } from "../lib/prisma";
 import {
+  lockAgendaSlot,
+  lockJogo,
+  type TransactionClient,
+} from "../lib/advisory-lock";
+import { invalidateQuadraCache } from "../lib/cache";
+import {
   AdicionarParticipanteJogoData,
   CreateJogoData,
 } from "../schemas/jogo.schema";
@@ -49,12 +55,15 @@ function getMaximoParticipantes(
   return 4;
 }
 
+type DbClient = typeof prisma | TransactionClient;
+
 async function validarConflitoAgenda(
+  db: DbClient,
   quadraId: string,
   inicio: Date,
   fim: Date
 ) {
-  const jogoConflitante = await prisma.jogo.findFirst({
+  const jogoConflitante = await db.jogo.findFirst({
     where: {
       quadra_id: quadraId,
       status: {
@@ -73,7 +82,7 @@ async function validarConflitoAgenda(
     throw new Error("Já existe um jogo nesse horário");
   }
 
-  const aulaConflitante = await prisma.aula.findFirst({
+  const aulaConflitante = await db.aula.findFirst({
     where: {
       quadra_id: quadraId,
       status: "CONFIRMADA",
@@ -90,7 +99,7 @@ async function validarConflitoAgenda(
     throw new Error("Já existe uma aula nesse horário");
   }
 
-  const bloqueioConflitante = await prisma.bloqueioQuadra.findFirst({
+  const bloqueioConflitante = await db.bloqueioQuadra.findFirst({
     where: {
       quadra_id: quadraId,
       inicio_em: {
@@ -108,6 +117,7 @@ async function validarConflitoAgenda(
 }
 
 async function validarHorarioFuncionamento(
+  db: DbClient,
   quadraId: string,
   inicio: Date,
   fim: Date
@@ -123,14 +133,14 @@ async function validarHorarioFuncionamento(
   const diaSemana = getDiaSemana(inicioLocal.data);
 
   const [horarioPadrao, horarioEspecial] = await Promise.all([
-    prisma.horarioQuadra.findFirst({
+    db.horarioQuadra.findFirst({
       where: {
         quadra_id: quadraId,
         dia_semana: diaSemana,
         ativo: true,
       },
     }),
-    prisma.horarioEspecialQuadra.findFirst({
+    db.horarioEspecialQuadra.findFirst({
       where: {
         quadra_id: quadraId,
         data: {
@@ -171,6 +181,7 @@ async function validarHorarioFuncionamento(
 }
 
 async function validarPermissaoGerenciarParticipantes(
+  db: DbClient,
   usuarioId: string,
   jogo: {
     academia_id: string;
@@ -181,7 +192,7 @@ async function validarPermissaoGerenciarParticipantes(
     return;
   }
 
-  const vinculoAdmin = await prisma.academiaUsuario.findFirst({
+  const vinculoAdmin = await db.academiaUsuario.findFirst({
     where: {
       academia_id: jogo.academia_id,
       usuario_id: usuarioId,
@@ -206,30 +217,32 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
 
   validarPeriodo(inicio, fim);
 
-  const quadra = await prisma.quadra.findUnique({
-    where: {
-      id: data.quadra_id,
-    },
-  });
-
-  if (!quadra) {
-    throw new Error("Quadra não encontrada");
-  }
-
-  if (!quadra.ativa) {
-    throw new Error("Quadra inativa");
-  }
-
-  if (quadra.academia_id !== data.academia_id) {
-    throw new Error("Quadra não pertence à academia informada");
-  }
-
-  await validarHorarioFuncionamento(data.quadra_id, inicio, fim);
-  await validarConflitoAgenda(data.quadra_id, inicio, fim);
-
-  const maximoParticipantes = getMaximoParticipantes(data.tipo_jogo, quadra);
-
   const jogo = await prisma.$transaction(async (tx) => {
+    await lockAgendaSlot(tx, data.quadra_id, inicio);
+
+    const quadra = await tx.quadra.findUnique({
+      where: {
+        id: data.quadra_id,
+      },
+    });
+
+    if (!quadra) {
+      throw new Error("Quadra não encontrada");
+    }
+
+    if (!quadra.ativa) {
+      throw new Error("Quadra inativa");
+    }
+
+    if (quadra.academia_id !== data.academia_id) {
+      throw new Error("Quadra não pertence à academia informada");
+    }
+
+    await validarHorarioFuncionamento(tx, data.quadra_id, inicio, fim);
+    await validarConflitoAgenda(tx, data.quadra_id, inicio, fim);
+
+    const maximoParticipantes = getMaximoParticipantes(data.tipo_jogo, quadra);
+
     const novoJogo = await tx.jogo.create({
       data: {
         academia_id: data.academia_id,
@@ -258,6 +271,8 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
     return novoJogo;
   });
 
+  invalidateQuadraCache(data.quadra_id, data.academia_id);
+
   return getJogoById(jogo.id);
 }
 
@@ -265,6 +280,10 @@ export async function listJogos(params: {
   academia_id?: string;
   data?: string;
   status?: "ABERTO" | "COMPLETO" | "CANCELADO" | "CONCLUIDO";
+  meus?: boolean;
+  usuario_id?: string;
+  limit?: number;
+  cursor?: string;
 }) {
   const where: any = {};
 
@@ -285,8 +304,26 @@ export async function listJogos(params: {
     };
   }
 
+  if (params.meus && params.usuario_id) {
+    where.participantes = {
+      some: {
+        usuario_id: params.usuario_id,
+        status: "CONFIRMADO",
+      },
+    };
+  }
+
   return prisma.jogo.findMany({
     where,
+    take: params.limit ?? 50,
+    ...(params.cursor
+      ? {
+          cursor: {
+            id: params.cursor,
+          },
+          skip: 1,
+        }
+      : {}),
     include: {
       academia: true,
       quadra: true,
@@ -305,9 +342,14 @@ export async function listJogos(params: {
         },
       },
     },
-    orderBy: {
-      inicio_em: "asc",
-    },
+    orderBy: [
+      {
+        inicio_em: "asc",
+      },
+      {
+        id: "asc",
+      },
+    ],
   });
 }
 
@@ -341,48 +383,50 @@ export async function getJogoById(id: string) {
 }
 
 export async function participarJogo(usuarioId: string, jogoId: string) {
-  const jogo = await prisma.jogo.findUnique({
-    where: {
-      id: jogoId,
-    },
-    include: {
-      participantes: {
-        where: {
-          status: {
-            in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+  await prisma.$transaction(async (tx) => {
+    await lockJogo(tx, jogoId);
+
+    const jogo = await tx.jogo.findUnique({
+      where: {
+        id: jogoId,
+      },
+      include: {
+        participantes: {
+          where: {
+            status: {
+              in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!jogo) {
-    throw new Error("Jogo não encontrado");
-  }
+    if (!jogo) {
+      throw new Error("Jogo não encontrado");
+    }
 
-  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
-    throw new Error("Este jogo não está aberto para participantes");
-  }
+    if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
+      throw new Error("Este jogo não está aberto para participantes");
+    }
 
-  const participantesConfirmados = jogo.participantes.filter(
-    (participante) => participante.status === "CONFIRMADO"
-  );
+    const participantesConfirmados = jogo.participantes.filter(
+      (participante) => participante.status === "CONFIRMADO"
+    );
 
-  const participanteExistente = jogo.participantes.find(
-    (participante) => participante.usuario_id === usuarioId
-  );
+    const participanteExistente = jogo.participantes.find(
+      (participante) => participante.usuario_id === usuarioId
+    );
 
-  if (participanteExistente?.status === "CONFIRMADO") {
-    throw new Error("Você já participa deste jogo");
-  }
+    if (participanteExistente?.status === "CONFIRMADO") {
+      throw new Error("Você já participa deste jogo");
+    }
 
-  if (participantesConfirmados.length >= jogo.maximo_participantes) {
-    throw new Error("Este jogo já está completo");
-  }
+    if (participantesConfirmados.length >= jogo.maximo_participantes) {
+      throw new Error("Este jogo já está completo");
+    }
 
-  const totalParticipantes = participantesConfirmados.length + 1;
+    const totalParticipantes = participantesConfirmados.length + 1;
 
-  await prisma.$transaction(async (tx) => {
     if (participanteExistente) {
       await tx.participanteJogo.update({
         where: {
@@ -441,6 +485,20 @@ export async function participarJogo(usuarioId: string, jogoId: string) {
     }
   });
 
+  const jogoAtualizado = await prisma.jogo.findUnique({
+    where: {
+      id: jogoId,
+    },
+    select: {
+      quadra_id: true,
+      academia_id: true,
+    },
+  });
+
+  if (jogoAtualizado) {
+    invalidateQuadraCache(jogoAtualizado.quadra_id, jogoAtualizado.academia_id);
+  }
+
   return getJogoById(jogoId);
 }
 
@@ -449,62 +507,64 @@ export async function adicionarParticipanteJogo(
   jogoId: string,
   data: AdicionarParticipanteJogoData
 ) {
-  const jogo = await prisma.jogo.findUnique({
-    where: {
-      id: jogoId,
-    },
-    include: {
-      participantes: {
-        where: {
-          status: {
-            in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+  await prisma.$transaction(async (tx) => {
+    await lockJogo(tx, jogoId);
+
+    const jogo = await tx.jogo.findUnique({
+      where: {
+        id: jogoId,
+      },
+      include: {
+        participantes: {
+          where: {
+            status: {
+              in: ["CONFIRMADO", "SAIU", "REMOVIDO"],
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!jogo) {
-    throw new Error("Jogo nao encontrado");
-  }
+    if (!jogo) {
+      throw new Error("Jogo nao encontrado");
+    }
 
-  await validarPermissaoGerenciarParticipantes(usuarioId, jogo);
+    await validarPermissaoGerenciarParticipantes(tx, usuarioId, jogo);
 
-  if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
-    throw new Error("Este jogo nao esta aberto para participantes");
-  }
+    if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
+      throw new Error("Este jogo nao esta aberto para participantes");
+    }
 
-  const usuario = await prisma.usuario.findUnique({
-    where: {
-      id: data.usuario_id,
-    },
-  });
+    const usuario = await tx.usuario.findUnique({
+      where: {
+        id: data.usuario_id,
+      },
+    });
 
-  if (!usuario) {
-    throw new Error("Usuario nao encontrado");
-  }
+    if (!usuario) {
+      throw new Error("Usuario nao encontrado");
+    }
 
-  const participantesConfirmados = jogo.participantes.filter(
-    (participante) => participante.status === "CONFIRMADO"
-  );
+    const participantesConfirmados = jogo.participantes.filter(
+      (participante) => participante.status === "CONFIRMADO"
+    );
 
-  const participanteExistente = jogo.participantes.find(
-    (participante) => participante.usuario_id === data.usuario_id
-  );
+    const participanteExistente = jogo.participantes.find(
+      (participante) => participante.usuario_id === data.usuario_id
+    );
 
-  if (participanteExistente?.status === "CONFIRMADO") {
-    throw new Error("Este usuario ja participa do jogo");
-  }
+    if (participanteExistente?.status === "CONFIRMADO") {
+      throw new Error("Este usuario ja participa do jogo");
+    }
 
-  if (participantesConfirmados.length >= jogo.maximo_participantes) {
-    throw new Error("Este jogo ja esta completo");
-  }
+    if (participantesConfirmados.length >= jogo.maximo_participantes) {
+      throw new Error("Este jogo ja esta completo");
+    }
 
-  const totalParticipantes = participantesConfirmados.length + 1;
-  const jogoFicouCompleto =
-    totalParticipantes >= jogo.maximo_participantes;
+    const totalParticipantes = participantesConfirmados.length + 1;
+    const jogoFicouCompleto =
+      totalParticipantes >= jogo.maximo_participantes;
 
-  await prisma.$transaction(async (tx) => {
     if (participanteExistente) {
       await tx.participanteJogo.update({
         where: {
@@ -568,6 +628,20 @@ export async function adicionarParticipanteJogo(
     }
   });
 
+  const jogoAtualizado = await prisma.jogo.findUnique({
+    where: {
+      id: jogoId,
+    },
+    select: {
+      quadra_id: true,
+      academia_id: true,
+    },
+  });
+
+  if (jogoAtualizado) {
+    invalidateQuadraCache(jogoAtualizado.quadra_id, jogoAtualizado.academia_id);
+  }
+
   return getJogoById(jogoId);
 }
 
@@ -593,7 +667,7 @@ export async function removerParticipanteJogo(
     throw new Error("Jogo nao encontrado");
   }
 
-  await validarPermissaoGerenciarParticipantes(usuarioId, jogo);
+  await validarPermissaoGerenciarParticipantes(prisma, usuarioId, jogo);
 
   if (!["ABERTO", "COMPLETO"].includes(jogo.status)) {
     throw new Error("Este jogo nao esta aberto para remover participantes");
@@ -646,6 +720,8 @@ export async function removerParticipanteJogo(
       });
     }
   });
+
+  invalidateQuadraCache(jogo.quadra_id, jogo.academia_id);
 
   return getJogoById(jogoId);
 }
@@ -712,6 +788,20 @@ export async function sairJogo(usuarioId: string, jogoId: string) {
     });
   }
 
+  const jogo = await prisma.jogo.findUnique({
+    where: {
+      id: jogoId,
+    },
+    select: {
+      quadra_id: true,
+      academia_id: true,
+    },
+  });
+
+  if (jogo) {
+    invalidateQuadraCache(jogo.quadra_id, jogo.academia_id);
+  }
+
   return getJogoById(jogoId);
 }
 
@@ -747,6 +837,8 @@ export async function cancelarJogo(usuarioId: string, jogoId: string) {
   }
 
   await prisma.$transaction(async (tx) => {
+    await lockJogo(tx, jogoId);
+
     await tx.jogo.update({
       where: {
         id: jogoId,
@@ -766,6 +858,8 @@ export async function cancelarJogo(usuarioId: string, jogoId: string) {
       },
     });
   });
+
+  invalidateQuadraCache(jogo.quadra_id, jogo.academia_id);
 
   return getJogoById(jogoId);
 }

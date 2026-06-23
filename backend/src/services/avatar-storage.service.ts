@@ -46,7 +46,6 @@ export async function uploadAvatar(
   file?: AvatarFile
 ) {
   validateAvatar(file);
-  await ensureAvatarBucket();
 
   const usuarioAtual = await prisma.usuario.findUnique({
     where: {
@@ -61,7 +60,7 @@ export async function uploadAvatar(
     throw badRequest("Usuario nao encontrado");
   }
 
-  const path = `usuarios/${supabaseUserId}/avatar.${getExtension(
+  const path = `usuarios/${supabaseUserId}/avatar-${Date.now()}.${getExtension(
     file.mimetype as AvatarMimeType
   )}`;
 
@@ -70,7 +69,7 @@ export async function uploadAvatar(
     .upload(path, file.buffer, {
       cacheControl: "3600",
       contentType: file.mimetype,
-      upsert: true,
+      upsert: false,
     });
 
   if (error) {
@@ -148,47 +147,16 @@ function validateAvatar(file?: AvatarFile): asserts file is AvatarFile {
     throw badRequest("Formato de imagem invalido");
   }
 
+  if (!matchesMimeSignature(file.buffer, file.mimetype as AvatarMimeType)) {
+    throw badRequest("Conteudo da imagem nao corresponde ao formato enviado");
+  }
+
   if (file.size > env.AVATAR_MAX_BYTES) {
     throw badRequest(
       `Imagem muito grande. O limite e ${Math.floor(
         env.AVATAR_MAX_BYTES / 1024 / 1024
       )}MB`
     );
-  }
-}
-
-async function ensureAvatarBucket() {
-  const bucket = env.SUPABASE_STORAGE_BUCKET;
-  const { error: getError } = await supabaseAdmin.storage.getBucket(bucket);
-
-  if (getError) {
-    const { error: createError } = await supabaseAdmin.storage.createBucket(
-      bucket,
-      {
-        public: true,
-        fileSizeLimit: env.AVATAR_MAX_BYTES,
-        allowedMimeTypes: [...ALLOWED_AVATAR_MIME_TYPES],
-      }
-    );
-
-    if (createError) {
-      throw new Error(createError.message);
-    }
-
-    return;
-  }
-
-  const { error: updateError } = await supabaseAdmin.storage.updateBucket(
-    bucket,
-    {
-      public: true,
-      fileSizeLimit: env.AVATAR_MAX_BYTES,
-      allowedMimeTypes: [...ALLOWED_AVATAR_MIME_TYPES],
-    }
-  );
-
-  if (updateError) {
-    throw new Error(updateError.message);
   }
 }
 
@@ -201,4 +169,31 @@ function getExtension(mimetype: AvatarMimeType) {
   };
 
   return extensions[mimetype];
+}
+
+function matchesMimeSignature(buffer: Buffer, mimetype: AvatarMimeType) {
+  if (buffer.length < 12) {
+    return false;
+  }
+
+  if (mimetype === "image/jpeg") {
+    return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+
+  if (mimetype === "image/png") {
+    return buffer.subarray(0, 8).equals(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    );
+  }
+
+  if (mimetype === "image/webp") {
+    return (
+      buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+      buffer.subarray(8, 12).toString("ascii") === "WEBP"
+    );
+  }
+
+  return ["GIF87a", "GIF89a"].includes(
+    buffer.subarray(0, 6).toString("ascii")
+  );
 }

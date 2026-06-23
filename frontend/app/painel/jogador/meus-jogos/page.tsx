@@ -17,6 +17,7 @@ import {
   recusarConviteJogo,
 } from "@/services/jogos.service";
 
+import { getUsuario } from "@/lib/auth-storage";
 import type { Convite, Jogo } from "@/lib/jogos-utils";
 import { sortJogosAsc, sortJogosDesc } from "@/lib/jogos-utils";
 
@@ -125,9 +126,10 @@ export default function MeusJogosPage() {
 
   const buscarDados = useCallback(async () => {
     try {
+      const usuarioCache = getUsuario();
       const [usuario, jogosApi, convitesApi] = await Promise.all([
-        buscarUsuarioLogado(),
-        listarJogos(),
+        usuarioCache ? Promise.resolve(usuarioCache) : buscarUsuarioLogado(),
+        listarJogos({ meus: true, limit: 100 }),
         listarConvitesJogos(),
       ]);
 

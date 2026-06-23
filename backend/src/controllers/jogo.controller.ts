@@ -31,7 +31,10 @@ export async function createJogoController(req: AuthRequest, res: Response) {
 
 export async function listJogosController(req: AuthRequest, res: Response) {
   const query = listJogosQuerySchema.parse(req.query);
-  const jogos = await listJogos(query);
+  const jogos = await listJogos({
+    ...query,
+    usuario_id: req.user!.id,
+  });
 
   return res.json({
     success: true,
