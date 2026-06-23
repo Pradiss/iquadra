@@ -3,7 +3,12 @@ import { buscarUltimaAcademia } from "@/lib/last-academia";
 import { getPainelHomeByRole, getUserRole } from "@/lib/user-role";
 
 export function persistAuthenticatedUsuario(usuario: UsuarioLogado) {
-  localStorage.setItem("usuario", JSON.stringify(usuario));
+  try {
+    localStorage.setItem("usuario", JSON.stringify(usuario));
+    console.log("Usuário salvo no localStorage");
+  } catch (error) {
+    console.error("Erro ao salvar usuário no localStorage", error);
+  }
 }
 
 export function getRedirectAfterAuth(

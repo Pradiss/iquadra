@@ -65,13 +65,19 @@ export default function FormLogin() {
       const { usuario } = response.data.data;
 
       persistAuthenticatedUsuario(usuario);
-      router.replace(
-        getRedirectAfterAuth(usuario, searchParams.get("redirect"))
+
+      const redirectTo = getRedirectAfterAuth(
+        usuario,
+        searchParams.get("redirect"),
       );
+
+      setTimeout(() => {
+        router.replace(redirectTo);
+      }, 100);
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(
-          error.response?.data?.message || "Não foi possível entrar agora."
+          error.response?.data?.message || "Não foi possível entrar agora.",
         );
       } else if (error instanceof Error) {
         setErro(error.message);
