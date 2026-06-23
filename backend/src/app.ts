@@ -17,6 +17,7 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import amizadeRoutes from "./routes/amizades.routes";
 import conviteJogoRoutes from "./routes/convite-jogo.routes";
 
+import cookieParser from "cookie-parser";
 import { env } from "./config/env";
 import { AppError } from "./errors/app-error";
 import {
@@ -29,7 +30,9 @@ import { csrfMiddleware } from "./middlewares/csrf.middleware";
 const app = express();
 
 app.set("trust proxy", 1);
+
 app.use(helmet());
+
 app.use(
   cors({
     credentials: true,
@@ -43,7 +46,19 @@ app.use(
     },
   })
 );
+
+app.use(cookieParser());
 app.use(express.json({ limit: "100kb" }));
+
+
+app.get("/csrf-token", (req, res) => {
+  const token = req.cookies?.playfy_csrf_token;
+
+  return res.json({
+    csrfToken: token,
+  });
+});
+
 app.use(csrfMiddleware);
 
 app.use(

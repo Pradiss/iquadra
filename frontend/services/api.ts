@@ -6,9 +6,14 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined" && isMutatingMethod(config.method)) {
-    const csrfToken = getCookie("playfy_csrf_token");
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_URL}/csrf-token`,
+      { withCredentials: true }
+    );
+
+    const csrfToken = response.data?.csrfToken;
 
     if (csrfToken) {
       config.headers = config.headers ?? {};
@@ -50,16 +55,3 @@ function isMutatingMethod(method?: string) {
   );
 }
 
-function getCookie(name: string) {
-  const prefix = `${name}=`;
-  const cookie = document.cookie
-    .split(";")
-    .map((chunk) => chunk.trim())
-    .find((chunk) => chunk.startsWith(prefix));
-
-  if (!cookie) {
-    return "";
-  }
-
-  return decodeURIComponent(cookie.slice(prefix.length));
-}
