@@ -8,6 +8,10 @@ type PrismaKnownError = Error & {
   meta?: Record<string, unknown>;
 };
 
+type UploadError = Error & {
+  code?: string;
+};
+
 function isBodyParserError(error: unknown) {
   return (
     error instanceof SyntaxError &&
@@ -20,6 +24,14 @@ function isPrismaUniqueError(error: unknown): error is PrismaKnownError {
   return (
     error instanceof Error &&
     (error as PrismaKnownError).code === "P2002"
+  );
+}
+
+function isUploadError(error: unknown): error is UploadError {
+  return (
+    error instanceof Error &&
+    typeof (error as UploadError).code === "string" &&
+    (error as UploadError).code!.startsWith("LIMIT_")
   );
 }
 
@@ -58,6 +70,17 @@ export function errorMiddleware(
       success: false,
       code: "CONFLICT",
       message: "Registro ja existe",
+    });
+  }
+
+  if (isUploadError(error)) {
+    return res.status(400).json({
+      success: false,
+      code: "UPLOAD_ERROR",
+      message:
+        error.code === "LIMIT_FILE_SIZE"
+          ? "Imagem muito grande"
+          : error.message,
     });
   }
 

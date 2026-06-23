@@ -1,14 +1,18 @@
 import type { Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { prisma } from "../lib/prisma";
+import { supabaseAdmin } from "../lib/supabase";
 import { listUsersQuerySchema, updateMeSchema } from "../schemas/user.schema";
 
 const usuarioSelect = {
   id: true,
+  supabaseUserId: true,
   nome: true,
   email: true,
   telefone: true,
   foto_perfil: true,
+  fotoUrl: true,
+  fotoPath: true,
   status: true,
   perfil_cliente: true,
   perfil_professor: true,
@@ -74,6 +78,7 @@ export async function listUsersController(req: AuthRequest, res: Response) {
       id: true,
       nome: true,
       foto_perfil: true,
+      fotoUrl: true,
       perfil_cliente: {
         select: {
           categoria: true,
@@ -153,6 +158,8 @@ export async function updateMeController(req: AuthRequest, res: Response) {
 
   if (data.foto_perfil !== undefined) {
     usuarioData.foto_perfil = data.foto_perfil;
+    usuarioData.fotoUrl = data.foto_perfil;
+    usuarioData.fotoPath = null;
   }
 
   const perfilClienteData: any = {};
@@ -177,6 +184,25 @@ export async function updateMeController(req: AuthRequest, res: Response) {
       success: false,
       message: "Perfil de jogador nao encontrado",
     });
+  }
+
+  if (data.email !== undefined || data.nome !== undefined) {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      req.user!.supabaseUserId,
+      {
+        email: data.email,
+        user_metadata: {
+          nome: data.nome ?? usuarioAtual.nome,
+        },
+      }
+    );
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
 
   await prisma.$transaction(async (tx) => {

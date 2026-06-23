@@ -26,11 +26,14 @@ export type AggregateUsuario = {
 
 export type UsuarioMinAggregateOutputType = {
   id: string | null
+  supabaseUserId: string | null
   nome: string | null
   email: string | null
   telefone: string | null
   senha_hash: string | null
   foto_perfil: string | null
+  fotoUrl: string | null
+  fotoPath: string | null
   status: $Enums.StatusUsuario | null
   criado_em: Date | null
   atualizado_em: Date | null
@@ -38,11 +41,14 @@ export type UsuarioMinAggregateOutputType = {
 
 export type UsuarioMaxAggregateOutputType = {
   id: string | null
+  supabaseUserId: string | null
   nome: string | null
   email: string | null
   telefone: string | null
   senha_hash: string | null
   foto_perfil: string | null
+  fotoUrl: string | null
+  fotoPath: string | null
   status: $Enums.StatusUsuario | null
   criado_em: Date | null
   atualizado_em: Date | null
@@ -50,11 +56,14 @@ export type UsuarioMaxAggregateOutputType = {
 
 export type UsuarioCountAggregateOutputType = {
   id: number
+  supabaseUserId: number
   nome: number
   email: number
   telefone: number
   senha_hash: number
   foto_perfil: number
+  fotoUrl: number
+  fotoPath: number
   status: number
   criado_em: number
   atualizado_em: number
@@ -64,11 +73,14 @@ export type UsuarioCountAggregateOutputType = {
 
 export type UsuarioMinAggregateInputType = {
   id?: true
+  supabaseUserId?: true
   nome?: true
   email?: true
   telefone?: true
   senha_hash?: true
   foto_perfil?: true
+  fotoUrl?: true
+  fotoPath?: true
   status?: true
   criado_em?: true
   atualizado_em?: true
@@ -76,11 +88,14 @@ export type UsuarioMinAggregateInputType = {
 
 export type UsuarioMaxAggregateInputType = {
   id?: true
+  supabaseUserId?: true
   nome?: true
   email?: true
   telefone?: true
   senha_hash?: true
   foto_perfil?: true
+  fotoUrl?: true
+  fotoPath?: true
   status?: true
   criado_em?: true
   atualizado_em?: true
@@ -88,11 +103,14 @@ export type UsuarioMaxAggregateInputType = {
 
 export type UsuarioCountAggregateInputType = {
   id?: true
+  supabaseUserId?: true
   nome?: true
   email?: true
   telefone?: true
   senha_hash?: true
   foto_perfil?: true
+  fotoUrl?: true
+  fotoPath?: true
   status?: true
   criado_em?: true
   atualizado_em?: true
@@ -173,11 +191,14 @@ export type UsuarioGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type UsuarioGroupByOutputType = {
   id: string
+  supabaseUserId: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash: string | null
   foto_perfil: string | null
+  fotoUrl: string | null
+  fotoPath: string | null
   status: $Enums.StatusUsuario
   criado_em: Date
   atualizado_em: Date
@@ -206,11 +227,14 @@ export type UsuarioWhereInput = {
   OR?: Prisma.UsuarioWhereInput[]
   NOT?: Prisma.UsuarioWhereInput | Prisma.UsuarioWhereInput[]
   id?: Prisma.StringFilter<"Usuario"> | string
+  supabaseUserId?: Prisma.StringNullableFilter<"Usuario"> | string | null
   nome?: Prisma.StringFilter<"Usuario"> | string
   email?: Prisma.StringFilter<"Usuario"> | string
   telefone?: Prisma.StringFilter<"Usuario"> | string
-  senha_hash?: Prisma.StringFilter<"Usuario"> | string
+  senha_hash?: Prisma.StringNullableFilter<"Usuario"> | string | null
   foto_perfil?: Prisma.StringNullableFilter<"Usuario"> | string | null
+  fotoUrl?: Prisma.StringNullableFilter<"Usuario"> | string | null
+  fotoPath?: Prisma.StringNullableFilter<"Usuario"> | string | null
   status?: Prisma.EnumStatusUsuarioFilter<"Usuario"> | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFilter<"Usuario"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Usuario"> | Date | string
@@ -233,11 +257,14 @@ export type UsuarioWhereInput = {
 
 export type UsuarioOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  supabaseUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
-  senha_hash?: Prisma.SortOrder
+  senha_hash?: Prisma.SortOrderInput | Prisma.SortOrder
   foto_perfil?: Prisma.SortOrderInput | Prisma.SortOrder
+  fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  fotoPath?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
@@ -260,14 +287,17 @@ export type UsuarioOrderByWithRelationInput = {
 
 export type UsuarioWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  supabaseUserId?: string
   email?: string
   AND?: Prisma.UsuarioWhereInput | Prisma.UsuarioWhereInput[]
   OR?: Prisma.UsuarioWhereInput[]
   NOT?: Prisma.UsuarioWhereInput | Prisma.UsuarioWhereInput[]
   nome?: Prisma.StringFilter<"Usuario"> | string
   telefone?: Prisma.StringFilter<"Usuario"> | string
-  senha_hash?: Prisma.StringFilter<"Usuario"> | string
+  senha_hash?: Prisma.StringNullableFilter<"Usuario"> | string | null
   foto_perfil?: Prisma.StringNullableFilter<"Usuario"> | string | null
+  fotoUrl?: Prisma.StringNullableFilter<"Usuario"> | string | null
+  fotoPath?: Prisma.StringNullableFilter<"Usuario"> | string | null
   status?: Prisma.EnumStatusUsuarioFilter<"Usuario"> | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFilter<"Usuario"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Usuario"> | Date | string
@@ -286,15 +316,18 @@ export type UsuarioWhereUniqueInput = Prisma.AtLeast<{
   amizades_recebidas?: Prisma.AmizadeListRelationFilter
   convites_recebidos?: Prisma.ConviteJogoListRelationFilter
   convites_enviados?: Prisma.ConviteJogoListRelationFilter
-}, "id" | "email">
+}, "id" | "supabaseUserId" | "email">
 
 export type UsuarioOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  supabaseUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
-  senha_hash?: Prisma.SortOrder
+  senha_hash?: Prisma.SortOrderInput | Prisma.SortOrder
   foto_perfil?: Prisma.SortOrderInput | Prisma.SortOrder
+  fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  fotoPath?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
@@ -308,11 +341,14 @@ export type UsuarioScalarWhereWithAggregatesInput = {
   OR?: Prisma.UsuarioScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UsuarioScalarWhereWithAggregatesInput | Prisma.UsuarioScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Usuario"> | string
+  supabaseUserId?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null
   nome?: Prisma.StringWithAggregatesFilter<"Usuario"> | string
   email?: Prisma.StringWithAggregatesFilter<"Usuario"> | string
   telefone?: Prisma.StringWithAggregatesFilter<"Usuario"> | string
-  senha_hash?: Prisma.StringWithAggregatesFilter<"Usuario"> | string
+  senha_hash?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null
   foto_perfil?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null
+  fotoUrl?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null
+  fotoPath?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null
   status?: Prisma.EnumStatusUsuarioWithAggregatesFilter<"Usuario"> | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeWithAggregatesFilter<"Usuario"> | Date | string
   atualizado_em?: Prisma.DateTimeWithAggregatesFilter<"Usuario"> | Date | string
@@ -320,11 +356,14 @@ export type UsuarioScalarWhereWithAggregatesInput = {
 
 export type UsuarioCreateInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -347,11 +386,14 @@ export type UsuarioCreateInput = {
 
 export type UsuarioUncheckedCreateInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -374,11 +416,14 @@ export type UsuarioUncheckedCreateInput = {
 
 export type UsuarioUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -401,11 +446,14 @@ export type UsuarioUpdateInput = {
 
 export type UsuarioUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -428,11 +476,14 @@ export type UsuarioUncheckedUpdateInput = {
 
 export type UsuarioCreateManyInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -440,11 +491,14 @@ export type UsuarioCreateManyInput = {
 
 export type UsuarioUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -452,11 +506,14 @@ export type UsuarioUpdateManyMutationInput = {
 
 export type UsuarioUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -464,11 +521,14 @@ export type UsuarioUncheckedUpdateManyInput = {
 
 export type UsuarioCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  supabaseUserId?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
   senha_hash?: Prisma.SortOrder
   foto_perfil?: Prisma.SortOrder
+  fotoUrl?: Prisma.SortOrder
+  fotoPath?: Prisma.SortOrder
   status?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
@@ -476,11 +536,14 @@ export type UsuarioCountOrderByAggregateInput = {
 
 export type UsuarioMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  supabaseUserId?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
   senha_hash?: Prisma.SortOrder
   foto_perfil?: Prisma.SortOrder
+  fotoUrl?: Prisma.SortOrder
+  fotoPath?: Prisma.SortOrder
   status?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
@@ -488,11 +551,14 @@ export type UsuarioMaxOrderByAggregateInput = {
 
 export type UsuarioMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  supabaseUserId?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
   senha_hash?: Prisma.SortOrder
   foto_perfil?: Prisma.SortOrder
+  fotoUrl?: Prisma.SortOrder
+  fotoPath?: Prisma.SortOrder
   status?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
@@ -742,11 +808,14 @@ export type UsuarioUpdateOneWithoutLogsNestedInput = {
 
 export type UsuarioCreateWithoutPerfil_clienteInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -768,11 +837,14 @@ export type UsuarioCreateWithoutPerfil_clienteInput = {
 
 export type UsuarioUncheckedCreateWithoutPerfil_clienteInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -810,11 +882,14 @@ export type UsuarioUpdateToOneWithWhereWithoutPerfil_clienteInput = {
 
 export type UsuarioUpdateWithoutPerfil_clienteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -836,11 +911,14 @@ export type UsuarioUpdateWithoutPerfil_clienteInput = {
 
 export type UsuarioUncheckedUpdateWithoutPerfil_clienteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -862,11 +940,14 @@ export type UsuarioUncheckedUpdateWithoutPerfil_clienteInput = {
 
 export type UsuarioCreateWithoutPerfil_professorInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -888,11 +969,14 @@ export type UsuarioCreateWithoutPerfil_professorInput = {
 
 export type UsuarioUncheckedCreateWithoutPerfil_professorInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -930,11 +1014,14 @@ export type UsuarioUpdateToOneWithWhereWithoutPerfil_professorInput = {
 
 export type UsuarioUpdateWithoutPerfil_professorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -956,11 +1043,14 @@ export type UsuarioUpdateWithoutPerfil_professorInput = {
 
 export type UsuarioUncheckedUpdateWithoutPerfil_professorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -982,11 +1072,14 @@ export type UsuarioUncheckedUpdateWithoutPerfil_professorInput = {
 
 export type UsuarioCreateWithoutAcademiasInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1008,11 +1101,14 @@ export type UsuarioCreateWithoutAcademiasInput = {
 
 export type UsuarioUncheckedCreateWithoutAcademiasInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1050,11 +1146,14 @@ export type UsuarioUpdateToOneWithWhereWithoutAcademiasInput = {
 
 export type UsuarioUpdateWithoutAcademiasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1076,11 +1175,14 @@ export type UsuarioUpdateWithoutAcademiasInput = {
 
 export type UsuarioUncheckedUpdateWithoutAcademiasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1102,11 +1204,14 @@ export type UsuarioUncheckedUpdateWithoutAcademiasInput = {
 
 export type UsuarioCreateWithoutTokensInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1128,11 +1233,14 @@ export type UsuarioCreateWithoutTokensInput = {
 
 export type UsuarioUncheckedCreateWithoutTokensInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1170,11 +1278,14 @@ export type UsuarioUpdateToOneWithWhereWithoutTokensInput = {
 
 export type UsuarioUpdateWithoutTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1196,11 +1307,14 @@ export type UsuarioUpdateWithoutTokensInput = {
 
 export type UsuarioUncheckedUpdateWithoutTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1222,11 +1336,14 @@ export type UsuarioUncheckedUpdateWithoutTokensInput = {
 
 export type UsuarioCreateWithoutBloqueios_criadosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1248,11 +1365,14 @@ export type UsuarioCreateWithoutBloqueios_criadosInput = {
 
 export type UsuarioUncheckedCreateWithoutBloqueios_criadosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1290,11 +1410,14 @@ export type UsuarioUpdateToOneWithWhereWithoutBloqueios_criadosInput = {
 
 export type UsuarioUpdateWithoutBloqueios_criadosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1316,11 +1439,14 @@ export type UsuarioUpdateWithoutBloqueios_criadosInput = {
 
 export type UsuarioUncheckedUpdateWithoutBloqueios_criadosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1342,11 +1468,14 @@ export type UsuarioUncheckedUpdateWithoutBloqueios_criadosInput = {
 
 export type UsuarioCreateWithoutJogos_criadosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1368,11 +1497,14 @@ export type UsuarioCreateWithoutJogos_criadosInput = {
 
 export type UsuarioUncheckedCreateWithoutJogos_criadosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1399,11 +1531,14 @@ export type UsuarioCreateOrConnectWithoutJogos_criadosInput = {
 
 export type UsuarioCreateWithoutJogos_responsavelInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1425,11 +1560,14 @@ export type UsuarioCreateWithoutJogos_responsavelInput = {
 
 export type UsuarioUncheckedCreateWithoutJogos_responsavelInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1467,11 +1605,14 @@ export type UsuarioUpdateToOneWithWhereWithoutJogos_criadosInput = {
 
 export type UsuarioUpdateWithoutJogos_criadosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1493,11 +1634,14 @@ export type UsuarioUpdateWithoutJogos_criadosInput = {
 
 export type UsuarioUncheckedUpdateWithoutJogos_criadosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1530,11 +1674,14 @@ export type UsuarioUpdateToOneWithWhereWithoutJogos_responsavelInput = {
 
 export type UsuarioUpdateWithoutJogos_responsavelInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1556,11 +1703,14 @@ export type UsuarioUpdateWithoutJogos_responsavelInput = {
 
 export type UsuarioUncheckedUpdateWithoutJogos_responsavelInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1582,11 +1732,14 @@ export type UsuarioUncheckedUpdateWithoutJogos_responsavelInput = {
 
 export type UsuarioCreateWithoutParticipantes_jogosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1608,11 +1761,14 @@ export type UsuarioCreateWithoutParticipantes_jogosInput = {
 
 export type UsuarioUncheckedCreateWithoutParticipantes_jogosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1650,11 +1806,14 @@ export type UsuarioUpdateToOneWithWhereWithoutParticipantes_jogosInput = {
 
 export type UsuarioUpdateWithoutParticipantes_jogosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1676,11 +1835,14 @@ export type UsuarioUpdateWithoutParticipantes_jogosInput = {
 
 export type UsuarioUncheckedUpdateWithoutParticipantes_jogosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1702,11 +1864,14 @@ export type UsuarioUncheckedUpdateWithoutParticipantes_jogosInput = {
 
 export type UsuarioCreateWithoutConvites_recebidosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1728,11 +1893,14 @@ export type UsuarioCreateWithoutConvites_recebidosInput = {
 
 export type UsuarioUncheckedCreateWithoutConvites_recebidosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1759,11 +1927,14 @@ export type UsuarioCreateOrConnectWithoutConvites_recebidosInput = {
 
 export type UsuarioCreateWithoutConvites_enviadosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1785,11 +1956,14 @@ export type UsuarioCreateWithoutConvites_enviadosInput = {
 
 export type UsuarioUncheckedCreateWithoutConvites_enviadosInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1827,11 +2001,14 @@ export type UsuarioUpdateToOneWithWhereWithoutConvites_recebidosInput = {
 
 export type UsuarioUpdateWithoutConvites_recebidosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1853,11 +2030,14 @@ export type UsuarioUpdateWithoutConvites_recebidosInput = {
 
 export type UsuarioUncheckedUpdateWithoutConvites_recebidosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1890,11 +2070,14 @@ export type UsuarioUpdateToOneWithWhereWithoutConvites_enviadosInput = {
 
 export type UsuarioUpdateWithoutConvites_enviadosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1916,11 +2099,14 @@ export type UsuarioUpdateWithoutConvites_enviadosInput = {
 
 export type UsuarioUncheckedUpdateWithoutConvites_enviadosInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1942,11 +2128,14 @@ export type UsuarioUncheckedUpdateWithoutConvites_enviadosInput = {
 
 export type UsuarioCreateWithoutAulas_clienteInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1968,11 +2157,14 @@ export type UsuarioCreateWithoutAulas_clienteInput = {
 
 export type UsuarioUncheckedCreateWithoutAulas_clienteInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -1999,11 +2191,14 @@ export type UsuarioCreateOrConnectWithoutAulas_clienteInput = {
 
 export type UsuarioCreateWithoutAulas_professorInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2025,11 +2220,14 @@ export type UsuarioCreateWithoutAulas_professorInput = {
 
 export type UsuarioUncheckedCreateWithoutAulas_professorInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2067,11 +2265,14 @@ export type UsuarioUpdateToOneWithWhereWithoutAulas_clienteInput = {
 
 export type UsuarioUpdateWithoutAulas_clienteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2093,11 +2294,14 @@ export type UsuarioUpdateWithoutAulas_clienteInput = {
 
 export type UsuarioUncheckedUpdateWithoutAulas_clienteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2130,11 +2334,14 @@ export type UsuarioUpdateToOneWithWhereWithoutAulas_professorInput = {
 
 export type UsuarioUpdateWithoutAulas_professorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2156,11 +2363,14 @@ export type UsuarioUpdateWithoutAulas_professorInput = {
 
 export type UsuarioUncheckedUpdateWithoutAulas_professorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2182,11 +2392,14 @@ export type UsuarioUncheckedUpdateWithoutAulas_professorInput = {
 
 export type UsuarioCreateWithoutAmizades_enviadasInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2208,11 +2421,14 @@ export type UsuarioCreateWithoutAmizades_enviadasInput = {
 
 export type UsuarioUncheckedCreateWithoutAmizades_enviadasInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2239,11 +2455,14 @@ export type UsuarioCreateOrConnectWithoutAmizades_enviadasInput = {
 
 export type UsuarioCreateWithoutAmizades_recebidasInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2265,11 +2484,14 @@ export type UsuarioCreateWithoutAmizades_recebidasInput = {
 
 export type UsuarioUncheckedCreateWithoutAmizades_recebidasInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2307,11 +2529,14 @@ export type UsuarioUpdateToOneWithWhereWithoutAmizades_enviadasInput = {
 
 export type UsuarioUpdateWithoutAmizades_enviadasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2333,11 +2558,14 @@ export type UsuarioUpdateWithoutAmizades_enviadasInput = {
 
 export type UsuarioUncheckedUpdateWithoutAmizades_enviadasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2370,11 +2598,14 @@ export type UsuarioUpdateToOneWithWhereWithoutAmizades_recebidasInput = {
 
 export type UsuarioUpdateWithoutAmizades_recebidasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2396,11 +2627,14 @@ export type UsuarioUpdateWithoutAmizades_recebidasInput = {
 
 export type UsuarioUncheckedUpdateWithoutAmizades_recebidasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2422,11 +2656,14 @@ export type UsuarioUncheckedUpdateWithoutAmizades_recebidasInput = {
 
 export type UsuarioCreateWithoutLogsInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2448,11 +2685,14 @@ export type UsuarioCreateWithoutLogsInput = {
 
 export type UsuarioUncheckedCreateWithoutLogsInput = {
   id?: string
+  supabaseUserId?: string | null
   nome: string
   email: string
   telefone: string
-  senha_hash: string
+  senha_hash?: string | null
   foto_perfil?: string | null
+  fotoUrl?: string | null
+  fotoPath?: string | null
   status?: $Enums.StatusUsuario
   criado_em?: Date | string
   atualizado_em?: Date | string
@@ -2490,11 +2730,14 @@ export type UsuarioUpdateToOneWithWhereWithoutLogsInput = {
 
 export type UsuarioUpdateWithoutLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2516,11 +2759,14 @@ export type UsuarioUpdateWithoutLogsInput = {
 
 export type UsuarioUncheckedUpdateWithoutLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.StringFieldUpdateOperationsInput | string
-  senha_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  senha_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   foto_perfil?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2681,11 +2927,14 @@ export type UsuarioCountOutputTypeCountConvites_enviadosArgs<ExtArgs extends run
 
 export type UsuarioSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  supabaseUserId?: boolean
   nome?: boolean
   email?: boolean
   telefone?: boolean
   senha_hash?: boolean
   foto_perfil?: boolean
+  fotoUrl?: boolean
+  fotoPath?: boolean
   status?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
@@ -2709,11 +2958,14 @@ export type UsuarioSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 
 export type UsuarioSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  supabaseUserId?: boolean
   nome?: boolean
   email?: boolean
   telefone?: boolean
   senha_hash?: boolean
   foto_perfil?: boolean
+  fotoUrl?: boolean
+  fotoPath?: boolean
   status?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
@@ -2721,11 +2973,14 @@ export type UsuarioSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type UsuarioSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  supabaseUserId?: boolean
   nome?: boolean
   email?: boolean
   telefone?: boolean
   senha_hash?: boolean
   foto_perfil?: boolean
+  fotoUrl?: boolean
+  fotoPath?: boolean
   status?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
@@ -2733,17 +2988,20 @@ export type UsuarioSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type UsuarioSelectScalar = {
   id?: boolean
+  supabaseUserId?: boolean
   nome?: boolean
   email?: boolean
   telefone?: boolean
   senha_hash?: boolean
   foto_perfil?: boolean
+  fotoUrl?: boolean
+  fotoPath?: boolean
   status?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
 }
 
-export type UsuarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "email" | "telefone" | "senha_hash" | "foto_perfil" | "status" | "criado_em" | "atualizado_em", ExtArgs["result"]["usuario"]>
+export type UsuarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "supabaseUserId" | "nome" | "email" | "telefone" | "senha_hash" | "foto_perfil" | "fotoUrl" | "fotoPath" | "status" | "criado_em" | "atualizado_em", ExtArgs["result"]["usuario"]>
 export type UsuarioInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   perfil_cliente?: boolean | Prisma.Usuario$perfil_clienteArgs<ExtArgs>
   perfil_professor?: boolean | Prisma.Usuario$perfil_professorArgs<ExtArgs>
@@ -2786,11 +3044,14 @@ export type $UsuarioPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    supabaseUserId: string | null
     nome: string
     email: string
     telefone: string
-    senha_hash: string
+    senha_hash: string | null
     foto_perfil: string | null
+    fotoUrl: string | null
+    fotoPath: string | null
     status: $Enums.StatusUsuario
     criado_em: Date
     atualizado_em: Date
@@ -3233,11 +3494,14 @@ export interface Prisma__UsuarioClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface UsuarioFieldRefs {
   readonly id: Prisma.FieldRef<"Usuario", 'String'>
+  readonly supabaseUserId: Prisma.FieldRef<"Usuario", 'String'>
   readonly nome: Prisma.FieldRef<"Usuario", 'String'>
   readonly email: Prisma.FieldRef<"Usuario", 'String'>
   readonly telefone: Prisma.FieldRef<"Usuario", 'String'>
   readonly senha_hash: Prisma.FieldRef<"Usuario", 'String'>
   readonly foto_perfil: Prisma.FieldRef<"Usuario", 'String'>
+  readonly fotoUrl: Prisma.FieldRef<"Usuario", 'String'>
+  readonly fotoPath: Prisma.FieldRef<"Usuario", 'String'>
   readonly status: Prisma.FieldRef<"Usuario", 'StatusUsuario'>
   readonly criado_em: Prisma.FieldRef<"Usuario", 'DateTime'>
   readonly atualizado_em: Prisma.FieldRef<"Usuario", 'DateTime'>

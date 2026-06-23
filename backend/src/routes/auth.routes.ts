@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   loginController,
+  logoutController,
   registerAcademiaController,
   registerClienteController,
   registerProfessorController,
@@ -14,5 +15,6 @@ router.post("/auth/register/cliente", authRateLimiter, registerClienteController
 router.post("/auth/register/professor", authRateLimiter, registerProfessorController);
 router.post("/auth/register/academia", authRateLimiter, registerAcademiaController);
 router.post("/auth/login", authRateLimiter, loginController);
+router.post("/auth/logout", logoutController);
 
 export default router;

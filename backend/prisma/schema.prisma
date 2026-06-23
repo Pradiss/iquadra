@@ -123,13 +123,16 @@ enum TipoBloqueio {
 }
 
 model Usuario {
-  id         String @id @default(uuid())
-  nome       String
-  email      String @unique
-  telefone   String
-  senha_hash String
+  id             String  @id @default(uuid())
+  supabaseUserId String? @unique @map("supabase_user_id")
+  nome           String
+  email          String  @unique
+  telefone       String
+  senha_hash     String?
 
   foto_perfil String?
+  fotoUrl     String? @map("foto_url")
+  fotoPath    String? @map("foto_path")
 
   status StatusUsuario @default(ATIVO)
 

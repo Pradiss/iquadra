@@ -1,0 +1,70 @@
+import type { CookieOptions, Request, Response } from "express";
+import type { Session } from "@supabase/supabase-js";
+import { env } from "../config/env";
+
+export const ACCESS_TOKEN_COOKIE = "playfy_sb_access_token";
+export const REFRESH_TOKEN_COOKIE = "playfy_sb_refresh_token";
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+function cookieOptions(maxAge: number): CookieOptions {
+  const configuredSecure =
+    env.AUTH_COOKIE_SECURE ?? env.NODE_ENV === "production";
+  const secure = configuredSecure || env.AUTH_COOKIE_SAME_SITE === "none";
+
+  return {
+    httpOnly: true,
+    secure,
+    sameSite: env.AUTH_COOKIE_SAME_SITE,
+    path: "/",
+    maxAge,
+    domain: env.AUTH_COOKIE_DOMAIN,
+  };
+}
+
+export function setAuthCookies(res: Response, session: Session) {
+  res.cookie(
+    ACCESS_TOKEN_COOKIE,
+    session.access_token,
+    cookieOptions((session.expires_in || 3600) * 1000)
+  );
+
+  res.cookie(
+    REFRESH_TOKEN_COOKIE,
+    session.refresh_token,
+    cookieOptions(THIRTY_DAYS_MS)
+  );
+}
+
+export function clearAuthCookies(res: Response) {
+  const options = cookieOptions(0);
+
+  res.clearCookie(ACCESS_TOKEN_COOKIE, options);
+  res.clearCookie(REFRESH_TOKEN_COOKIE, options);
+}
+
+export function getAuthCookie(req: Request, name: string) {
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies[name];
+}
+
+function parseCookies(cookieHeader?: string) {
+  const cookies: Record<string, string> = {};
+
+  if (!cookieHeader) {
+    return cookies;
+  }
+
+  for (const chunk of cookieHeader.split(";")) {
+    const [rawName, ...rawValue] = chunk.trim().split("=");
+    const name = rawName?.trim();
+
+    if (!name) {
+      continue;
+    }
+
+    cookies[name] = decodeURIComponent(rawValue.join("="));
+  }
+
+  return cookies;
+}
