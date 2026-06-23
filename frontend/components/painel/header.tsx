@@ -67,7 +67,7 @@ export function PainelHeader({
               alt="IQuadra"
               width={120}
               height={32}
-              className="h-8"
+              className="h-26"
               style={{ width: "auto" }}
             />
           </Link>
@@ -80,7 +80,7 @@ export function PainelHeader({
               alt="IQuadra"
               width={120}
               height={32}
-              className="h-8"
+              className="h-20"
               style={{ width: "auto" }}
             />
           </Link>

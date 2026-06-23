@@ -19,7 +19,7 @@ export default function AuthCard({
           alt="IQuadra"
           width={124}
           height={32}
-          className="mx-auto mb-4"
+          className="mx-auto "
         />
 
         <h1 className="text-[32px] font-bold tracking-[-0.03em] text-gray-900">

@@ -66,7 +66,7 @@ export function LayoutPainel({
                   alt="IQuadra"
                   width={120}
                   height={32}
-                  className="h-8"
+                  className="h-20"
                   style={{ width: "auto" }}
                 />
               </Link>
