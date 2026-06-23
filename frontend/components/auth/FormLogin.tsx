@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { UsuarioLogado } from "@/lib/auth-storage";
 import {
-  getRedirectAfterAuth,
+  
   persistAuthenticatedUsuario,
 } from "@/lib/auth-flow";
 
@@ -64,30 +64,12 @@ export default function FormLogin() {
       const response = await api.post<LoginResponse>("/auth/login", dados);
       const { usuario } = response.data.data;
 
-      persistAuthenticatedUsuario(usuario);
+    persistAuthenticatedUsuario(usuario);
 
-      const redirectTo = getRedirectAfterAuth(
-        usuario,
-        searchParams.get("redirect"),
-      );
+router.replace("/painel/jogador");
 
-      setTimeout(() => {
-        router.replace(redirectTo);
-      }, 100);
-    } catch (error) {
-      if (axios.isAxiosError<{ message?: string }>(error)) {
-        setErro(
-          error.response?.data?.message || "Não foi possível entrar agora.",
-        );
-      } else if (error instanceof Error) {
-        setErro(error.message);
-      } else {
-        setErro("Não foi possível entrar agora.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+     
+  
 
   return (
     <AuthCard
