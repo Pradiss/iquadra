@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import {
+  getCachedSession,
   validateSession,
   type ValidatedSession,
 } from "@/lib/auth-session";
@@ -28,7 +29,10 @@ export function PainelRoleGuard({
   expectedRole,
 }: PainelRoleGuardProps) {
   const router = useRouter();
-  const [session, setSession] = useState<ValidatedSession | null>(null);
+  const [session, setSession] = useState<ValidatedSession | null>(() => {
+    const cachedSession = getCachedSession();
+    return cachedSession?.role === expectedRole ? cachedSession : null;
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -75,7 +79,10 @@ type ProfessorGuardProps = {
 
 export function ProfessorGuard({ children }: ProfessorGuardProps) {
   const router = useRouter();
-  const [role, setRole] = useState<PainelRole | null>(null);
+  const [role, setRole] = useState<PainelRole | null>(() => {
+    const cachedSession = getCachedSession();
+    return cachedSession?.role === "professor" ? cachedSession.role : null;
+  });
 
   useEffect(() => {
     let mounted = true;

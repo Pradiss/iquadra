@@ -137,6 +137,55 @@ type DisponibilidadeAcademiaResponse = {
   quadras?: DisponibilidadeResponse[];
 };
 
+type AgendaCacheSnapshot = {
+  academia: Academia | null;
+  quadras: Quadra[];
+  horarios: HorarioAgenda[];
+  savedAt: number;
+};
+
+const AGENDA_CACHE_PREFIX = "playfy_agenda_snapshot";
+const AGENDA_CACHE_MAX_AGE_MS = 60 * 1000;
+
+function getAgendaCacheKey(academiaId: string, data: string) {
+  return `${AGENDA_CACHE_PREFIX}:${academiaId}:${data}`;
+}
+
+function readAgendaSnapshot(academiaId: string, data: string) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = localStorage.getItem(getAgendaCacheKey(academiaId, data));
+    if (!raw) return null;
+
+    const snapshot = JSON.parse(raw) as AgendaCacheSnapshot;
+
+    if (Date.now() - snapshot.savedAt > AGENDA_CACHE_MAX_AGE_MS) {
+      return null;
+    }
+
+    return snapshot;
+  } catch {
+    return null;
+  }
+}
+
+function saveAgendaSnapshot(
+  academiaId: string,
+  data: string,
+  snapshot: Omit<AgendaCacheSnapshot, "savedAt">
+) {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(
+    getAgendaCacheKey(academiaId, data),
+    JSON.stringify({
+      ...snapshot,
+      savedAt: Date.now(),
+    })
+  );
+}
+
 function montarHorariosDaQuadra(
   quadra: Quadra,
   response: DisponibilidadeResponse
@@ -228,6 +277,7 @@ export default function AcademiaAgendaPage() {
   const [quadras, setQuadras] = useState<Quadra[]>([]);
   const [horarios, setHorarios] = useState<HorarioAgenda[]>([]);
   const [loading, setLoading] = useState(true);
+  const [atualizandoAgenda, setAtualizandoAgenda] = useState(false);
   const [erro, setErro] = useState("");
 
   const [filtrosQuadra, setFiltrosQuadra] =
@@ -308,8 +358,21 @@ export default function AcademiaAgendaPage() {
 
     const requestId = agendaRequestIdRef.current + 1;
     agendaRequestIdRef.current = requestId;
-    setLoading(true);
+    const snapshot = readAgendaSnapshot(academiaId, dataSelecionada);
+
+    if (snapshot) {
+      setAcademia(snapshot.academia);
+      setQuadras(snapshot.quadras);
+      setHorarios(snapshot.horarios);
+      setLoading(false);
+      setAtualizandoAgenda(true);
+    } else {
+      setLoading(true);
+      setAtualizandoAgenda(false);
+    }
+
     setErro("");
+    const startedAt = performance.now();
 
     try {
       const disponibilidade = (await obterDisponibilidadeAcademia(
@@ -369,6 +432,21 @@ export default function AcademiaAgendaPage() {
       setQuadras(quadrasApi);
 
       setHorarios(agenda);
+      saveAgendaSnapshot(academiaId, dataSelecionada, {
+        academia: academiaApi ?? null,
+        quadras: quadrasApi,
+        horarios: agenda,
+      });
+
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[agenda] disponibilidade atualizada", {
+          academiaId,
+          data: dataSelecionada,
+          quadras: quadrasApi.length,
+          horarios: agenda.length,
+          ms: Math.round(performance.now() - startedAt),
+        });
+      }
     } catch {
       if (requestId !== agendaRequestIdRef.current) return;
 
@@ -379,6 +457,7 @@ export default function AcademiaAgendaPage() {
     } finally {
       if (requestId === agendaRequestIdRef.current) {
         setLoading(false);
+        setAtualizandoAgenda(false);
       }
     }
   }, [academiaId, dataSelecionada]);
@@ -468,6 +547,12 @@ export default function AcademiaAgendaPage() {
           {erro && (
             <p className="mb-3 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-600">
               {erro}
+            </p>
+          )}
+
+          {atualizandoAgenda && !loading && (
+            <p className="mb-3 text-xs font-semibold text-zinc-500">
+              Atualizando agenda...
             </p>
           )}
 

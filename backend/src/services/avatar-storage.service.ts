@@ -1,7 +1,9 @@
 import { env } from "../config/env";
 import { badRequest } from "../errors/app-error";
+import { invalidateCacheByPrefix, invalidateUserCache } from "../lib/cache";
 import { prisma } from "../lib/prisma";
 import { supabaseAdmin } from "../lib/supabase";
+import { withSignedAvatar } from "./avatar-url.service";
 
 export const ALLOWED_AVATAR_MIME_TYPES = [
   "image/jpeg",
@@ -82,23 +84,25 @@ export async function uploadAvatar(
       .remove([usuarioAtual.fotoPath]);
   }
 
-  const {
-    data: { publicUrl },
-  } = supabaseAdmin.storage
-    .from(env.SUPABASE_STORAGE_BUCKET)
-    .getPublicUrl(path);
+  if (usuarioAtual.fotoPath) {
+    invalidateCacheByPrefix(`avatar:signed:${usuarioAtual.fotoPath}`);
+  }
 
-  return prisma.usuario.update({
+  const usuario = await prisma.usuario.update({
     where: {
       id: usuarioId,
     },
     data: {
-      foto_perfil: publicUrl,
-      fotoUrl: publicUrl,
+      foto_perfil: null,
+      fotoUrl: null,
       fotoPath: path,
     },
     select: usuarioSelect,
   });
+
+  invalidateUserCache(usuarioId);
+
+  return withSignedAvatar(usuario);
 }
 
 export async function removeAvatar(usuarioId: string) {
@@ -123,9 +127,11 @@ export async function removeAvatar(usuarioId: string) {
     if (error) {
       throw new Error(error.message);
     }
+
+    invalidateCacheByPrefix(`avatar:signed:${usuarioAtual.fotoPath}`);
   }
 
-  return prisma.usuario.update({
+  const usuario = await prisma.usuario.update({
     where: {
       id: usuarioId,
     },
@@ -136,6 +142,10 @@ export async function removeAvatar(usuarioId: string) {
     },
     select: usuarioSelect,
   });
+
+  invalidateUserCache(usuarioId);
+
+  return usuario;
 }
 
 function validateAvatar(file?: AvatarFile): asserts file is AvatarFile {

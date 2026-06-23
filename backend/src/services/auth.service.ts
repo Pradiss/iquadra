@@ -4,6 +4,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { prisma } from "../lib/prisma";
 import { invalidateAcademiaCache } from "../lib/cache";
 import { supabaseAdmin, supabaseAuth } from "../lib/supabase";
+import { withSignedAvatar } from "./avatar-url.service";
 import {
   LoginData,
   RegisterAcademiaData,
@@ -213,13 +214,13 @@ async function getUsuarioBySupabaseAuth(auth: SupabaseAuthResult) {
       },
     });
 
-    return {
+    return withSignedAvatar({
       ...usuario,
       supabaseUserId: auth.user.id,
-    };
+    });
   }
 
-  return usuario;
+  return withSignedAvatar(usuario);
 }
 
 function getFotoData(foto?: string) {

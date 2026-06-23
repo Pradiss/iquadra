@@ -1,8 +1,14 @@
 import type { Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import {
+  CACHE_TTL,
+  getOrSetCache,
+  invalidateUserCache,
+} from "../lib/cache";
 import { prisma } from "../lib/prisma";
 import { supabaseAdmin } from "../lib/supabase";
 import { listUsersQuerySchema, updateMeSchema } from "../schemas/user.schema";
+import { withSignedAvatar } from "../services/avatar-url.service";
 
 const usuarioSelect = {
   id: true,
@@ -26,18 +32,23 @@ const usuarioSelect = {
 };
 
 async function getUsuarioCompleto(id: string) {
-  const usuario = await prisma.usuario.findUnique({
-    where: {
-      id,
-    },
-    select: usuarioSelect,
-  });
+  const usuario = await getOrSetCache(
+    `usuario:${id}:me`,
+    Math.min(CACHE_TTL.usuarios, 30 * 1000),
+    () =>
+      prisma.usuario.findUnique({
+        where: {
+          id,
+        },
+        select: usuarioSelect,
+      })
+  );
 
   if (!usuario) {
     throw new Error("Usuario nao encontrado");
   }
 
-  return usuario;
+  return withSignedAvatar(usuario);
 }
 
 export async function listUsersController(req: AuthRequest, res: Response) {
@@ -87,6 +98,7 @@ export async function listUsersController(req: AuthRequest, res: Response) {
       nome: true,
       foto_perfil: true,
       fotoUrl: true,
+      fotoPath: true,
       perfil_cliente: {
         select: {
           categoria: true,
@@ -94,11 +106,19 @@ export async function listUsersController(req: AuthRequest, res: Response) {
       },
     },
   });
+  const usuariosComAvatar = await Promise.all(
+    usuarios.map(async (usuario) => {
+      const usuarioComAvatar = await withSignedAvatar(usuario);
+      const { fotoPath: _fotoPath, ...publicUsuario } = usuarioComAvatar;
+
+      return publicUsuario;
+    })
+  );
 
   return res.json({
     success: true,
-    total: usuarios.length,
-    data: usuarios,
+    total: usuariosComAvatar.length,
+    data: usuariosComAvatar,
   });
 }
 
@@ -232,6 +252,8 @@ export async function updateMeController(req: AuthRequest, res: Response) {
       });
     }
   });
+
+  invalidateUserCache(usuarioId);
 
   const usuario = await getUsuarioCompleto(usuarioId);
 

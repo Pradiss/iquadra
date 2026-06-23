@@ -40,6 +40,13 @@ export default function PainelJogadorPage() {
 
   useEffect(() => {
     async function carregarAcademias() {
+      const ultimaAcademiaId = buscarUltimaAcademia();
+
+      if (ultimaAcademiaId) {
+        router.replace(`/painel/jogador/academia/${ultimaAcademiaId}`);
+        return;
+      }
+
       try {
         const response = await listarAcademias();
         setAcademias(Array.isArray(response) ? response : []);
@@ -52,7 +59,7 @@ export default function PainelJogadorPage() {
     }
 
     carregarAcademias();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (loading || academias.length === 0) return;
