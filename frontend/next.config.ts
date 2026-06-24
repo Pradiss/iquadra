@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/proxy/:path*",
-       destination: `${railwayApiUrl}/api/:path*`,
+       destination: `${railwayApiUrl}/:path*`,
       },
     ];
   },

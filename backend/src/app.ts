@@ -26,7 +26,7 @@ import {
 } from "./middlewares/error.middleware";
 import { generalRateLimiter } from "./middlewares/rate-limit.middleware";
 import { csrfMiddleware } from "./middlewares/csrf.middleware";
-import adminRoutes from "./routes/admin.routes";
+
 
 
 const app = express();
@@ -75,7 +75,7 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use(adminRoutes);
+
 app.use(authRoutes);
 app.use(userRoutes)
 app.use(academiaRoutes)
