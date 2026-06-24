@@ -9,9 +9,14 @@ export const CSRF_TOKEN_COOKIE = "playfy_csrf_token";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-function cookieOptions(maxAge: number): CookieOptions {
+type SetAuthCookiesOptions = {
+  persistent?: boolean;
+};
+
+function cookieOptions(maxAge?: number): CookieOptions {
   const configuredSecure =
     env.AUTH_COOKIE_SECURE ?? env.NODE_ENV === "production";
+
   const secure = configuredSecure || env.AUTH_COOKIE_SAME_SITE === "none";
 
   const options: CookieOptions = {
@@ -19,8 +24,11 @@ function cookieOptions(maxAge: number): CookieOptions {
     secure,
     sameSite: env.AUTH_COOKIE_SAME_SITE,
     path: "/",
-    maxAge,
   };
+
+  if (typeof maxAge === "number") {
+    options.maxAge = maxAge;
+  }
 
   if (env.AUTH_COOKIE_DOMAIN) {
     options.domain = env.AUTH_COOKIE_DOMAIN;
@@ -29,30 +37,43 @@ function cookieOptions(maxAge: number): CookieOptions {
   return options;
 }
 
-function csrfCookieOptions(maxAge: number): CookieOptions {
+function csrfCookieOptions(maxAge?: number): CookieOptions {
   return {
     ...cookieOptions(maxAge),
     httpOnly: false,
   };
 }
 
-export function setAuthCookies(res: Response, session: Session) {
+export function setAuthCookies(
+  res: Response,
+  session: Session,
+  options: SetAuthCookiesOptions = {},
+) {
+  const persistent = options.persistent === true;
+
+  const accessTokenMaxAge = persistent
+    ? (session.expires_in || 3600) * 1000
+    : undefined;
+
+  const refreshTokenMaxAge = persistent ? THIRTY_DAYS_MS : undefined;
+  const csrfTokenMaxAge = persistent ? THIRTY_DAYS_MS : undefined;
+
   res.cookie(
     ACCESS_TOKEN_COOKIE,
     session.access_token,
-    cookieOptions((session.expires_in || 3600) * 1000)
+    cookieOptions(accessTokenMaxAge),
   );
 
   res.cookie(
     REFRESH_TOKEN_COOKIE,
     session.refresh_token,
-    cookieOptions(THIRTY_DAYS_MS)
+    cookieOptions(refreshTokenMaxAge),
   );
 
   res.cookie(
     CSRF_TOKEN_COOKIE,
     randomBytes(32).toString("hex"),
-    csrfCookieOptions(THIRTY_DAYS_MS)
+    csrfCookieOptions(csrfTokenMaxAge),
   );
 }
 

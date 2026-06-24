@@ -2,24 +2,43 @@
 
 import api from "@/services/api";
 import axios from "axios";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthCard from "./AuthCard";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { UsuarioLogado } from "@/lib/auth-storage";
 import { persistAuthenticatedUsuario } from "@/lib/auth-flow";
 
+const ULTIMA_ACADEMIA_KEY = "playfy_ultima_academia";
+const MANTER_LOGADO_KEY = "playfy_manter_logado";
+
+function safeStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeStorageRemove(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {}
+}
+
 function getSuccessMessage(created?: string | null) {
-  if (created === "jogador") {
-    return "Conta criada com sucesso. Agora é só entrar.";
-  }
-
-  if (created === "professor") {
-    return "Cadastro de professor criado. Entre para continuar.";
-  }
-
+  if (created === "jogador") return "Conta criada com sucesso. Agora é só entrar.";
+  if (created === "professor") return "Cadastro de professor criado. Entre para continuar.";
   if (created === "academia") {
     return "Academia cadastrada. Entre com o e-mail e a senha que você acabou de criar.";
   }
@@ -41,6 +60,8 @@ export default function FormLogin() {
 
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [manterLogado, setManterLogado] = useState(true);
 
   const successMessage = getSuccessMessage(searchParams.get("created"));
 
@@ -55,24 +76,43 @@ export default function FormLogin() {
     const dados = {
       email: String(formData.get("email")).trim().toLowerCase(),
       senha: String(formData.get("senha")),
+      manterLogado,
     };
 
     try {
       const response = await api.post<LoginResponse>("/auth/login", dados);
-      const { usuario } = response.data.data;
+      const usuario = response.data?.data?.usuario;
+
+      if (!usuario) {
+        setErro("Não foi possível carregar os dados do usuário.");
+        return;
+      }
 
       persistAuthenticatedUsuario(usuario);
 
-      const ultimaAcademia =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("playfy_ultima_academia")
-          : null;
+      if (manterLogado) {
+        safeStorageSet(MANTER_LOGADO_KEY, "true");
+      } else {
+        safeStorageRemove(MANTER_LOGADO_KEY);
+      }
+
+      const ultimaAcademia = manterLogado
+        ? safeStorageGet(ULTIMA_ACADEMIA_KEY)
+        : null;
 
       if (ultimaAcademia) {
         router.replace(`/painel/jogador/academia/${ultimaAcademia}`);
-      } else {
-        router.replace("/painel/jogador");
+        return;
       }
+
+      router.replace("/painel/jogador");
+    } catch (error) {
+      if (axios.isAxiosError<{ message?: string }>(error)) {
+        setErro(error.response?.data?.message || "Não foi possível entrar agora.");
+        return;
+      }
+
+      setErro("Não foi possível entrar agora.");
     } finally {
       setLoading(false);
     }
@@ -104,6 +144,7 @@ export default function FormLogin() {
           <Input
             name="email"
             type="email"
+            autoComplete="email"
             className="h-[50px] rounded-xl bg-gray-50 px-4 text-base"
           />
         </label>
@@ -113,11 +154,36 @@ export default function FormLogin() {
             Senha
           </span>
 
-          <Input
-            name="senha"
-            type="password"
-            className="h-[50px] rounded-xl bg-gray-50 px-4 text-base"
+          <div className="relative">
+            <Input
+              name="senha"
+              type={mostrarSenha ? "text" : "password"}
+              autoComplete="current-password"
+              className="h-[50px] rounded-xl bg-gray-50 px-4 pr-12 text-base [&::-ms-clear]:hidden [&::-ms-reveal]:hidden"
+            />
+
+            <button
+              type="button"
+              onClick={() => setMostrarSenha((valor) => !valor)}
+              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+            >
+              {mostrarSenha ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+        </label>
+
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-600">
+          <Checkbox
+            checked={manterLogado}
+            onCheckedChange={(checked) => setManterLogado(checked === true)}
+            className="h-4 w-4 rounded-full border-gray-300"
           />
+          Manter logado
         </label>
 
         <Button

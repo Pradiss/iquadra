@@ -265,8 +265,12 @@ export default function MeusJogosPage() {
   );
 
   useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     void carregarDados();
-  }, [carregarDados]);
+  }, 0);
+
+  return () => window.clearTimeout(timeoutId);
+}, [carregarDados]);
 
   const meusJogos = useMemo(() => {
     return jogos.filter((jogo) => usuarioEstaNoJogo(jogo, usuarioId));

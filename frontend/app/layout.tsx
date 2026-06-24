@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "IQuadra",
+  title: "PlayFy",
   description: "Sistema para reservas de quadras",
-};
+  icons: {
+    icon: "/favicon.png",
+  },
+};;
 
 export const viewport = {
   width: "device-width",

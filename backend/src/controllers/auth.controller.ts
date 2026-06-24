@@ -65,7 +65,9 @@ export async function loginController(req: Request, res: Response) {
   const data = loginSchema.parse(req.body);
   const result = await loginUser(data);
 
-  setAuthCookies(res, result.session);
+  setAuthCookies(res, result.session, {
+    persistent: data.manterLogado,
+  });
 
   return res.json({
     success: true,

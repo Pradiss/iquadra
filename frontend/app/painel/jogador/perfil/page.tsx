@@ -239,10 +239,13 @@ export default function PerfilPage() {
     }
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     void carregarPerfil();
-  }, [carregarPerfil]);
+  }, 0);
 
+  return () => window.clearTimeout(timeoutId);
+}, [carregarPerfil]);
   async function sair() {
     try {
       await api.post("/auth/logout");

@@ -483,9 +483,13 @@ export default function AcademiaAgendaPage() {
     [academiaId, dataSelecionada],
   );
 
-  useEffect(() => {
+ useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     void carregarAgenda();
-  }, [carregarAgenda]);
+  }, 0);
+
+  return () => window.clearTimeout(timeoutId);
+}, [carregarAgenda]);
 
   const handleAgendaMutationSuccess = useCallback(async () => {
     await carregarAgenda({ force: true });

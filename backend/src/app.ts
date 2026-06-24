@@ -16,6 +16,7 @@ import recorrenciaAulaRoutes from "./routes/recorrencia-aula.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import amizadeRoutes from "./routes/amizades.routes";
 import conviteJogoRoutes from "./routes/convite-jogo.routes";
+import publicAgendaRoutes from "./routes/public-agenda.routes";
 
 import cookieParser from "cookie-parser";
 import { env } from "./config/env";
@@ -75,7 +76,6 @@ app.get("/", (req, res) => {
   });
 });
 
-
 app.use(authRoutes);
 app.use(userRoutes)
 app.use(academiaRoutes)
@@ -89,6 +89,8 @@ app.use(recorrenciaAulaRoutes);
 app.use(dashboardRoutes);
 app.use(amizadeRoutes);
 app.use(conviteJogoRoutes);
+app.use(publicAgendaRoutes)
+
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 

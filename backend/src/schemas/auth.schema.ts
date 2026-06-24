@@ -73,6 +73,7 @@ export const loginSchema = z
   .object({
     email: emailSchema,
     senha: z.string().min(1).max(128),
+    manterLogado: z.boolean().optional().default(false),
   })
   .strict();
 

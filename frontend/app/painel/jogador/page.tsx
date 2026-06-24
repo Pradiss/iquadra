@@ -118,15 +118,6 @@ export default function PainelJogadorPage() {
 
         setAcademias(lista);
         salvarCacheAcademias(lista);
-
-        const ultimaAcademiaId = safeStorageGet(ULTIMA_ACADEMIA_KEY);
-
-        if (
-          ultimaAcademiaId &&
-          !lista.some((academia) => academia.id === ultimaAcademiaId)
-        ) {
-          safeStorageRemove(ULTIMA_ACADEMIA_KEY);
-        }
       } catch {
         if (!ativo) return;
 

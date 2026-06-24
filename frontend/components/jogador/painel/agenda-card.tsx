@@ -7,7 +7,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { getSafeImageUrl } from "@/lib/safe-image";
 
 type Participante = {
-  id: string;
+  id?: string;
   nome: string;
   foto_perfil?: string | null;
   categoria?: string | null;

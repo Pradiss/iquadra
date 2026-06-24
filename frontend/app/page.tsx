@@ -1,7 +1,7 @@
-import LoginPage from "./login/page";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <LoginPage />
-  );
+const ACADEMIA_PADRAO_SLUG = "boa-bola";
+
+export default function HomePage() {
+  redirect(`/a/${ACADEMIA_PADRAO_SLUG}`);
 }
