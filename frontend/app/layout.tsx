@@ -5,9 +5,11 @@ export const metadata: Metadata = {
   title: "PlayFy",
   description: "Sistema para reservas de quadras",
   icons: {
-    icon: "/favicon.png",
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    shortcut: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/favicon.png", type: "image/png" }],
   },
-};;
+};
 
 export const viewport = {
   width: "device-width",
@@ -20,8 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="min-h-full flex flex-col font-sans antialiased">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body
+        className="min-h-full flex flex-col font-sans antialiased"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

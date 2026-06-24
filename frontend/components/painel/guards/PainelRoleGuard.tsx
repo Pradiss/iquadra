@@ -29,15 +29,18 @@ export function PainelRoleGuard({
   expectedRole,
 }: PainelRoleGuardProps) {
   const router = useRouter();
-  const [session, setSession] = useState<ValidatedSession | null>(() => {
-    const cachedSession = getCachedSession();
-    return cachedSession?.role === expectedRole ? cachedSession : null;
-  });
+  const [session, setSession] = useState<ValidatedSession | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     async function validar() {
+      const cachedSession = getCachedSession();
+
+      if (mounted && cachedSession?.role === expectedRole) {
+        setSession(cachedSession);
+      }
+
       const validatedSession = await validateSession();
 
       if (!mounted) return;
@@ -79,15 +82,18 @@ type ProfessorGuardProps = {
 
 export function ProfessorGuard({ children }: ProfessorGuardProps) {
   const router = useRouter();
-  const [role, setRole] = useState<PainelRole | null>(() => {
-    const cachedSession = getCachedSession();
-    return cachedSession?.role === "professor" ? cachedSession.role : null;
-  });
+  const [role, setRole] = useState<PainelRole | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     async function validar() {
+      const cachedSession = getCachedSession();
+
+      if (mounted && cachedSession?.role === "professor") {
+        setRole(cachedSession.role);
+      }
+
       const validatedSession = await validateSession();
 
       if (!mounted) return;
