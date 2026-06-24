@@ -1,23 +1,38 @@
 import axios from "axios";
 import { clearAuthStorage } from "@/lib/auth-storage";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: API_URL,
   withCredentials: true,
 });
 
+const CSRF_EXEMPT_PATHS = [
+  "/auth/login",
+  "/auth/register/cliente",
+  "/auth/register/professor",
+  "/auth/register/academia",
+  "/auth/logout",
+];
+
 api.interceptors.request.use(async (config) => {
-  if (typeof window !== "undefined" && isMutatingMethod(config.method)) {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_API_URL}/csrf-token`,
-      { withCredentials: true }
-    );
+  const method = config.method?.toLowerCase();
+  const url = config.url ?? "";
+
+  const isMutating = ["post", "put", "patch", "delete"].includes(method ?? "");
+  const isExempt = CSRF_EXEMPT_PATHS.some((path) => url.startsWith(path));
+
+  if (typeof window !== "undefined" && isMutating && !isExempt) {
+    const response = await axios.get(`${API_URL}/csrf-token`, {
+      withCredentials: true,
+    });
 
     const csrfToken = response.data?.csrfToken;
 
     if (csrfToken) {
       config.headers = config.headers ?? {};
-      (config.headers as Record<string, string>)["X-CSRF-Token"] = csrfToken;
+      config.headers["X-CSRF-Token"] = csrfToken;
     }
   }
 
@@ -48,10 +63,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
-function isMutatingMethod(method?: string) {
-  return ["post", "put", "patch", "delete"].includes(
-    method?.toLowerCase() ?? ""
-  );
-}
-
