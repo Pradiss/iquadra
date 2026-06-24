@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LogOut, Settings, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -40,9 +40,84 @@ type Jogo = {
   }[];
 };
 
+type PerfilCache = {
+  usuario: Usuario;
+  totalJogos: number;
+  savedAt: number;
+};
+
+const CACHE_KEY = "playfy_perfil_cache";
+const CACHE_TTL_MS = 1000 * 60;
+
+function safeStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeStorageRemove(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {}
+}
+
+function readPerfilCache() {
+  const raw = safeStorageGet(CACHE_KEY);
+  if (!raw) return null;
+
+  try {
+    const cache = JSON.parse(raw) as PerfilCache;
+    const expirado = Date.now() - cache.savedAt > CACHE_TTL_MS;
+
+    if (expirado || !cache.usuario?.id) {
+      safeStorageRemove(CACHE_KEY);
+      return null;
+    }
+
+    return cache;
+  } catch {
+    safeStorageRemove(CACHE_KEY);
+    return null;
+  }
+}
+
+function savePerfilCache(usuario: Usuario, totalJogos: number) {
+  safeStorageSet(
+    CACHE_KEY,
+    JSON.stringify({
+      usuario,
+      totalJogos,
+      savedAt: Date.now(),
+    }),
+  );
+}
+
 function getData<T>(response: { data: unknown }): T {
-  const data = response.data as { data?: T; user?: T };
-  return data.data ?? data.user ?? (response.data as T);
+  const data = response.data as { data?: T; user?: T; jogos?: T; items?: T };
+  return data.data ?? data.user ?? data.jogos ?? data.items ?? (response.data as T);
+}
+
+function normalizarLista<T>(response: unknown): T[] {
+  const data = response as {
+    data?: T[];
+    jogos?: T[];
+    items?: T[];
+  };
+
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.jogos)) return data.jogos;
+  if (Array.isArray(data?.items)) return data.items;
+
+  return [];
 }
 
 function getInitials(nome?: string) {
@@ -76,7 +151,7 @@ function isUsuarioNoJogo(jogo: Jogo, usuarioId: string) {
 }
 
 function isJogoCompleto(jogo: Jogo) {
-  const status = String((jogo as Jogo & { status?: string }).status ?? "")
+  const status = String(jogo.status ?? "")
     .toUpperCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
@@ -89,153 +164,182 @@ function isJogoCompleto(jogo: Jogo) {
   );
 }
 
+function contarJogosConcluidos(jogos: Jogo[], usuarioId: string) {
+  return jogos.filter(
+    (jogo) => isUsuarioNoJogo(jogo, usuarioId) && isJogoCompleto(jogo),
+  ).length;
+}
+
 export default function PerfilPage() {
   const router = useRouter();
+  const requestRef = useRef(0);
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [totalJogos, setTotalJogos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
-  useEffect(() => {
-    async function carregarPerfil() {
+  const fotoPerfil = useMemo(
+    () => getSafeImageUrl(usuario?.foto_perfil),
+    [usuario?.foto_perfil],
+  );
+
+  const carregarPerfil = useCallback(async () => {
+    const requestId = requestRef.current + 1;
+    requestRef.current = requestId;
+
+    const cache = readPerfilCache();
+
+    if (cache) {
+      setUsuario(cache.usuario);
+      setTotalJogos(cache.totalJogos);
+      setLoading(false);
+    } else {
       const usuarioSalvo = getUsuario() as Usuario | null;
 
       if (usuarioSalvo) {
         setUsuario(usuarioSalvo);
-      }
-
-      try {
-        const [userResponse, jogosResponse] = await Promise.all([
-          api.get("/users/me"),
-          api.get("/jogos"),
-        ]);
-
-        const user = getData<Usuario>(userResponse);
-        const jogos = getData<Jogo[]>(jogosResponse);
-
-        const jogosUsuario = Array.isArray(jogos)
-          ? jogos.filter(
-              (jogo) => isUsuarioNoJogo(jogo, user.id) && isJogoCompleto(jogo),
-            )
-          : [];
-
-        setUsuario(user);
-        setTotalJogos(jogosUsuario.length);
-
-        localStorage.setItem("usuario", JSON.stringify(user));
-      } catch {
-        setErro("Não foi possível carregar todas as informações do perfil.");
-      } finally {
         setLoading(false);
+      } else {
+        setLoading(true);
       }
     }
 
-    void carregarPerfil();
+    try {
+      setErro("");
+
+      const [userResponse, jogosResponse] = await Promise.all([
+        api.get("/users/me"),
+        api.get("/jogos", {
+          params: {
+            meus: true,
+            limit: 100,
+          },
+        }),
+      ]);
+
+      if (requestId !== requestRef.current) return;
+
+      const user = getData<Usuario>(userResponse);
+      const jogos = normalizarLista<Jogo>(getData<unknown>(jogosResponse));
+      const jogosConcluidos = contarJogosConcluidos(jogos, user.id);
+
+      setUsuario(user);
+      setTotalJogos(jogosConcluidos);
+      savePerfilCache(user, jogosConcluidos);
+      safeStorageSet("usuario", JSON.stringify(user));
+    } catch {
+      if (requestId !== requestRef.current) return;
+
+      setErro("Não foi possível carregar todas as informações do perfil.");
+    } finally {
+      if (requestId === requestRef.current) {
+        setLoading(false);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    void carregarPerfil();
+  }, [carregarPerfil]);
 
   async function sair() {
     try {
       await api.post("/auth/logout");
-    } catch {
-      // The local session cache should be cleared even if the server is offline.
-    }
+    } catch {}
 
+    safeStorageRemove(CACHE_KEY);
     clearAuthStorage();
     router.push("/login");
   }
 
-  const fotoPerfil = getSafeImageUrl(usuario?.foto_perfil);
-
   return (
-    <>
-      <section className="mx-auto max-w-xl rounded-[32px] bg-white p-6 text-center shadow-sm sm:p-8">
-        <Avatar className="mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-white bg-green-100 shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
-          {fotoPerfil && (
-            <AvatarImage
-              src={fotoPerfil}
-              alt={usuario?.nome ?? "Jogador"}
-              className="h-full w-full rounded-full object-cover"
-            />
-          )}
-
-          <AvatarFallback className="h-full w-full rounded-full bg-green-100 text-4xl font-black text-green-800">
-            {getInitials(usuario?.nome)}
-          </AvatarFallback>
-        </Avatar>
-
-        <h1 className="mt-5 text-2xl font-black text-zinc-950">
-          {usuario?.nome ?? "Jogador"}
-        </h1>
-
-        <p className="mt-1 text-sm text-zinc-500">
-          {loading ? "Carregando informações..." : usuario?.email}
-        </p>
-
-        <div className="mt-4 flex justify-center gap-2">
-          {usuario?.perfil_cliente?.cidade && (
-            <Badge variant="outline" className="rounded-full px-4 py-1.5">
-              {usuario.perfil_cliente.cidade}
-            </Badge>
-          )}
-        </div>
-
-        {erro && (
-          <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-            {erro}
-          </p>
+    <section className="mx-auto max-w-xl rounded-[32px] bg-white p-6 text-center shadow-sm sm:p-8">
+      <Avatar className="mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-white bg-green-100 shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
+        {fotoPerfil && (
+          <AvatarImage
+            src={fotoPerfil}
+            alt={usuario?.nome ?? "Jogador"}
+            className="h-full w-full rounded-full object-cover"
+          />
         )}
 
-        <div className="mt-8 grid grid-cols-2 gap-3">
-          <div className="rounded-[30px] bg-zinc-100 p-5">
-            <Trophy className="mx-auto h-6 w-6 text-green-700" />
+        <AvatarFallback className="h-full w-full rounded-full bg-green-100 text-4xl font-black text-green-800">
+          {getInitials(usuario?.nome)}
+        </AvatarFallback>
+      </Avatar>
 
-            <p className="mt-3 text-2xl font-black text-zinc-950">
-              {totalJogos}
-            </p>
+      <h1 className="mt-5 text-2xl font-black text-zinc-950">
+        {usuario?.nome ?? "Jogador"}
+      </h1>
 
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-400">
-              Jogos
-            </p>
-          </div>
+      <p className="mt-1 text-sm text-zinc-500">
+        {loading ? "Carregando informações..." : usuario?.email}
+      </p>
 
-          <div className="rounded-[30px] bg-zinc-100 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-400">
-              Ranking
-            </p>
+      <div className="mt-4 flex justify-center gap-2">
+        {usuario?.perfil_cliente?.cidade && (
+          <Badge variant="outline" className="rounded-full px-4 py-1.5">
+            {usuario.perfil_cliente.cidade}
+          </Badge>
+        )}
+      </div>
 
-            <p className="mt-3 text-3xl font-black text-green-700">
-              {formatCategoria(usuario?.perfil_cliente?.categoria)}
-            </p>
+      {erro && (
+        <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+          {erro}
+        </p>
+      )}
 
-            <p className="mt-1 text-xs font-semibold text-zinc-400">
-              Categoria atual
-            </p>
-          </div>
+      <div className="mt-8 grid grid-cols-2 gap-3">
+        <div className="rounded-[30px] bg-zinc-100 p-5">
+          <Trophy className="mx-auto h-6 w-6 text-green-700" />
+
+          <p className="mt-3 text-2xl font-black text-zinc-950">
+            {totalJogos}
+          </p>
+
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-400">
+            Jogos
+          </p>
         </div>
 
-        <div className="mt-8 space-y-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-[50px] w-full rounded-2xl font-bold"
-            onClick={() => router.push("/painel/jogador/configuracoes")}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Configurações
-          </Button>
+        <div className="rounded-[30px] bg-zinc-100 p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-400">
+            Ranking
+          </p>
 
-          <Button
-            type="button"
-            onClick={sair}
-            className="h-[50px] w-full rounded-2xl bg-red-50 font-bold text-red-600 hover:bg-red-100"
-            variant="ghost"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair da conta
-          </Button>
+          <p className="mt-3 text-3xl font-black text-green-700">
+            {formatCategoria(usuario?.perfil_cliente?.categoria)}
+          </p>
+
+          <p className="mt-1 text-xs font-semibold text-zinc-400">
+            Categoria atual
+          </p>
         </div>
-      </section>
-    </>
+      </div>
+
+      <div className="mt-8 space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-[50px] w-full rounded-2xl font-bold"
+          onClick={() => router.push("/painel/jogador/configuracoes")}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          Configurações
+        </Button>
+
+        <Button
+          type="button"
+          onClick={sair}
+          className="h-[50px] w-full rounded-2xl bg-red-50 font-bold text-red-600 hover:bg-red-100"
+          variant="ghost"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair da conta
+        </Button>
+      </div>
+    </section>
   );
 }

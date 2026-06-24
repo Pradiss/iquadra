@@ -117,18 +117,7 @@ type SlotDisponibilidade = {
 };
 
 type DisponibilidadeResponse = {
-  quadra?: {
-    id?: string;
-    nome?: string;
-    tipo_piso?: string | null;
-    modalidade?: string | null;
-    valor_hora?: number | null;
-    coberta?: boolean | null;
-    capacidade_minima?: number;
-    capacidade_maxima?: number;
-    permite_simples?: boolean;
-    permite_dupla?: boolean;
-  };
+  quadra?: Partial<Quadra>;
   slots?: SlotDisponibilidade[];
 };
 
@@ -151,21 +140,46 @@ function getAgendaCacheKey(academiaId: string, data: string) {
   return `${AGENDA_CACHE_PREFIX}:${academiaId}:${data}`;
 }
 
+function safeStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeStorageRemove(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {}
+}
+
 function readAgendaSnapshot(academiaId: string, data: string) {
-  if (typeof window === "undefined") return null;
+  const raw = safeStorageGet(getAgendaCacheKey(academiaId, data));
+  if (!raw) return null;
 
   try {
-    const raw = localStorage.getItem(getAgendaCacheKey(academiaId, data));
-    if (!raw) return null;
-
     const snapshot = JSON.parse(raw) as AgendaCacheSnapshot;
+    const expired = Date.now() - snapshot.savedAt > AGENDA_CACHE_MAX_AGE_MS;
 
-    if (Date.now() - snapshot.savedAt > AGENDA_CACHE_MAX_AGE_MS) {
+    if (
+      expired ||
+      !Array.isArray(snapshot.quadras) ||
+      !Array.isArray(snapshot.horarios)
+    ) {
+      safeStorageRemove(getAgendaCacheKey(academiaId, data));
       return null;
     }
 
     return snapshot;
   } catch {
+    safeStorageRemove(getAgendaCacheKey(academiaId, data));
     return null;
   }
 }
@@ -173,22 +187,24 @@ function readAgendaSnapshot(academiaId: string, data: string) {
 function saveAgendaSnapshot(
   academiaId: string,
   data: string,
-  snapshot: Omit<AgendaCacheSnapshot, "savedAt">
+  snapshot: Omit<AgendaCacheSnapshot, "savedAt">,
 ) {
-  if (typeof window === "undefined") return;
-
-  localStorage.setItem(
+  safeStorageSet(
     getAgendaCacheKey(academiaId, data),
     JSON.stringify({
       ...snapshot,
       savedAt: Date.now(),
-    })
+    }),
   );
+}
+
+function invalidateAgendaSnapshot(academiaId: string, data: string) {
+  safeStorageRemove(getAgendaCacheKey(academiaId, data));
 }
 
 function montarHorariosDaQuadra(
   quadra: Quadra,
-  response: DisponibilidadeResponse
+  response: DisponibilidadeResponse,
 ): HorarioAgenda[] {
   const slots = Array.isArray(response.slots) ? response.slots : [];
 
@@ -199,20 +215,20 @@ function montarHorariosDaQuadra(
       slot.capacidade_minima ??
         response.quadra?.capacidade_minima ??
         quadra.capacidade_minima ??
-        2
+        2,
     );
 
     const capacidadeMaxima = Number(
       slot.capacidade_maxima ??
         response.quadra?.capacidade_maxima ??
         quadra.capacidade_maxima ??
-        4
+        4,
     );
 
     const jogadoresConfirmados = Number(
       slot.jogadores_confirmados ??
         slot.jogo?.jogadores_confirmados ??
-        participantes.length
+        participantes.length,
     );
 
     const maximoParticipantesJogo =
@@ -232,19 +248,19 @@ function montarHorariosDaQuadra(
         slot.permite_simples ??
           response.quadra?.permite_simples ??
           quadra.permite_simples ??
-          true
+          true,
       ),
       permiteDupla: Boolean(
         slot.permite_dupla ??
           response.quadra?.permite_dupla ??
           quadra.permite_dupla ??
-          true
+          true,
       ),
       jogadoresConfirmados,
       vagasDisponiveis: Number(
         slot.vagas_disponiveis ??
           slot.jogo?.vagas_disponiveis ??
-          Math.max(maximoParticipantesJogo - jogadoresConfirmados, 0)
+          Math.max(maximoParticipantesJogo - jogadoresConfirmados, 0),
       ),
       jogo: slot.jogo
         ? {
@@ -266,9 +282,52 @@ function formatarAcademiaAtual(academia?: Academia | null) {
   return local ? `${academia.nome} • ${local}` : academia.nome;
 }
 
+function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse) {
+  const quadrasDisponibilidade = Array.isArray(disponibilidade.quadras)
+    ? disponibilidade.quadras
+    : [];
+
+  const quadras = quadrasDisponibilidade
+    .map((item) => item.quadra)
+    .filter(Boolean)
+    .map((quadra) => ({
+      id: String(quadra?.id ?? ""),
+      nome: String(quadra?.nome ?? "Quadra"),
+      tipo_piso: quadra?.tipo_piso ?? null,
+      modalidade: quadra?.modalidade ?? null,
+      valor_hora: quadra?.valor_hora ?? null,
+      coberta: quadra?.coberta ?? null,
+      capacidade_minima: quadra?.capacidade_minima,
+      capacidade_maxima: quadra?.capacidade_maxima,
+      permite_simples: quadra?.permite_simples,
+      permite_dupla: quadra?.permite_dupla,
+    }))
+    .filter((quadra) => Boolean(quadra.id)) as Quadra[];
+
+  const quadrasById = new Map(quadras.map((quadra) => [quadra.id, quadra]));
+
+  const horarios = quadrasDisponibilidade
+    .flatMap((item) => {
+      const quadraId = item.quadra?.id;
+      const quadra = quadraId ? quadrasById.get(quadraId) : null;
+
+      return quadra ? montarHorariosDaQuadra(quadra, item) : [];
+    })
+    .sort((a, b) => {
+      const porHora = a.hora.localeCompare(b.hora);
+      return porHora !== 0 ? porHora : a.quadraNome.localeCompare(b.quadraNome);
+    });
+
+  return {
+    academia: disponibilidade.academia ?? null,
+    quadras,
+    horarios,
+  };
+}
+
 export default function AcademiaAgendaPage() {
   const params = useParams<{ id?: string }>();
-  const agendaRequestIdRef = useRef(0);
+  const requestRef = useRef(0);
 
   const [modalAcademiasOpen, setModalAcademiasOpen] = useState(false);
   const [academias, setAcademias] = useState<Academia[]>([]);
@@ -277,14 +336,13 @@ export default function AcademiaAgendaPage() {
   const [quadras, setQuadras] = useState<Quadra[]>([]);
   const [horarios, setHorarios] = useState<HorarioAgenda[]>([]);
   const [loading, setLoading] = useState(true);
-  const [atualizandoAgenda, setAtualizandoAgenda] = useState(false);
   const [erro, setErro] = useState("");
 
   const [filtrosQuadra, setFiltrosQuadra] =
     useState<AgendaFiltros>(agendaFiltroInicial);
 
   const [dataSelecionada, setDataSelecionada] = useState(
-    format(new Date(), "yyyy-MM-dd")
+    format(new Date(), "yyyy-MM-dd"),
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -336,138 +394,101 @@ export default function AcademiaAgendaPage() {
     if (quadrasFiltradas.length === 0) return [];
 
     const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
-
     return horarios.filter((horario) => idsPermitidos.has(horario.quadraId));
   }, [horarios, quadrasFiltradas]);
 
   useEffect(() => {
+    let ativo = true;
+
     async function carregarAcademias() {
       try {
         const data = await listarAcademias();
-        setAcademias(Array.isArray(data) ? data : []);
+
+        if (ativo) {
+          setAcademias(Array.isArray(data) ? data : []);
+        }
       } catch {
-        setAcademias([]);
+        if (ativo) {
+          setAcademias([]);
+        }
       }
     }
 
     void carregarAcademias();
+
+    return () => {
+      ativo = false;
+    };
   }, []);
 
-  const carregarAgenda = useCallback(async () => {
-    if (!academiaId || !dataSelecionada) return;
+  const carregarAgenda = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      if (!academiaId || !dataSelecionada) return;
 
-    const requestId = agendaRequestIdRef.current + 1;
-    agendaRequestIdRef.current = requestId;
-    const snapshot = readAgendaSnapshot(academiaId, dataSelecionada);
+      const requestId = requestRef.current + 1;
+      requestRef.current = requestId;
 
-    if (snapshot) {
-      setAcademia(snapshot.academia);
-      setQuadras(snapshot.quadras);
-      setHorarios(snapshot.horarios);
-      setLoading(false);
-      setAtualizandoAgenda(true);
-    } else {
-      setLoading(true);
-      setAtualizandoAgenda(false);
-    }
-
-    setErro("");
-    const startedAt = performance.now();
-
-    try {
-      const disponibilidade = (await obterDisponibilidadeAcademia(
-        academiaId,
-        dataSelecionada
-      )) as DisponibilidadeAcademiaResponse;
-      const academiaApi = disponibilidade.academia;
-      const quadrasDisponibilidade = Array.isArray(disponibilidade.quadras)
-        ? disponibilidade.quadras
-        : [];
-      const quadrasApi = quadrasDisponibilidade
-        .map((item) => item.quadra)
-        .filter(Boolean)
-        .map((quadra) => ({
-          id: String(quadra?.id ?? ""),
-          nome: String(quadra?.nome ?? "Quadra"),
-          tipo_piso: quadra?.tipo_piso ?? null,
-          modalidade: quadra?.modalidade ?? null,
-          valor_hora: quadra?.valor_hora ?? null,
-          coberta: quadra?.coberta ?? null,
-          capacidade_minima: quadra?.capacidade_minima,
-          capacidade_maxima: quadra?.capacidade_maxima,
-          permite_simples: quadra?.permite_simples,
-          permite_dupla: quadra?.permite_dupla,
-        }))
-        .filter((quadra) => Boolean(quadra.id)) as Quadra[];
-
-      if (quadrasApi.length === 0) {
-        if (requestId !== agendaRequestIdRef.current) return;
-
-        salvarUltimaAcademia(academiaApi?.id ?? academiaId);
-        setAcademia(academiaApi ?? null);
-        setQuadras(quadrasApi);
-        setHorarios([]);
-        return;
+      if (force) {
+        invalidateAgendaSnapshot(academiaId, dataSelecionada);
       }
 
-      const quadrasById = new Map(quadrasApi.map((quadra) => [quadra.id, quadra]));
-      const agenda = quadrasDisponibilidade
-        .flatMap((item) => {
-          const quadraId = item.quadra?.id;
-          const quadra = quadraId ? quadrasById.get(quadraId) : null;
+      const snapshot = !force
+        ? readAgendaSnapshot(academiaId, dataSelecionada)
+        : null;
 
-          return quadra ? montarHorariosDaQuadra(quadra, item) : [];
-        })
-        .sort((a, b) => {
-          const porHora = a.hora.localeCompare(b.hora);
-          if (porHora !== 0) return porHora;
-
-          return a.quadraNome.localeCompare(b.quadraNome);
-        });
-
-      if (requestId !== agendaRequestIdRef.current) return;
-
-      salvarUltimaAcademia(academiaApi?.id ?? academiaId);
-      setAcademia(academiaApi ?? null);
-      setQuadras(quadrasApi);
-
-      setHorarios(agenda);
-      saveAgendaSnapshot(academiaId, dataSelecionada, {
-        academia: academiaApi ?? null,
-        quadras: quadrasApi,
-        horarios: agenda,
-      });
-
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[agenda] disponibilidade atualizada", {
-          academiaId,
-          data: dataSelecionada,
-          quadras: quadrasApi.length,
-          horarios: agenda.length,
-          ms: Math.round(performance.now() - startedAt),
-        });
-      }
-    } catch {
-      if (requestId !== agendaRequestIdRef.current) return;
-
-      setAcademia(null);
-      setQuadras([]);
-      setHorarios([]);
-      setErro("Não foi possível carregar a agenda.");
-    } finally {
-      if (requestId === agendaRequestIdRef.current) {
+      if (snapshot) {
+        setAcademia(snapshot.academia);
+        setQuadras(snapshot.quadras);
+        setHorarios(snapshot.horarios);
         setLoading(false);
-        setAtualizandoAgenda(false);
+      } else {
+        setLoading(true);
       }
-    }
-  }, [academiaId, dataSelecionada]);
+
+      setErro("");
+
+      try {
+        const disponibilidade = (await obterDisponibilidadeAcademia(
+          academiaId,
+          dataSelecionada,
+        )) as DisponibilidadeAcademiaResponse;
+
+        if (requestId !== requestRef.current) return;
+
+        const agenda = montarAgenda(disponibilidade);
+
+        salvarUltimaAcademia(agenda.academia?.id ?? academiaId);
+
+        setAcademia(agenda.academia);
+        setQuadras(agenda.quadras);
+        setHorarios(agenda.horarios);
+
+        saveAgendaSnapshot(academiaId, dataSelecionada, agenda);
+      } catch {
+        if (requestId !== requestRef.current) return;
+
+        if (!snapshot) {
+          setAcademia(null);
+          setQuadras([]);
+          setHorarios([]);
+        }
+
+        setErro("Não foi possível carregar a agenda.");
+      } finally {
+        if (requestId === requestRef.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [academiaId, dataSelecionada],
+  );
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void carregarAgenda();
-    }, 0);
+    void carregarAgenda();
+  }, [carregarAgenda]);
 
-    return () => window.clearTimeout(timeoutId);
+  const handleAgendaMutationSuccess = useCallback(async () => {
+    await carregarAgenda({ force: true });
   }, [carregarAgenda]);
 
   function trocarAcademia(item: Academia) {
@@ -514,7 +535,7 @@ export default function AcademiaAgendaPage() {
 
   return (
     <>
-      <section >
+      <section>
         <div className="mb-2">
           <button
             type="button"
@@ -550,12 +571,6 @@ export default function AcademiaAgendaPage() {
             </p>
           )}
 
-          {atualizandoAgenda && !loading && (
-            <p className="mb-3 text-xs font-semibold text-zinc-500">
-              Atualizando agenda...
-            </p>
-          )}
-
           {loading ? (
             <p className="text-sm text-zinc-500">Carregando agenda...</p>
           ) : horariosFiltrados.length === 0 ? (
@@ -585,7 +600,7 @@ export default function AcademiaAgendaPage() {
         horario={horarioSelecionado}
         data={dataSelecionada}
         academiaId={academiaId}
-        onSuccess={carregarAgenda}
+        onSuccess={handleAgendaMutationSuccess}
       />
     </>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { JogosTabs } from "@/components/jogador/meus-jogos/jogos-tabs";
@@ -22,6 +22,75 @@ import type { Convite, Jogo } from "@/lib/jogos-utils";
 import { sortJogosAsc, sortJogosDesc } from "@/lib/jogos-utils";
 
 type AbaJogos = "pendentes" | "proximos" | "historico";
+
+type MeusJogosCache = {
+  usuarioId: string;
+  jogos: Jogo[];
+  convites: Convite[];
+  savedAt: number;
+};
+
+const CACHE_KEY = "playfy_meus_jogos_cache";
+const CACHE_TTL_MS = 1000 * 60;
+
+function safeStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeStorageRemove(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {}
+}
+
+function readCache() {
+  const raw = safeStorageGet(CACHE_KEY);
+  if (!raw) return null;
+
+  try {
+    const cache = JSON.parse(raw) as MeusJogosCache;
+    const expirado = Date.now() - cache.savedAt > CACHE_TTL_MS;
+
+    if (
+      expirado ||
+      !cache.usuarioId ||
+      !Array.isArray(cache.jogos) ||
+      !Array.isArray(cache.convites)
+    ) {
+      safeStorageRemove(CACHE_KEY);
+      return null;
+    }
+
+    return cache;
+  } catch {
+    safeStorageRemove(CACHE_KEY);
+    return null;
+  }
+}
+
+function saveCache(cache: Omit<MeusJogosCache, "savedAt">) {
+  safeStorageSet(
+    CACHE_KEY,
+    JSON.stringify({
+      ...cache,
+      savedAt: Date.now(),
+    }),
+  );
+}
+
+function invalidateCache() {
+  safeStorageRemove(CACHE_KEY);
+}
 
 function normalizarLista<T>(response: unknown): T[] {
   const data = response as {
@@ -106,9 +175,7 @@ function isConcluido(jogo: Jogo) {
 function isFuturo(jogo: Jogo) {
   const data = getDataJogo(jogo);
 
-  if (!data) {
-    return true;
-  }
+  if (!data) return true;
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -117,45 +184,89 @@ function isFuturo(jogo: Jogo) {
 }
 
 export default function MeusJogosPage() {
-  const [aba, setAba] = useState<AbaJogos>("pendentes");
+  const requestRef = useRef(0);
 
+  const [aba, setAba] = useState<AbaJogos>("pendentes");
   const [usuarioId, setUsuarioId] = useState("");
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [convites, setConvites] = useState<Convite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
 
-  const buscarDados = useCallback(async () => {
-    try {
-      const usuarioCache = getUsuario();
-      const [usuario, jogosApi, convitesApi] = await Promise.all([
-        usuarioCache ? Promise.resolve(usuarioCache) : buscarUsuarioLogado(),
-        listarJogos({ meus: true, limit: 100 }),
-        listarConvitesJogos(),
-      ]);
+  const aplicarDados = useCallback(
+    (dados: { usuarioId: string; jogos: Jogo[]; convites: Convite[] }) => {
+      setUsuarioId(dados.usuarioId);
+      setJogos(dados.jogos);
+      setConvites(dados.convites);
+    },
+    [],
+  );
 
-      setUsuarioId(usuario.id);
-      setJogos(normalizarLista<Jogo>(jogosApi));
-      setConvites(normalizarLista<Convite>(convitesApi));
-    } catch {
-      setJogos([]);
-      setConvites([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const carregarDados = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      const requestId = requestRef.current + 1;
+      requestRef.current = requestId;
 
-  const carregarDados = useCallback(async () => {
-    setLoading(true);
-    await buscarDados();
-  }, [buscarDados]);
+      if (force) {
+        invalidateCache();
+      }
+
+      const cache = !force ? readCache() : null;
+
+      if (cache) {
+        aplicarDados({
+          usuarioId: cache.usuarioId,
+          jogos: cache.jogos,
+          convites: cache.convites,
+        });
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+
+      try {
+        setErro("");
+
+        const usuarioCache = getUsuario();
+
+        const [usuario, jogosApi, convitesApi] = await Promise.all([
+          usuarioCache ? Promise.resolve(usuarioCache) : buscarUsuarioLogado(),
+          listarJogos({ meus: true, limit: 100 }),
+          listarConvitesJogos(),
+        ]);
+
+        if (requestId !== requestRef.current) return;
+
+        const novosDados = {
+          usuarioId: usuario.id,
+          jogos: normalizarLista<Jogo>(jogosApi),
+          convites: normalizarLista<Convite>(convitesApi),
+        };
+
+        aplicarDados(novosDados);
+        saveCache(novosDados);
+      } catch {
+        if (requestId !== requestRef.current) return;
+
+        if (!cache) {
+          setUsuarioId("");
+          setJogos([]);
+          setConvites([]);
+        }
+
+        setErro("Não foi possível carregar seus jogos agora.");
+      } finally {
+        if (requestId === requestRef.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [aplicarDados],
+  );
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void buscarDados();
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [buscarDados]);
+    void carregarDados();
+  }, [carregarDados]);
 
   const meusJogos = useMemo(() => {
     return jogos.filter((jogo) => usuarioEstaNoJogo(jogo, usuarioId));
@@ -174,7 +285,7 @@ export default function MeusJogosPage() {
   }, [meusJogos]);
 
   const jogosPendentes = useMemo(() => {
-    return [...jogosProximos].filter((jogo) => {
+    return jogosProximos.filter((jogo) => {
       const participantes = jogo.participantes?.length ?? 0;
       const maximo = jogo.maximo_participantes ?? 2;
 
@@ -190,20 +301,29 @@ export default function MeusJogosPage() {
       .sort(sortJogosDesc);
   }, [meusJogos]);
 
-  async function aceitarConvite(id: string) {
-    await aceitarConviteJogo(id);
-    await carregarDados();
-  }
+  const aceitarConvite = useCallback(
+    async (id: string) => {
+      await aceitarConviteJogo(id);
+      await carregarDados({ force: true });
+    },
+    [carregarDados],
+  );
 
-  async function recusarConvite(id: string) {
-    await recusarConviteJogo(id);
-    await carregarDados();
-  }
+  const recusarConvite = useCallback(
+    async (id: string) => {
+      await recusarConviteJogo(id);
+      await carregarDados({ force: true });
+    },
+    [carregarDados],
+  );
 
-  async function handleCancelarJogo(id: string) {
-    await cancelarJogo(id);
-    await carregarDados();
-  }
+  const handleCancelarJogo = useCallback(
+    async (id: string) => {
+      await cancelarJogo(id);
+      await carregarDados({ force: true });
+    },
+    [carregarDados],
+  );
 
   return (
     <>
@@ -222,9 +342,15 @@ export default function MeusJogosPage() {
       <JogosTabs aba={aba} onChange={setAba} />
 
       <section className="mt-5 flex flex-col gap-4">
+        {erro && !loading && (
+          <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+            {erro}
+          </p>
+        )}
+
         {loading && <EmptyJogos text="Carregando seus jogos..." />}
 
-        {!loading && aba === "pendentes" && (
+        {!loading && !erro && aba === "pendentes" && (
           <>
             {convitesPendentes.length === 0 && jogosPendentes.length === 0 && (
               <EmptyJogos text="Nenhum convite ou jogo aguardando jogadores." />
@@ -257,7 +383,7 @@ export default function MeusJogosPage() {
           </>
         )}
 
-        {!loading && aba === "proximos" && (
+        {!loading && !erro && aba === "proximos" && (
           <>
             {jogosProximos.length === 0 && (
               <EmptyJogos text="Nenhum jogo próximo." />
@@ -281,7 +407,7 @@ export default function MeusJogosPage() {
           </>
         )}
 
-        {!loading && aba === "historico" && (
+        {!loading && !erro && aba === "historico" && (
           <>
             {jogosHistorico.length === 0 && (
               <EmptyJogos text="Nenhum jogo no histórico." />

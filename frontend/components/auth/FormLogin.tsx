@@ -9,10 +9,7 @@ import AuthCard from "./AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { UsuarioLogado } from "@/lib/auth-storage";
-import {
-  getRedirectAfterAuth,
-  persistAuthenticatedUsuario,
-} from "@/lib/auth-flow";
+import { persistAuthenticatedUsuario } from "@/lib/auth-flow";
 
 function getSuccessMessage(created?: string | null) {
   if (created === "jogador") {
@@ -65,18 +62,16 @@ export default function FormLogin() {
       const { usuario } = response.data.data;
 
       persistAuthenticatedUsuario(usuario);
-      router.replace(
-        getRedirectAfterAuth(usuario, searchParams.get("redirect"))
-      );
-    } catch (error) {
-      if (axios.isAxiosError<{ message?: string }>(error)) {
-        setErro(
-          error.response?.data?.message || "Não foi possível entrar agora."
-        );
-      } else if (error instanceof Error) {
-        setErro(error.message);
+
+      const ultimaAcademia =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("playfy_ultima_academia")
+          : null;
+
+      if (ultimaAcademia) {
+        router.replace(`/painel/jogador/academia/${ultimaAcademia}`);
       } else {
-        setErro("Não foi possível entrar agora.");
+        router.replace("/painel/jogador");
       }
     } finally {
       setLoading(false);
