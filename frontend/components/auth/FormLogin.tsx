@@ -3,18 +3,20 @@
 import api from "@/services/api";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthCard from "./AuthCard";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import type { UsuarioLogado } from "@/lib/auth-storage";
-import { persistAuthenticatedUsuario } from "@/lib/auth-flow";
+import { getUsuario, type UsuarioLogado } from "@/lib/auth-storage";
+import {
+  getRedirectAfterAuth,
+  persistAuthenticatedUsuario,
+} from "@/lib/auth-flow";
 
 const ULTIMA_ACADEMIA_KEY = "playfy_ultima_academia";
-const MANTER_LOGADO_KEY = "playfy_manter_logado";
 
 function safeStorageGet(key: string) {
   try {
@@ -22,18 +24,6 @@ function safeStorageGet(key: string) {
   } catch {
     return null;
   }
-}
-
-function safeStorageSet(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {}
-}
-
-function safeStorageRemove(key: string) {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {}
 }
 
 function getSuccessMessage(created?: string | null) {
@@ -62,8 +52,20 @@ export default function FormLogin() {
   const [loading, setLoading] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [manterLogado, setManterLogado] = useState(true);
+  const [verificandoSessao, setVerificandoSessao] = useState(true);
 
   const successMessage = getSuccessMessage(searchParams.get("created"));
+
+  useEffect(() => {
+    const usuario = getUsuario();
+
+    if (!usuario) {
+      setVerificandoSessao(false);
+      return;
+    }
+
+    router.replace(getRedirectAfterAuth(usuario));
+  }, [router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,24 +90,22 @@ export default function FormLogin() {
         return;
       }
 
-      persistAuthenticatedUsuario(usuario);
+      persistAuthenticatedUsuario(usuario, {
+        persistent: manterLogado,
+      });
 
-      if (manterLogado) {
-        safeStorageSet(MANTER_LOGADO_KEY, "true");
-      } else {
-        safeStorageRemove(MANTER_LOGADO_KEY);
-      }
+      const requestedRedirect = searchParams.get("redirect");
 
       const ultimaAcademia = manterLogado
         ? safeStorageGet(ULTIMA_ACADEMIA_KEY)
         : null;
 
-      if (ultimaAcademia) {
+      if (ultimaAcademia && !requestedRedirect) {
         router.replace(`/painel/jogador/academia/${ultimaAcademia}`);
         return;
       }
 
-      router.replace("/painel/jogador");
+      router.replace(getRedirectAfterAuth(usuario, requestedRedirect));
     } catch (error) {
       if (axios.isAxiosError<{ message?: string }>(error)) {
         setErro(error.response?.data?.message || "Não foi possível entrar agora.");
@@ -116,6 +116,14 @@ export default function FormLogin() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (verificandoSessao) {
+    return (
+      <AuthCard title="Bora pro Play!" description="Verificando sua sessão...">
+        <p className="text-center text-sm text-gray-500">Carregando...</p>
+      </AuthCard>
+    );
   }
 
   return (

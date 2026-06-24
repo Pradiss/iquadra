@@ -1,6 +1,7 @@
 import {
   clearAuthStorage,
   getUsuario,
+  updateStoredUsuario,
   type UsuarioLogado,
 } from "@/lib/auth-storage";
 import { getUserRole, type PainelRole } from "@/lib/user-role";
@@ -65,7 +66,7 @@ async function fetchSession(): Promise<ValidatedSession | null> {
       return null;
     }
 
-    localStorage.setItem("usuario", JSON.stringify(usuario));
+    updateStoredUsuario(usuario);
 
     return {
       usuario,

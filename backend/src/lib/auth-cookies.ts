@@ -6,6 +6,7 @@ import { env } from "../config/env";
 export const ACCESS_TOKEN_COOKIE = "playfy_sb_access_token";
 export const REFRESH_TOKEN_COOKIE = "playfy_sb_refresh_token";
 export const CSRF_TOKEN_COOKIE = "playfy_csrf_token";
+export const KEEP_LOGGED_IN_COOKIE = "playfy_keep_logged_in";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -75,6 +76,12 @@ export function setAuthCookies(
     randomBytes(32).toString("hex"),
     csrfCookieOptions(csrfTokenMaxAge),
   );
+
+  if (persistent) {
+    res.cookie(KEEP_LOGGED_IN_COOKIE, "true", cookieOptions(THIRTY_DAYS_MS));
+  } else {
+    res.clearCookie(KEEP_LOGGED_IN_COOKIE, cookieOptions(0));
+  }
 }
 
 export function clearAuthCookies(res: Response) {
@@ -83,6 +90,7 @@ export function clearAuthCookies(res: Response) {
   res.clearCookie(ACCESS_TOKEN_COOKIE, options);
   res.clearCookie(REFRESH_TOKEN_COOKIE, options);
   res.clearCookie(CSRF_TOKEN_COOKIE, csrfCookieOptions(0));
+  res.clearCookie(KEEP_LOGGED_IN_COOKIE, options);
 }
 
 export function getAuthCookie(req: Request, name: string) {

@@ -1,14 +1,18 @@
-import type { UsuarioLogado } from "@/lib/auth-storage";
+import { persistUsuario, type UsuarioLogado } from "@/lib/auth-storage";
 import { buscarUltimaAcademia } from "@/lib/last-academia";
 import { getPainelHomeByRole, getUserRole } from "@/lib/user-role";
 
-export function persistAuthenticatedUsuario(usuario: UsuarioLogado) {
-  try {
-    localStorage.setItem("usuario", JSON.stringify(usuario));
-    console.log("Usuário salvo no localStorage");
-  } catch (error) {
-    console.error("Erro ao salvar usuário no localStorage", error);
-  }
+type PersistAuthenticatedUsuarioOptions = {
+  persistent?: boolean;
+};
+
+export function persistAuthenticatedUsuario(
+  usuario: UsuarioLogado,
+  options: PersistAuthenticatedUsuarioOptions = {}
+) {
+  persistUsuario(usuario, {
+    persistent: options.persistent === true,
+  });
 }
 
 export function getRedirectAfterAuth(

@@ -19,7 +19,7 @@ export type UsuarioLogado = {
   supabaseUserId?: string | null;
   nome: string;
   email: string;
-  telefone?: string;
+  telefone?: string | null;
   foto_perfil?: string | null;
   fotoUrl?: string | null;
   fotoPath?: string | null;
@@ -28,22 +28,106 @@ export type UsuarioLogado = {
   academias?: AcademiaUsuarioLogado[];
 };
 
-export function getUsuario(): UsuarioLogado | null {
-  if (typeof window === "undefined") return null;
+export const USER_STORAGE_KEY = "usuario";
+export const KEEP_LOGGED_IN_STORAGE_KEY = "playfy_manter_logado";
 
-  const usuario = localStorage.getItem("usuario");
+type PersistUsuarioOptions = {
+  persistent?: boolean;
+};
+
+export function getUsuario(): UsuarioLogado | null {
+  return (
+    getStoredUsuario(localStorageSafe()) ?? getStoredUsuario(sessionStorageSafe())
+  );
+}
+
+export function persistUsuario(
+  usuario: UsuarioLogado,
+  options: PersistUsuarioOptions = {}
+) {
+  const persistent = options.persistent === true;
+  const serializedUsuario = JSON.stringify(usuario);
+
+  if (persistent) {
+    safeStorageSet(localStorageSafe(), USER_STORAGE_KEY, serializedUsuario);
+    safeStorageSet(localStorageSafe(), KEEP_LOGGED_IN_STORAGE_KEY, "true");
+    safeStorageRemove(sessionStorageSafe(), USER_STORAGE_KEY);
+    return;
+  }
+
+  safeStorageSet(sessionStorageSafe(), USER_STORAGE_KEY, serializedUsuario);
+  safeStorageRemove(localStorageSafe(), USER_STORAGE_KEY);
+  safeStorageRemove(localStorageSafe(), KEEP_LOGGED_IN_STORAGE_KEY);
+}
+
+export function updateStoredUsuario(usuario: UsuarioLogado) {
+  persistUsuario(usuario, {
+    persistent: isKeepLoggedIn(),
+  });
+}
+
+export function isKeepLoggedIn() {
+  return safeStorageGet(localStorageSafe(), KEEP_LOGGED_IN_STORAGE_KEY) === "true";
+}
+
+export function clearAuthStorage() {
+  safeStorageRemove(localStorageSafe(), USER_STORAGE_KEY);
+  safeStorageRemove(localStorageSafe(), KEEP_LOGGED_IN_STORAGE_KEY);
+  safeStorageRemove(sessionStorageSafe(), USER_STORAGE_KEY);
+}
+
+function getStoredUsuario(storage: Storage | null) {
+  const usuario = safeStorageGet(storage, USER_STORAGE_KEY);
 
   if (!usuario) return null;
 
   try {
-    return JSON.parse(usuario);
+    return JSON.parse(usuario) as UsuarioLogado;
   } catch {
     return null;
   }
 }
 
-export function clearAuthStorage() {
-  if (typeof window === "undefined") return;
+function localStorageSafe(): Storage | null {
+  if (typeof window === "undefined") return null;
 
-  localStorage.removeItem("usuario");
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function sessionStorageSafe(): Storage | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageGet(storage: Storage | null | undefined, key: string) {
+  try {
+    return storage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(
+  storage: Storage | null | undefined,
+  key: string,
+  value: string
+) {
+  try {
+    storage?.setItem(key, value);
+  } catch {}
+}
+
+function safeStorageRemove(storage: Storage | null | undefined, key: string) {
+  try {
+    storage?.removeItem(key);
+  } catch {}
 }

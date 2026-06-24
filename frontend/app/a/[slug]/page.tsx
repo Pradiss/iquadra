@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
 import { MapPin, Search } from "lucide-react";
 
+import { getUsuario } from "@/lib/auth-storage";
+import { getRedirectAfterAuth } from "@/lib/auth-flow";
 import {
   AgendaFilterBar,
   agendaFiltroInicial,
@@ -65,68 +67,12 @@ type HorarioAgendaPublico = {
   } | null;
 };
 
-const CACHE_PREFIX = "playfy_public_agenda";
-const CACHE_TTL_MS = 1000 * 30;
 const AGENDAMENTO_PENDENTE_KEY = "playfy_agendamento_pendente";
-
-function cacheKey(slug: string, data: string) {
-  return `${CACHE_PREFIX}:${slug}:${data}`;
-}
-
-function safeStorageGet(key: string) {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
 
 function safeStorageSet(key: string, value: string) {
   try {
     window.localStorage.setItem(key, value);
   } catch {}
-}
-
-function safeStorageRemove(key: string) {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {}
-}
-
-function readCache(slug: string, data: string) {
-  const raw = safeStorageGet(cacheKey(slug, data));
-  if (!raw) return null;
-
-  try {
-    const cache = JSON.parse(raw) as {
-      savedAt: number;
-      data: DisponibilidadeAcademiaPublica;
-    };
-
-    if (Date.now() - cache.savedAt > CACHE_TTL_MS) {
-      safeStorageRemove(cacheKey(slug, data));
-      return null;
-    }
-
-    return cache.data;
-  } catch {
-    safeStorageRemove(cacheKey(slug, data));
-    return null;
-  }
-}
-
-function saveCache(
-  slug: string,
-  data: string,
-  agenda: DisponibilidadeAcademiaPublica,
-) {
-  safeStorageSet(
-    cacheKey(slug, data),
-    JSON.stringify({
-      savedAt: Date.now(),
-      data: agenda,
-    }),
-  );
 }
 
 function formatarLocal(academia?: AcademiaPublica | null) {
@@ -229,10 +175,11 @@ export default function AcademiaPublicaPage() {
 
   const slug = params.slug ?? "";
 
+  const [verificandoSessao, setVerificandoSessao] = useState(true);
   const [agenda, setAgenda] = useState<DisponibilidadeAcademiaPublica | null>(
     null,
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [dataSelecionada, setDataSelecionada] = useState(
     format(new Date(), "yyyy-MM-dd"),
@@ -240,100 +187,36 @@ export default function AcademiaPublicaPage() {
   const [filtrosQuadra, setFiltrosQuadra] =
     useState<AgendaFiltros>(agendaFiltroInicial);
 
-  const { quadras, horarios } = useMemo(() => {
-    if (!agenda) {
-      return { quadras: [], horarios: [] };
+  useEffect(() => {
+    const usuario = getUsuario();
+
+    if (usuario) {
+      router.replace(getRedirectAfterAuth(usuario));
+      return;
     }
 
-    return montarHorarios(agenda);
-  }, [agenda]);
-
-  const quadrasFiltradas = useMemo(() => {
-    return quadras.filter((quadra) => {
-      const filtroPiso =
-        filtrosQuadra.piso === "TODOS" ||
-        quadra.tipo_piso === filtrosQuadra.piso;
-
-      const filtroCobertura =
-        filtrosQuadra.cobertura === "TODAS" ||
-        (filtrosQuadra.cobertura === "COBERTA" && quadra.coberta) ||
-        (filtrosQuadra.cobertura === "DESCOBERTA" && !quadra.coberta);
-
-      const filtroJogadores =
-        filtrosQuadra.jogadores === "TODOS" ||
-        (filtrosQuadra.jogadores === "2" && quadra.permite_simples) ||
-        (filtrosQuadra.jogadores === "4" && quadra.permite_dupla);
-
-      const filtroModalidade =
-        filtrosQuadra.modalidade === "TODAS" ||
-        quadra.modalidade === filtrosQuadra.modalidade;
-
-      const valorHora = quadra.valor_hora ?? null;
-      const filtroPreco =
-        filtrosQuadra.preco === "TODOS" ||
-        (valorHora !== null &&
-          ((filtrosQuadra.preco === "ATE_50" && valorHora <= 50) ||
-            (filtrosQuadra.preco === "50_100" &&
-              valorHora > 50 &&
-              valorHora <= 100) ||
-            (filtrosQuadra.preco === "ACIMA_100" && valorHora > 100)));
-
-      return (
-        filtroPiso &&
-        filtroCobertura &&
-        filtroJogadores &&
-        filtroModalidade &&
-        filtroPreco
-      );
-    });
-  }, [quadras, filtrosQuadra]);
-
-  const horariosFiltrados = useMemo(() => {
-    if (quadrasFiltradas.length === 0) return [];
-
-    const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
-
-    return horarios
-      .filter((horario) => idsPermitidos.has(horario.quadraId))
-      .sort((a, b) => {
-        const porHora = a.hora.localeCompare(b.hora);
-        if (porHora !== 0) return porHora;
-
-        return a.quadraNome.localeCompare(b.quadraNome);
-      });
-  }, [horarios, quadrasFiltradas]);
+    setVerificandoSessao(false);
+  }, [router]);
 
   useEffect(() => {
+    if (verificandoSessao || !slug || !dataSelecionada) return;
+
     let ativo = true;
 
     async function carregarAgenda() {
-      if (!slug || !dataSelecionada) return;
-
-      const cache = readCache(slug, dataSelecionada);
-
-      if (cache && ativo) {
-        setAgenda(cache);
-        setLoading(false);
-      } else {
-        setLoading(true);
-      }
+      setLoading(true);
+      setErro("");
 
       try {
-        setErro("");
-
         const data = await obterDisponibilidadePublica(slug, dataSelecionada);
 
         if (!ativo) return;
 
         setAgenda(data);
-        saveCache(slug, dataSelecionada, data);
       } catch {
         if (!ativo) return;
 
-        if (!cache) {
-          setAgenda(null);
-        }
-
+        setAgenda(null);
         setErro("Não foi possível carregar os horários agora.");
       } finally {
         if (ativo) {
@@ -347,7 +230,57 @@ export default function AcademiaPublicaPage() {
     return () => {
       ativo = false;
     };
-  }, [slug, dataSelecionada]);
+  }, [slug, dataSelecionada, verificandoSessao]);
+
+  const { quadras, horarios } = useMemo(() => {
+    if (!agenda) {
+      return { quadras: [], horarios: [] };
+    }
+
+    return montarHorarios(agenda);
+  }, [agenda]);
+
+  const quadrasFiltradas = useMemo(() => {
+    return quadras.filter((quadra) => {
+      const valorHora = quadra.valor_hora ?? null;
+
+      return (
+        (filtrosQuadra.piso === "TODOS" ||
+          quadra.tipo_piso === filtrosQuadra.piso) &&
+        (filtrosQuadra.cobertura === "TODAS" ||
+          (filtrosQuadra.cobertura === "COBERTA" && quadra.coberta) ||
+          (filtrosQuadra.cobertura === "DESCOBERTA" && !quadra.coberta)) &&
+        (filtrosQuadra.jogadores === "TODOS" ||
+          (filtrosQuadra.jogadores === "2" && quadra.permite_simples) ||
+          (filtrosQuadra.jogadores === "4" && quadra.permite_dupla)) &&
+        (filtrosQuadra.modalidade === "TODAS" ||
+          quadra.modalidade === filtrosQuadra.modalidade) &&
+        (filtrosQuadra.preco === "TODOS" ||
+          (valorHora !== null &&
+            ((filtrosQuadra.preco === "ATE_50" && valorHora <= 50) ||
+              (filtrosQuadra.preco === "50_100" &&
+                valorHora > 50 &&
+                valorHora <= 100) ||
+              (filtrosQuadra.preco === "ACIMA_100" && valorHora > 100))))
+      );
+    });
+  }, [quadras, filtrosQuadra]);
+
+  const horariosFiltrados = useMemo(() => {
+    if (quadrasFiltradas.length === 0) return [];
+
+    const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
+
+    return horarios
+      .filter((horario) => idsPermitidos.has(horario.quadraId))
+      .sort((a, b) => {
+        const porHora = a.hora.localeCompare(b.hora);
+
+        if (porHora !== 0) return porHora;
+
+        return a.quadraNome.localeCompare(b.quadraNome);
+      });
+  }, [horarios, quadrasFiltradas]);
 
   function escolherHorario(horario: HorarioAgendaPublico) {
     safeStorageSet(
@@ -363,6 +296,14 @@ export default function AcademiaPublicaPage() {
 
     router.push(
       `/login?redirect=${encodeURIComponent(`/a/${slug}?agendar=1`)}`,
+    );
+  }
+
+  if (verificandoSessao) {
+    return (
+      <main className="min-h-screen bg-[#F3F0E8] px-4 py-6">
+        <p className="text-sm text-zinc-500">Carregando...</p>
+      </main>
     );
   }
 

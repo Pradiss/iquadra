@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import {
   ACCESS_TOKEN_COOKIE,
+  KEEP_LOGGED_IN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   getAuthCookie,
   setAuthCookies,
@@ -112,6 +113,7 @@ async function resolveAuthUser(req: Request, res: Response) {
 async function resolveSupabaseUser(req: Request, res: Response) {
   const accessToken = getBearerToken(req) ?? getAuthCookie(req, ACCESS_TOKEN_COOKIE);
   const refreshToken = getAuthCookie(req, REFRESH_TOKEN_COOKIE);
+  const persistent = Boolean(getAuthCookie(req, KEEP_LOGGED_IN_COOKIE));
 
   if (accessToken) {
     const { data, error } = await supabaseAuth.auth.getUser(accessToken);
@@ -133,7 +135,7 @@ async function resolveSupabaseUser(req: Request, res: Response) {
     throw unauthorized("Sessao expirada");
   }
 
-  setAuthCookies(res, data.session);
+  setAuthCookies(res, data.session, { persistent });
 
   return data.user;
 }

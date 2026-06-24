@@ -8,6 +8,7 @@ import api from "@/services/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { updateStoredUsuario } from "@/lib/auth-storage";
 import { getSafeImageUrl } from "@/lib/safe-image";
 import {
   AVATAR_ACCEPT,
@@ -138,7 +139,7 @@ export function ConfigJogador({ usuario }: Props) {
         usuarioAtualizado = await uploadAvatarFile<Usuario>(avatarFile);
       }
 
-      localStorage.setItem("usuario", JSON.stringify(usuarioAtualizado));
+      updateStoredUsuario(usuarioAtualizado);
       setAvatarFile(null);
 
       setSucesso("Dados atualizados com sucesso.");
@@ -161,7 +162,7 @@ export function ConfigJogador({ usuario }: Props) {
     try {
       const usuarioAtualizado = await removeAvatarFile<Usuario>();
 
-      localStorage.setItem("usuario", JSON.stringify(usuarioAtualizado));
+      updateStoredUsuario(usuarioAtualizado);
       setAvatarFile(null);
       setForm((current) => ({
         ...current,
