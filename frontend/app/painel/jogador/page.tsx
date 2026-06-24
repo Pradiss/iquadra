@@ -14,6 +14,11 @@ type Academia = {
   nome: string;
   cidade?: string;
   estado?: string;
+  logo_url?: string | null;
+  fotoUrl?: string | null;
+  foto_url?: string | null;
+  imagem_url?: string | null;
+  logo?: string | null;
 };
 
 type AcademiasCache = {
@@ -21,7 +26,7 @@ type AcademiasCache = {
   createdAt: number;
 };
 
-const CACHE_KEY = "playfy_academias_cache";
+const CACHE_KEY = "playfy_academias_cache:v2";
 const ULTIMA_ACADEMIA_KEY = "playfy_ultima_academia";
 const CACHE_TTL_MS = 1000 * 60 * 5;
 
@@ -47,6 +52,7 @@ function safeStorageRemove(key: string) {
 
 function lerCacheAcademias() {
   const raw = safeStorageGet(CACHE_KEY);
+
   if (!raw) return null;
 
   try {
@@ -74,6 +80,17 @@ function salvarCacheAcademias(data: Academia[]) {
       data,
       createdAt: Date.now(),
     }),
+  );
+}
+
+function getAcademiaFotoUrl(academia: Academia) {
+  return (
+    academia.logo_url ??
+    academia.fotoUrl ??
+    academia.foto_url ??
+    academia.imagem_url ??
+    academia.logo ??
+    null
   );
 }
 
@@ -133,7 +150,7 @@ export default function PainelJogadorPage() {
       }
     }
 
-    carregarAcademias();
+    void carregarAcademias();
 
     return () => {
       ativo = false;
@@ -155,7 +172,7 @@ export default function PainelJogadorPage() {
       <section className="mb-6">
         <p className="text-sm font-semibold text-green-700">Início</p>
 
-        <h1 className=" text-3xl font-bold tracking-[-0.03em] text-zinc-950">
+        <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-950">
           Encontre uma quadra para jogar
         </h1>
 
@@ -185,6 +202,7 @@ export default function PainelJogadorPage() {
               key={academia.id}
               nome={academia.nome}
               cidade={academia.cidade}
+              fotoUrl={getAcademiaFotoUrl(academia)}
               selected={false}
               onClick={() => selecionarAcademia(academia)}
             />

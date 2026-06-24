@@ -5,6 +5,7 @@ import {
   invalidateAcademiaCache,
 } from "../lib/cache";
 import { CreateAcademiaData } from "../schemas/academia.schema";
+import { withSignedAcademiaLogo } from "./academia-logo.service";
 
 export async function createAcademia(data: CreateAcademiaData) {
   const academiaExistente = await prisma.academia.findUnique({
@@ -27,8 +28,8 @@ export async function createAcademia(data: CreateAcademiaData) {
 }
 
 export async function listAcademias() {
-  return getOrSetCache("academias:list:ativas", CACHE_TTL.academias, () =>
-    prisma.academia.findMany({
+  return getOrSetCache("academias:list:ativas", CACHE_TTL.academias, async () => {
+    const academias = await prisma.academia.findMany({
       where: {
         status: "ATIVO",
       },
@@ -39,12 +40,15 @@ export async function listAcademias() {
         cidade: true,
         estado: true,
         status: true,
+        logoPath: true,
       },
       orderBy: {
         nome: "asc",
       },
-    })
-  );
+    });
+
+    return Promise.all(academias.map(withSignedAcademiaLogo));
+  });
 }
 
 export async function getAcademiaById(id: string) {
@@ -63,6 +67,7 @@ export async function getAcademiaById(id: string) {
           cidade: true,
           estado: true,
           status: true,
+          logoPath: true,
           criado_em: true,
         },
       })
@@ -72,5 +77,5 @@ export async function getAcademiaById(id: string) {
     throw new Error("Academia não encontrada");
   }
 
-  return academia;
+  return withSignedAcademiaLogo(academia);
 }

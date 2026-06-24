@@ -45,6 +45,7 @@ export type AcademiaMinAggregateOutputType = {
   cidade: string | null
   estado: string | null
   cep: string | null
+  logoPath: string | null
   status: $Enums.StatusUsuario | null
   limite_jogos_padrao: number | null
   periodo_limite_jogos: $Enums.PeriodoLimiteJogos | null
@@ -63,6 +64,7 @@ export type AcademiaMaxAggregateOutputType = {
   cidade: string | null
   estado: string | null
   cep: string | null
+  logoPath: string | null
   status: $Enums.StatusUsuario | null
   limite_jogos_padrao: number | null
   periodo_limite_jogos: $Enums.PeriodoLimiteJogos | null
@@ -81,6 +83,7 @@ export type AcademiaCountAggregateOutputType = {
   cidade: number
   estado: number
   cep: number
+  logoPath: number
   status: number
   limite_jogos_padrao: number
   periodo_limite_jogos: number
@@ -109,6 +112,7 @@ export type AcademiaMinAggregateInputType = {
   cidade?: true
   estado?: true
   cep?: true
+  logoPath?: true
   status?: true
   limite_jogos_padrao?: true
   periodo_limite_jogos?: true
@@ -127,6 +131,7 @@ export type AcademiaMaxAggregateInputType = {
   cidade?: true
   estado?: true
   cep?: true
+  logoPath?: true
   status?: true
   limite_jogos_padrao?: true
   periodo_limite_jogos?: true
@@ -145,6 +150,7 @@ export type AcademiaCountAggregateInputType = {
   cidade?: true
   estado?: true
   cep?: true
+  logoPath?: true
   status?: true
   limite_jogos_padrao?: true
   periodo_limite_jogos?: true
@@ -250,6 +256,7 @@ export type AcademiaGroupByOutputType = {
   cidade: string | null
   estado: string | null
   cep: string | null
+  logoPath: string | null
   status: $Enums.StatusUsuario
   limite_jogos_padrao: number
   periodo_limite_jogos: $Enums.PeriodoLimiteJogos
@@ -291,6 +298,7 @@ export type AcademiaWhereInput = {
   cidade?: Prisma.StringNullableFilter<"Academia"> | string | null
   estado?: Prisma.StringNullableFilter<"Academia"> | string | null
   cep?: Prisma.StringNullableFilter<"Academia"> | string | null
+  logoPath?: Prisma.StringNullableFilter<"Academia"> | string | null
   status?: Prisma.EnumStatusUsuarioFilter<"Academia"> | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFilter<"Academia"> | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFilter<"Academia"> | $Enums.PeriodoLimiteJogos
@@ -316,6 +324,7 @@ export type AcademiaOrderByWithRelationInput = {
   cidade?: Prisma.SortOrderInput | Prisma.SortOrder
   estado?: Prisma.SortOrderInput | Prisma.SortOrder
   cep?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoPath?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
@@ -344,6 +353,7 @@ export type AcademiaWhereUniqueInput = Prisma.AtLeast<{
   cidade?: Prisma.StringNullableFilter<"Academia"> | string | null
   estado?: Prisma.StringNullableFilter<"Academia"> | string | null
   cep?: Prisma.StringNullableFilter<"Academia"> | string | null
+  logoPath?: Prisma.StringNullableFilter<"Academia"> | string | null
   status?: Prisma.EnumStatusUsuarioFilter<"Academia"> | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFilter<"Academia"> | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFilter<"Academia"> | $Enums.PeriodoLimiteJogos
@@ -369,6 +379,7 @@ export type AcademiaOrderByWithAggregationInput = {
   cidade?: Prisma.SortOrderInput | Prisma.SortOrder
   estado?: Prisma.SortOrderInput | Prisma.SortOrder
   cep?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoPath?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
@@ -395,6 +406,7 @@ export type AcademiaScalarWhereWithAggregatesInput = {
   cidade?: Prisma.StringNullableWithAggregatesFilter<"Academia"> | string | null
   estado?: Prisma.StringNullableWithAggregatesFilter<"Academia"> | string | null
   cep?: Prisma.StringNullableWithAggregatesFilter<"Academia"> | string | null
+  logoPath?: Prisma.StringNullableWithAggregatesFilter<"Academia"> | string | null
   status?: Prisma.EnumStatusUsuarioWithAggregatesFilter<"Academia"> | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntWithAggregatesFilter<"Academia"> | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosWithAggregatesFilter<"Academia"> | $Enums.PeriodoLimiteJogos
@@ -413,6 +425,7 @@ export type AcademiaCreateInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -438,6 +451,7 @@ export type AcademiaUncheckedCreateInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -463,6 +477,7 @@ export type AcademiaUpdateInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -488,6 +503,7 @@ export type AcademiaUncheckedUpdateInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -513,6 +529,7 @@ export type AcademiaCreateManyInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -531,6 +548,7 @@ export type AcademiaUpdateManyMutationInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -549,6 +567,7 @@ export type AcademiaUncheckedUpdateManyInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -567,6 +586,7 @@ export type AcademiaCountOrderByAggregateInput = {
   cidade?: Prisma.SortOrder
   estado?: Prisma.SortOrder
   cep?: Prisma.SortOrder
+  logoPath?: Prisma.SortOrder
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
@@ -589,6 +609,7 @@ export type AcademiaMaxOrderByAggregateInput = {
   cidade?: Prisma.SortOrder
   estado?: Prisma.SortOrder
   cep?: Prisma.SortOrder
+  logoPath?: Prisma.SortOrder
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
@@ -607,6 +628,7 @@ export type AcademiaMinOrderByAggregateInput = {
   cidade?: Prisma.SortOrder
   estado?: Prisma.SortOrder
   cep?: Prisma.SortOrder
+  logoPath?: Prisma.SortOrder
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
@@ -751,6 +773,7 @@ export type AcademiaCreateWithoutUsuariosInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -775,6 +798,7 @@ export type AcademiaUncheckedCreateWithoutUsuariosInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -815,6 +839,7 @@ export type AcademiaUpdateWithoutUsuariosInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -839,6 +864,7 @@ export type AcademiaUncheckedUpdateWithoutUsuariosInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -863,6 +889,7 @@ export type AcademiaCreateWithoutQuadrasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -887,6 +914,7 @@ export type AcademiaUncheckedCreateWithoutQuadrasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -927,6 +955,7 @@ export type AcademiaUpdateWithoutQuadrasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -951,6 +980,7 @@ export type AcademiaUncheckedUpdateWithoutQuadrasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -975,6 +1005,7 @@ export type AcademiaCreateWithoutJogosInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -999,6 +1030,7 @@ export type AcademiaUncheckedCreateWithoutJogosInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1039,6 +1071,7 @@ export type AcademiaUpdateWithoutJogosInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1063,6 +1096,7 @@ export type AcademiaUncheckedUpdateWithoutJogosInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1087,6 +1121,7 @@ export type AcademiaCreateWithoutAulasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1111,6 +1146,7 @@ export type AcademiaUncheckedCreateWithoutAulasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1151,6 +1187,7 @@ export type AcademiaUpdateWithoutAulasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1175,6 +1212,7 @@ export type AcademiaUncheckedUpdateWithoutAulasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1199,6 +1237,7 @@ export type AcademiaCreateWithoutRecorrencias_aulasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1223,6 +1262,7 @@ export type AcademiaUncheckedCreateWithoutRecorrencias_aulasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1263,6 +1303,7 @@ export type AcademiaUpdateWithoutRecorrencias_aulasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1287,6 +1328,7 @@ export type AcademiaUncheckedUpdateWithoutRecorrencias_aulasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1311,6 +1353,7 @@ export type AcademiaCreateWithoutAssinaturasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1335,6 +1378,7 @@ export type AcademiaUncheckedCreateWithoutAssinaturasInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1375,6 +1419,7 @@ export type AcademiaUpdateWithoutAssinaturasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1399,6 +1444,7 @@ export type AcademiaUncheckedUpdateWithoutAssinaturasInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1423,6 +1469,7 @@ export type AcademiaCreateWithoutLogsInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1447,6 +1494,7 @@ export type AcademiaUncheckedCreateWithoutLogsInput = {
   cidade?: string | null
   estado?: string | null
   cep?: string | null
+  logoPath?: string | null
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
@@ -1487,6 +1535,7 @@ export type AcademiaUpdateWithoutLogsInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1511,6 +1560,7 @@ export type AcademiaUncheckedUpdateWithoutLogsInput = {
   cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cep?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
@@ -1620,6 +1670,7 @@ export type AcademiaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   cidade?: boolean
   estado?: boolean
   cep?: boolean
+  logoPath?: boolean
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
@@ -1646,6 +1697,7 @@ export type AcademiaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   cidade?: boolean
   estado?: boolean
   cep?: boolean
+  logoPath?: boolean
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
@@ -1664,6 +1716,7 @@ export type AcademiaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   cidade?: boolean
   estado?: boolean
   cep?: boolean
+  logoPath?: boolean
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
@@ -1682,6 +1735,7 @@ export type AcademiaSelectScalar = {
   cidade?: boolean
   estado?: boolean
   cep?: boolean
+  logoPath?: boolean
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
@@ -1689,7 +1743,7 @@ export type AcademiaSelectScalar = {
   atualizado_em?: boolean
 }
 
-export type AcademiaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "slug" | "cnpj" | "telefone" | "email" | "endereco" | "cidade" | "estado" | "cep" | "status" | "limite_jogos_padrao" | "periodo_limite_jogos" | "criado_em" | "atualizado_em", ExtArgs["result"]["academia"]>
+export type AcademiaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "slug" | "cnpj" | "telefone" | "email" | "endereco" | "cidade" | "estado" | "cep" | "logoPath" | "status" | "limite_jogos_padrao" | "periodo_limite_jogos" | "criado_em" | "atualizado_em", ExtArgs["result"]["academia"]>
 export type AcademiaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   usuarios?: boolean | Prisma.Academia$usuariosArgs<ExtArgs>
   quadras?: boolean | Prisma.Academia$quadrasArgs<ExtArgs>
@@ -1725,6 +1779,7 @@ export type $AcademiaPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     cidade: string | null
     estado: string | null
     cep: string | null
+    logoPath: string | null
     status: $Enums.StatusUsuario
     limite_jogos_padrao: number
     periodo_limite_jogos: $Enums.PeriodoLimiteJogos
@@ -2170,6 +2225,7 @@ export interface AcademiaFieldRefs {
   readonly cidade: Prisma.FieldRef<"Academia", 'String'>
   readonly estado: Prisma.FieldRef<"Academia", 'String'>
   readonly cep: Prisma.FieldRef<"Academia", 'String'>
+  readonly logoPath: Prisma.FieldRef<"Academia", 'String'>
   readonly status: Prisma.FieldRef<"Academia", 'StatusUsuario'>
   readonly limite_jogos_padrao: Prisma.FieldRef<"Academia", 'Int'>
   readonly periodo_limite_jogos: Prisma.FieldRef<"Academia", 'PeriodoLimiteJogos'>

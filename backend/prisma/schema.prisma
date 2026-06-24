@@ -209,6 +209,7 @@ model Academia {
   cidade   String?
   estado   String?
   cep      String?
+  logoPath String? @map("logo_path")
 
   status StatusUsuario @default(ATIVO)
 

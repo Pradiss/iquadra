@@ -6,6 +6,11 @@ import {
   getAcademiaById,
   listAcademias,
 } from "../services/academia.service";
+import {
+  uploadAcademiaLogo,
+} from "../services/academia-logo.service";
+import type { AvatarFile } from "../services/avatar-storage.service";
+import type { AuthRequest } from "../middlewares/auth.middleware";
 import { getRouteParam } from "../utils/request";
 
 export async function createAcademiaController(req: Request, res: Response) {
@@ -35,6 +40,24 @@ export async function getAcademiaController(req: Request, res: Response) {
 
   return res.json({
     success: true,
+    data: academia,
+  });
+}
+
+export async function uploadAcademiaLogoController(
+  req: AuthRequest,
+  res: Response
+) {
+  const id = getRouteParam(req, "id");
+  const academia = await uploadAcademiaLogo(
+    req.user!.id,
+    id,
+    req.file as AvatarFile | undefined
+  );
+
+  return res.json({
+    success: true,
+    message: "Logo da academia atualizado com sucesso",
     data: academia,
   });
 }

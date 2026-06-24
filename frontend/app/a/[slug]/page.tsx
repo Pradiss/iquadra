@@ -188,14 +188,18 @@ export default function AcademiaPublicaPage() {
     useState<AgendaFiltros>(agendaFiltroInicial);
 
   useEffect(() => {
-    const usuario = getUsuario();
+    const timeoutId = window.setTimeout(() => {
+      const usuario = getUsuario();
 
-    if (usuario) {
-      router.replace(getRedirectAfterAuth(usuario));
-      return;
-    }
+      if (usuario) {
+        router.replace(getRedirectAfterAuth(usuario));
+        return;
+      }
 
-    setVerificandoSessao(false);
+      setVerificandoSessao(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [router]);
 
   useEffect(() => {

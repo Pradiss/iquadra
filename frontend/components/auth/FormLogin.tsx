@@ -57,14 +57,18 @@ export default function FormLogin() {
   const successMessage = getSuccessMessage(searchParams.get("created"));
 
   useEffect(() => {
-    const usuario = getUsuario();
+    const timeoutId = window.setTimeout(() => {
+      const usuario = getUsuario();
 
-    if (!usuario) {
-      setVerificandoSessao(false);
-      return;
-    }
+      if (!usuario) {
+        setVerificandoSessao(false);
+        return;
+      }
 
-    router.replace(getRedirectAfterAuth(usuario));
+      router.replace(getRedirectAfterAuth(usuario));
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

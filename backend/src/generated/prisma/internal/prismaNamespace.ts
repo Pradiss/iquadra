@@ -1847,6 +1847,7 @@ export const AcademiaScalarFieldEnum = {
   cidade: 'cidade',
   estado: 'estado',
   cep: 'cep',
+  logoPath: 'logoPath',
   status: 'status',
   limite_jogos_padrao: 'limite_jogos_padrao',
   periodo_limite_jogos: 'periodo_limite_jogos',
