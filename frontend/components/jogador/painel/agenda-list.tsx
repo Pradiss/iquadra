@@ -30,7 +30,7 @@ type Horario = {
     criador_usuario_id?: string;
     maximo_participantes?: number;
     participantes: {
-      id: string;
+      id?: string;
       nome: string;
       foto_perfil?: string | null;
       categoria?: string | null;
@@ -39,12 +39,15 @@ type Horario = {
   } | null;
 };
 
-type Props = {
-  horarios: Horario[];
-  onSelect: (horario: Horario) => void;
+type Props<T extends Horario = Horario> = {
+  horarios: T[];
+  onSelect: (horario: T) => void;
 };
 
-export function AgendaList({ horarios, onSelect }: Props) {
+export function AgendaList<T extends Horario = Horario>({
+  horarios,
+  onSelect,
+}: Props<T>) {
   const usuarioLogado = getUsuario();
 
   return (

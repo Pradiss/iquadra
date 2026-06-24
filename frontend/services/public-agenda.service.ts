@@ -35,6 +35,21 @@ export type SlotPublico = {
   permite_dupla?: boolean;
   jogadores_confirmados?: number;
   vagas_disponiveis?: number;
+
+  jogo?: {
+    id?: string;
+    tipo_jogo?: "SIMPLES" | "DUPLA";
+    status?: string;
+    maximo_participantes?: number;
+    jogadores_confirmados?: number;
+    vagas_disponiveis?: number;
+    participantes?: {
+      id?: string;
+      nome: string;
+      foto_perfil?: string | null;
+      categoria?: string | null;
+    }[];
+  } | null;
 };
 
 export type DisponibilidadeQuadraPublica = {

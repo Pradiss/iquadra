@@ -26,7 +26,7 @@ const avatarUpload = multer({
       return;
     }
 
-    callback(new Error("Formato de imagem invalido"), false);
+    callback(new Error("Formato de imagem invalido"));
   },
 });
 
