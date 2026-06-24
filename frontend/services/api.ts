@@ -1,7 +1,7 @@
 import axios from "axios";
 import { clearAuthStorage } from "@/lib/auth-storage";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,7 +24,7 @@ api.interceptors.request.use(async (config) => {
   const isExempt = CSRF_EXEMPT_PATHS.some((path) => url.startsWith(path));
 
   if (typeof window !== "undefined" && isMutating && !isExempt) {
-    const response = await axios.get(`${API_URL}/csrf-token`, {
+    const response = await axios.get(buildApiUrl("/csrf-token"), {
       withCredentials: true,
     });
 
@@ -61,5 +61,17 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+function normalizeBaseUrl(url?: string) {
+  return url?.replace(/\/+$/, "");
+}
+
+function buildApiUrl(path: string) {
+  if (!API_URL) {
+    return path;
+  }
+
+  return `${API_URL}/${path.replace(/^\/+/, "")}`;
+}
 
 export default api;

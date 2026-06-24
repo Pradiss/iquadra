@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
+const railwayApiUrl = process.env.RAILWAY_API_URL?.replace(/\/+$/, "");
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    if (!railwayApiUrl) {
+      return [];
+    }
+
+    return [
+      {
+        source: "/api/proxy/:path*",
+       destination: `${railwayApiUrl}/api/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
