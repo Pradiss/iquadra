@@ -44,6 +44,20 @@ type Props<T extends Horario = Horario> = {
   onSelect: (horario: T) => void;
 };
 
+function timeToMinutes(time: string) {
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function sobrepoeHorario(a: Horario, b: Horario) {
+  const aInicio = timeToMinutes(a.hora);
+  const aFim = timeToMinutes(a.horaFim);
+  const bInicio = timeToMinutes(b.hora);
+  const bFim = timeToMinutes(b.horaFim);
+
+  return aInicio < bFim && aFim > bInicio;
+}
+
 export function AgendaList<T extends Horario = Horario>({
   horarios,
   onSelect,
@@ -54,7 +68,19 @@ export function AgendaList<T extends Horario = Horario>({
     if (horario.jogo) return true;
     if (horario.disponivel) return true;
 
-    return false;
+    if (horario.motivo === "AULA" || horario.motivo === "BLOQUEADO") {
+      return true;
+    }
+
+    const existeJogoNoMesmoHorario = horarios.some(
+      (outro) =>
+        outro.id !== horario.id &&
+        outro.quadraId === horario.quadraId &&
+        Boolean(outro.jogo) &&
+        sobrepoeHorario(horario, outro),
+    );
+
+    return !existeJogoNoMesmoHorario;
   });
 
   return (
