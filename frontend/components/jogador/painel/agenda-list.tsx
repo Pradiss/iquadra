@@ -50,6 +50,13 @@ export function AgendaList<T extends Horario = Horario>({
 }: Props<T>) {
   const usuarioLogado = getUsuario();
 
+  const horariosVisiveis = horarios.filter((horario) => {
+    if (horario.jogo) return true;
+    if (horario.disponivel) return true;
+
+    return false;
+  });
+
   return (
     <div>
       <Table>
@@ -61,17 +68,19 @@ export function AgendaList<T extends Horario = Horario>({
           </TableRow>
         </TableHeader>
 
-        <TableBody >
-          {horarios.map((horario) => {
+        <TableBody>
+          {horariosVisiveis.map((horario) => {
             const usuarioParticipa = Boolean(
               usuarioLogado?.id &&
                 horario.jogo?.participantes.some(
                   (participante) => participante.id === usuarioLogado.id,
                 ),
             );
+
             const usuarioCriador =
               Boolean(usuarioLogado?.id) &&
               horario.jogo?.criador_usuario_id === usuarioLogado?.id;
+
             const podeSelecionar =
               horario.disponivel ||
               Boolean(
@@ -83,7 +92,6 @@ export function AgendaList<T extends Horario = Horario>({
 
             return (
               <AgendaCard
-             
                 key={horario.id}
                 horario={horario}
                 canSelect={podeSelecionar}
