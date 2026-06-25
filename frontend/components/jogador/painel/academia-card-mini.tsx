@@ -38,6 +38,7 @@ export function AcademiaCardMini({
           <AvatarImage
             src={foto}
             alt={nome}
+            
             className="h-full w-full object-cover"
           />
         )}

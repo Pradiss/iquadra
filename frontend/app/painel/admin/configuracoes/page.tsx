@@ -1,4 +1,5 @@
 import { AdminPage } from "@/components/admin/AdminPage";
+import { ConfigAdmin } from "@/components/configuracoes/config-admin";
 
 export default function AdminConfiguracoesPage() {
   return (
@@ -6,9 +7,7 @@ export default function AdminConfiguracoesPage() {
       title="Configuracoes"
       description="Ajustes da academia e do painel administrativo."
     >
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        Configuracao em construcao.
-      </div>
+      <ConfigAdmin />
     </AdminPage>
   );
 }

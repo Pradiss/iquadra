@@ -14,7 +14,7 @@ import {
   ACADEMIA_LOGO_ACCEPT,
   uploadAcademiaLogoFile,
   validateAcademiaLogoFile,
-} from "@/lib/academia-logo-upload";
+} from "@/services/academia.service";
 import {
   getRedirectAfterAuth,
   persistAuthenticatedUsuario,

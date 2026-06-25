@@ -12,7 +12,7 @@ export const ALLOWED_AVATAR_MIME_TYPES = [
   "image/gif",
 ] as const;
 
-type AvatarMimeType = (typeof ALLOWED_AVATAR_MIME_TYPES)[number];
+export type AvatarMimeType = (typeof ALLOWED_AVATAR_MIME_TYPES)[number];
 
 export type AvatarFile = {
   buffer: Buffer;
@@ -47,7 +47,7 @@ export async function uploadAvatar(
   supabaseUserId: string,
   file?: AvatarFile
 ) {
-  validateAvatar(file);
+  validateAvatarFile(file);
 
   const usuarioAtual = await prisma.usuario.findUnique({
     where: {
@@ -62,7 +62,7 @@ export async function uploadAvatar(
     throw badRequest("Usuario nao encontrado");
   }
 
-  const path = `usuarios/${supabaseUserId}/avatar-${Date.now()}.${getExtension(
+  const path = `usuarios/${supabaseUserId}/avatar-${Date.now()}.${getAvatarFileExtension(
     file.mimetype as AvatarMimeType
   )}`;
 
@@ -148,9 +148,12 @@ export async function removeAvatar(usuarioId: string) {
   return usuario;
 }
 
-function validateAvatar(file?: AvatarFile): asserts file is AvatarFile {
+export function validateAvatarFile(
+  file?: AvatarFile,
+  requiredMessage = "Envie uma imagem de perfil"
+): asserts file is AvatarFile {
   if (!file) {
-    throw badRequest("Envie uma imagem de perfil");
+    throw badRequest(requiredMessage);
   }
 
   if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.mimetype as AvatarMimeType)) {
@@ -170,7 +173,7 @@ function validateAvatar(file?: AvatarFile): asserts file is AvatarFile {
   }
 }
 
-function getExtension(mimetype: AvatarMimeType) {
+export function getAvatarFileExtension(mimetype: AvatarMimeType) {
   const extensions: Record<AvatarMimeType, string> = {
     "image/jpeg": "jpg",
     "image/png": "png",

@@ -4,6 +4,7 @@ import multer from "multer";
 import {
   getAcademiaController,
   listAcademiasController,
+  updateAcademiaController,
   uploadAcademiaLogoController,
 } from "../controllers/academia.controller";
 import { env } from "../config/env";
@@ -28,6 +29,11 @@ const logoUpload = multer({
 
 router.get("/academias", listAcademiasController);
 router.get("/academias/:id", getAcademiaController);
+router.put(
+  "/academias/:id",
+  authMiddleware,
+  updateAcademiaController
+);
 router.post(
   "/academias/:id/logo",
   authMiddleware,

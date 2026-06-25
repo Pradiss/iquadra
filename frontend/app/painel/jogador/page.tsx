@@ -15,10 +15,6 @@ type Academia = {
   cidade?: string;
   estado?: string;
   logo_url?: string | null;
-  fotoUrl?: string | null;
-  foto_url?: string | null;
-  imagem_url?: string | null;
-  logo?: string | null;
 };
 
 type AcademiasCache = {
@@ -52,7 +48,6 @@ function safeStorageRemove(key: string) {
 
 function lerCacheAcademias() {
   const raw = safeStorageGet(CACHE_KEY);
-
   if (!raw) return null;
 
   try {
@@ -83,17 +78,6 @@ function salvarCacheAcademias(data: Academia[]) {
   );
 }
 
-function getAcademiaFotoUrl(academia: Academia) {
-  return (
-    academia.logo_url ??
-    academia.fotoUrl ??
-    academia.foto_url ??
-    academia.imagem_url ??
-    academia.logo ??
-    null
-  );
-}
-
 export default function PainelJogadorPage() {
   const router = useRouter();
 
@@ -117,43 +101,46 @@ export default function PainelJogadorPage() {
   useEffect(() => {
     let ativo = true;
 
-    async function carregarAcademias() {
-      const cache = lerCacheAcademias();
+    const timeoutId = window.setTimeout(() => {
+      async function carregarAcademias() {
+        const cache = lerCacheAcademias();
 
-      if (cache && ativo) {
-        setAcademias(cache);
-        setLoading(false);
-      }
-
-      try {
-        setErro("");
-
-        const response = await listarAcademias();
-        const lista = Array.isArray(response) ? response : [];
-
-        if (!ativo) return;
-
-        setAcademias(lista);
-        salvarCacheAcademias(lista);
-      } catch {
-        if (!ativo) return;
-
-        setErro("Não foi possível carregar as academias agora.");
-
-        if (!cache) {
-          setAcademias([]);
-        }
-      } finally {
-        if (ativo) {
+        if (cache && ativo) {
+          setAcademias(cache);
           setLoading(false);
         }
-      }
-    }
 
-    void carregarAcademias();
+        try {
+          setErro("");
+
+          const response = await listarAcademias();
+          const lista = Array.isArray(response) ? response : [];
+
+          if (!ativo) return;
+
+          setAcademias(lista);
+          salvarCacheAcademias(lista);
+        } catch {
+          if (!ativo) return;
+
+          setErro("Não foi possível carregar as academias agora.");
+
+          if (!cache) {
+            setAcademias([]);
+          }
+        } finally {
+          if (ativo) {
+            setLoading(false);
+          }
+        }
+      }
+
+      void carregarAcademias();
+    }, 0);
 
     return () => {
       ativo = false;
+      window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -202,7 +189,7 @@ export default function PainelJogadorPage() {
               key={academia.id}
               nome={academia.nome}
               cidade={academia.cidade}
-              fotoUrl={getAcademiaFotoUrl(academia)}
+              fotoUrl={academia.logo_url}
               selected={false}
               onClick={() => selecionarAcademia(academia)}
             />

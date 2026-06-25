@@ -1,14 +1,16 @@
 import type { Request, Response } from "express";
 
-import { createAcademiaSchema } from "../schemas/academia.schema";
+import {
+  createAcademiaSchema,
+  updateAcademiaSchema,
+} from "../schemas/academia.schema";
 import {
   createAcademia,
   getAcademiaById,
   listAcademias,
-} from "../services/academia.service";
-import {
+  updateAcademia,
   uploadAcademiaLogo,
-} from "../services/academia-logo.service";
+} from "../services/academia.service";
 import type { AvatarFile } from "../services/avatar-storage.service";
 import type { AuthRequest } from "../middlewares/auth.middleware";
 import { getRouteParam } from "../utils/request";
@@ -40,6 +42,21 @@ export async function getAcademiaController(req: Request, res: Response) {
 
   return res.json({
     success: true,
+    data: academia,
+  });
+}
+
+export async function updateAcademiaController(
+  req: AuthRequest,
+  res: Response
+) {
+  const id = getRouteParam(req, "id");
+  const data = updateAcademiaSchema.parse(req.body);
+  const academia = await updateAcademia(req.user!.id, id, data);
+
+  return res.json({
+    success: true,
+    message: "Academia atualizada com sucesso",
     data: academia,
   });
 }
