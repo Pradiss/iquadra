@@ -33,7 +33,7 @@ export function AcademiaCardMini({
         selected ? "border-green-500 bg-green-50" : "bg-white",
       ].join(" ")}
     >
-      <Avatar className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-green-100">
+      <Avatar className="h-12 w-12 shrink-0 overflow-hidden rounded-xl">
         {foto && (
           <AvatarImage
             src={foto}

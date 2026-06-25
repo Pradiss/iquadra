@@ -1,7 +1,10 @@
+import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { CACHE_TTL, getOrSetCache } from "../lib/cache";
+import { DURACOES_RESERVA_MINUTOS } from "../schemas/jogo.schema";
 import {
   buildDateTime,
+  formatInAppTimeZone,
   generateTimeSlots,
   getDiaSemana,
   getLocalDayRange,
@@ -135,6 +138,20 @@ function firstByQuadraId<T extends { quadra_id: string }>(items: T[]) {
   }
 
   return grouped;
+}
+
+function montarPeriodoOcupado(
+  tipo: "JOGO" | "AULA" | "BLOQUEIO",
+  item: PeriodoAgenda
+) {
+  return {
+    tipo,
+    id: item.id,
+    inicio_em: item.inicio_em,
+    fim_em: item.fim_em,
+    inicio: formatInAppTimeZone(item.inicio_em).hora,
+    fim: formatInAppTimeZone(item.fim_em).hora,
+  };
 }
 
 export async function getDisponibilidadeQuadra(
@@ -430,6 +447,11 @@ function montarDisponibilidadeQuadra({
       data,
       aberta: false,
       motivo: "Quadra sem horário configurado para esta data",
+      intervalo_entre_reservas_minutos: env.INTERVALO_ENTRE_RESERVAS_MINUTOS,
+      granularidade_agendamento_minutos:
+        env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
+      duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
+      eventos_ocupados: [],
       slots: [],
     };
   }
@@ -440,6 +462,11 @@ function montarDisponibilidadeQuadra({
       data,
       aberta: false,
       motivo: horarioEspecial.motivo || "Quadra fechada nesta data",
+      intervalo_entre_reservas_minutos: env.INTERVALO_ENTRE_RESERVAS_MINUTOS,
+      granularidade_agendamento_minutos:
+        env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
+      duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
+      eventos_ocupados: [],
       slots: [],
     };
   }
@@ -448,6 +475,64 @@ function montarDisponibilidadeQuadra({
   const fechaAs = horarioEspecial?.fecha_as || horarioPadrao.fecha_as;
   const duracao = horarioPadrao.duracao_slot_minutos;
   const slots = [];
+  const eventosOcupados = [
+    ...jogos.map((jogo) => {
+      const participantes = jogo.participantes.map((p) => ({
+        id: p.usuario?.id ?? p.usuario_id,
+        nome: includeParticipantDetails
+          ? (p.usuario?.nome ?? "Jogador")
+          : "Jogador",
+        foto_perfil: includeParticipantDetails
+          ? (p.usuario?.foto_perfil ?? null)
+          : null,
+        categoria: includeParticipantDetails
+          ? (p.usuario?.perfil_cliente?.categoria ?? "Sem ranking")
+          : null,
+      }));
+      const jogadoresConfirmados = participantes.length;
+      const vagasDisponiveis = Math.max(
+        jogo.maximo_participantes - jogadoresConfirmados,
+        0
+      );
+
+      return {
+        ...montarPeriodoOcupado("JOGO", jogo),
+        jogo: {
+          id: jogo.id,
+          criador_usuario_id: includeParticipantDetails
+            ? jogo.criado_por_usuario_id
+            : undefined,
+          tipo_jogo: jogo.tipo_jogo,
+          status: jogo.status,
+          maximo_participantes: jogo.maximo_participantes,
+          jogadores_confirmados: jogadoresConfirmados,
+          vagas_disponiveis: vagasDisponiveis,
+          observacoes: includeParticipantDetails ? jogo.observacoes : null,
+          participantes: includeParticipantDetails ? participantes : [],
+        },
+      };
+    }),
+    ...aulas.map((aula) => ({
+      ...montarPeriodoOcupado("AULA", aula),
+      aula: {
+        id: aula.id,
+        observacoes: includeParticipantDetails ? aula.observacoes : null,
+        cliente: includeParticipantDetails ? aula.cliente : null,
+        professor: includeParticipantDetails ? aula.professor : null,
+      },
+    })),
+    ...bloqueios.map((bloqueio) => ({
+      ...montarPeriodoOcupado("BLOQUEIO", bloqueio),
+      bloqueio: {
+        id: bloqueio.id,
+        motivo: bloqueio.motivo,
+        tipo_bloqueio: bloqueio.tipo_bloqueio,
+      },
+    })),
+  ].sort((a, b) => {
+    const porHora = a.inicio.localeCompare(b.inicio);
+    return porHora !== 0 ? porHora : a.tipo.localeCompare(b.tipo);
+  });
 
   for (const slot of generateTimeSlots(abreAs, fechaAs, duracao)) {
     const slotInicio = buildDateTime(data, slot.inicio);
@@ -550,6 +635,10 @@ function montarDisponibilidadeQuadra({
     aberta: true,
     abre_as: abreAs,
     fecha_as: fechaAs,
+    intervalo_entre_reservas_minutos: env.INTERVALO_ENTRE_RESERVAS_MINUTOS,
+    granularidade_agendamento_minutos: env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
+    duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
+    eventos_ocupados: eventosOcupados,
     duracao_slot_minutos: duracao,
     slots,
   };

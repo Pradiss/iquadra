@@ -10,9 +10,11 @@ import { invalidateQuadraCache } from "../lib/cache";
 import {
   AdicionarParticipanteJogoData,
   CreateJogoData,
+  DURACOES_RESERVA_MINUTOS,
 } from "../schemas/jogo.schema";
 import {
   addDaysToDateOnly,
+  buildDateTime,
   formatInAppTimeZone,
   getDiaSemana,
   getLocalDayRange,
@@ -21,6 +23,7 @@ import {
 } from "../utils/date-time";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_MINUTE = 60 * 1000;
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -62,12 +65,72 @@ function getMaximoParticipantes(
 
 type DbClient = typeof prisma | TransactionClient;
 
+type CreateJogoComDuracao = Extract<CreateJogoData, { duracao_minutos: number }>;
+
+function hasDuracaoMinutos(data: CreateJogoData): data is CreateJogoComDuracao {
+  return "duracao_minutos" in data;
+}
+
+function resolveJogoPeriod(data: CreateJogoData) {
+  if (hasDuracaoMinutos(data)) {
+    const inicio = buildDateTime(data.data, data.hora_inicio);
+
+    return {
+      inicio,
+      fim: new Date(inicio.getTime() + data.duracao_minutos * MS_PER_MINUTE),
+    };
+  }
+
+  return resolvePeriod(data);
+}
+
+function getDuracaoMinutos(inicio: Date, fim: Date) {
+  return Math.round((fim.getTime() - inicio.getTime()) / MS_PER_MINUTE);
+}
+
+function validarDuracaoReserva(inicio: Date, fim: Date) {
+  const duracao = getDuracaoMinutos(inicio, fim);
+
+  if (
+    !DURACOES_RESERVA_MINUTOS.includes(
+      duracao as (typeof DURACOES_RESERVA_MINUTOS)[number]
+    )
+  ) {
+    throw badRequest("Duração da reserva deve ser 60, 90 ou 120 minutos.");
+  }
+}
+
+function validarHorarioNaoPassado(inicio: Date) {
+  if (inicio <= new Date()) {
+    throw badRequest("Não é possível agendar em um horário que já passou.");
+  }
+}
+
+function validarGranularidadeAgendamento(inicio: Date) {
+  const inicioLocal = formatInAppTimeZone(inicio);
+  const inicioMinutos = timeToMinutes(inicioLocal.hora);
+
+  if (inicioMinutos % env.GRANULARIDADE_AGENDAMENTO_MINUTOS !== 0) {
+    throw badRequest(
+      `Horário inicial deve respeitar intervalos de ${env.GRANULARIDADE_AGENDAMENTO_MINUTOS} minutos.`
+    );
+  }
+}
+
+function addMinutes(date: Date, minutes: number) {
+  return new Date(date.getTime() + minutes * MS_PER_MINUTE);
+}
+
 async function validarConflitoAgenda(
   db: DbClient,
   quadraId: string,
   inicio: Date,
   fim: Date
 ) {
+  const intervalo = env.INTERVALO_ENTRE_RESERVAS_MINUTOS;
+  const inicioComIntervalo = addMinutes(inicio, -intervalo);
+  const fimComIntervalo = addMinutes(fim, intervalo);
+
   const jogoConflitante = await db.jogo.findFirst({
     where: {
       quadra_id: quadraId,
@@ -75,10 +138,10 @@ async function validarConflitoAgenda(
         in: ["ABERTO", "COMPLETO"],
       },
       inicio_em: {
-        lt: fim,
+        lt: fimComIntervalo,
       },
       fim_em: {
-        gt: inicio,
+        gt: inicioComIntervalo,
       },
     },
   });
@@ -92,10 +155,10 @@ async function validarConflitoAgenda(
       quadra_id: quadraId,
       status: "CONFIRMADA",
       inicio_em: {
-        lt: fim,
+        lt: fimComIntervalo,
       },
       fim_em: {
-        gt: inicio,
+        gt: inicioComIntervalo,
       },
     },
   });
@@ -108,10 +171,10 @@ async function validarConflitoAgenda(
     where: {
       quadra_id: quadraId,
       inicio_em: {
-        lt: fim,
+        lt: fimComIntervalo,
       },
       fim_em: {
-        gt: inicio,
+        gt: inicioComIntervalo,
       },
     },
   });
@@ -166,7 +229,6 @@ async function validarHorarioFuncionamento(
 
   const abreAs = horarioEspecial?.abre_as || horarioPadrao.abre_as;
   const fechaAs = horarioEspecial?.fecha_as || horarioPadrao.fecha_as;
-  const duracao = horarioPadrao.duracao_slot_minutos;
   const abreMinutos = timeToMinutes(abreAs);
   const fechaMinutos = timeToMinutes(fechaAs);
   const inicioMinutos = timeToMinutes(inicioLocal.hora);
@@ -174,14 +236,6 @@ async function validarHorarioFuncionamento(
 
   if (inicioMinutos < abreMinutos || fimMinutos > fechaMinutos) {
     throw new Error("Horario fora do funcionamento da quadra");
-  }
-
-  if (fimMinutos - inicioMinutos !== duracao) {
-    throw new Error(`Horario deve ter ${duracao} minutos`);
-  }
-
-  if ((inicioMinutos - abreMinutos) % duracao !== 0) {
-    throw new Error("Horario nao corresponde a um slot configurado");
   }
 }
 
@@ -270,9 +324,12 @@ async function validarLimiteJogosSemana(
 }
 
 export async function createJogo(usuarioId: string, data: CreateJogoData) {
-  const { inicio, fim } = resolvePeriod(data);
+  const { inicio, fim } = resolveJogoPeriod(data);
 
   validarPeriodo(inicio, fim);
+  validarDuracaoReserva(inicio, fim);
+  validarHorarioNaoPassado(inicio);
+  validarGranularidadeAgendamento(inicio);
   validarAntecedenciaMaxima(inicio);
 
   const jogo = await prisma.$transaction(async (tx) => {

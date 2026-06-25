@@ -16,7 +16,22 @@ const createJogoBaseSchema = z
   })
   .strict();
 
+export const DURACOES_RESERVA_MINUTOS = [60, 90, 120] as const;
+
+const duracaoReservaSchema = z.union([
+  z.literal(60),
+  z.literal(90),
+  z.literal(120),
+]);
+
 export const createJogoSchema = z.union([
+  createJogoBaseSchema
+    .extend({
+      data: dateOnlySchema,
+      hora_inicio: timeSchema,
+      duracao_minutos: duracaoReservaSchema,
+    })
+    .strict(),
   createJogoBaseSchema
     .extend({
       data: dateOnlySchema,

@@ -66,6 +66,7 @@ type HorarioSelecionado = {
   id: string;
   hora: string;
   fim?: string;
+  duracaoMinutos?: 60 | 90 | 120;
   quadraId: string;
   quadraNome: string;
   capacidadeMaxima: number;
@@ -462,13 +463,18 @@ export function AgendarJogoDialog({
       } else if (horario.jogoId) {
         await participarJogo(horario.jogoId);
       } else {
-        const jogo = await criarJogo({
+        const payload = {
           academia_id: academiaId,
           quadra_id: horario.quadraId,
           tipo_jogo: tipoJogo,
           data,
           hora_inicio: horario.hora,
-          hora_fim: horario.fim || horario.hora,
+          ...(horario.duracaoMinutos
+            ? { duracao_minutos: horario.duracaoMinutos }
+            : { hora_fim: horario.fim || horario.hora }),
+        };
+        const jogo = await criarJogo({
+          ...payload,
         });
 
         const jogadoresSelecionados = jogadoresExibidos.filter(

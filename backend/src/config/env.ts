@@ -27,6 +27,18 @@ const envSchema = z.object({
     .default(2 * 1024 * 1024),
   MAX_DIAS_AGENDAMENTO: z.coerce.number().int().positive().default(1),
   MAX_JOGOS_SEMANA: z.coerce.number().int().positive().default(3),
+  INTERVALO_ENTRE_RESERVAS_MINUTOS: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(120)
+    .default(10),
+  GRANULARIDADE_AGENDAMENTO_MINUTOS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(60)
+    .default(5),
   AUTH_COOKIE_DOMAIN: z.preprocess(emptyToUndefined, z.string().optional()),
   AUTH_COOKIE_SECURE: z.preprocess(
     emptyToUndefined,

@@ -58,7 +58,8 @@ export async function criarJogo(data: {
   tipo_jogo: "SIMPLES" | "DUPLA";
   data: string;
   hora_inicio: string;
-  hora_fim: string;
+  hora_fim?: string;
+  duracao_minutos?: 60 | 90 | 120;
   observacoes?: string;
 }) {
   const response = await api.post("/jogos", data);
