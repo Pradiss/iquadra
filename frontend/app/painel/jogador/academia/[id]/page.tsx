@@ -135,6 +135,7 @@ type AgendaCacheSnapshot = {
 
 const AGENDA_CACHE_PREFIX = "playfy_agenda_snapshot";
 const AGENDA_CACHE_MAX_AGE_MS = 60 * 1000;
+const MAX_DIAS_AGENDAMENTO = 1;
 
 function getAgendaCacheKey(academiaId: string, data: string) {
   return `${AGENDA_CACHE_PREFIX}:${academiaId}:${data}`;
@@ -567,6 +568,7 @@ export default function AcademiaAgendaPage() {
           <AgendaCalendar
             dataSelecionada={dataSelecionada}
             onSelectData={setDataSelecionada}
+            maxDiasAgendamento={MAX_DIAS_AGENDAMENTO}
           />
 
           {erro && (

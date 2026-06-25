@@ -25,6 +25,8 @@ const envSchema = z.object({
     .positive()
     .max(10 * 1024 * 1024)
     .default(2 * 1024 * 1024),
+  MAX_DIAS_AGENDAMENTO: z.coerce.number().int().positive().default(1),
+  MAX_JOGOS_SEMANA: z.coerce.number().int().positive().default(3),
   AUTH_COOKIE_DOMAIN: z.preprocess(emptyToUndefined, z.string().optional()),
   AUTH_COOKIE_SECURE: z.preprocess(
     emptyToUndefined,

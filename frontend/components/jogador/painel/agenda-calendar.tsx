@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { addDays, format, isBefore, startOfDay, startOfWeek } from "date-fns";
+import {
+  addDays,
+  format,
+  isAfter,
+  isBefore,
+  startOfDay,
+  startOfWeek,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -10,31 +17,63 @@ import { Calendar } from "@/components/ui/calendar";
 type Props = {
   dataSelecionada: string;
   onSelectData: (data: string) => void;
+  maxDiasAgendamento?: number;
 };
 
 function formatDate(date: Date) {
   return format(date, "yyyy-MM-dd");
 }
 
-export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
+export function AgendaCalendar({
+  dataSelecionada,
+  onSelectData,
+  maxDiasAgendamento,
+}: Props) {
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
 
   const hoje = startOfDay(new Date());
+  const dataLimite =
+    typeof maxDiasAgendamento === "number"
+      ? startOfDay(addDays(hoje, maxDiasAgendamento))
+      : null;
   const dataAtual = new Date(dataSelecionada + "T00:00:00");
 
   function podeSelecionar(data: Date) {
-    return !isBefore(startOfDay(data), hoje);
+    const dataNormalizada = startOfDay(data);
+
+    if (isBefore(dataNormalizada, hoje)) return false;
+    if (dataLimite && isAfter(dataNormalizada, dataLimite)) return false;
+
+    return true;
+  }
+
+  function semanaTemDataSelecionavel(inicioSemana: Date) {
+    return Array.from({ length: 7 }, (_, index) =>
+      addDays(inicioSemana, index)
+    ).some(podeSelecionar);
   }
 
   function voltarSemana() {
     const novaData = addDays(dataAtual, -7);
-    if (!podeSelecionar(novaData)) return;
+    const novaSemana = startOfWeek(novaData, { weekStartsOn: 1 });
 
-    onSelectData(formatDate(novaData));
+    if (!semanaTemDataSelecionavel(novaSemana)) return;
+
+    onSelectData(formatDate(podeSelecionar(novaData) ? novaData : hoje));
   }
 
   function avancarSemana() {
-    onSelectData(formatDate(addDays(dataAtual, 7)));
+    const novaData = addDays(dataAtual, 7);
+    const novaSemana = startOfWeek(novaData, { weekStartsOn: 1 });
+
+    if (!semanaTemDataSelecionavel(novaSemana)) return;
+
+    const dataSelecionavel =
+      dataLimite && isAfter(startOfDay(novaData), dataLimite)
+        ? dataLimite
+        : novaData;
+
+    onSelectData(formatDate(dataSelecionavel));
   }
 
   const inicioSemana = startOfWeek(dataAtual, {
@@ -54,6 +93,14 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
   });
 
   const mes = format(dataAtual, "MMM", { locale: ptBR }).toUpperCase();
+  const semanaAnterior = startOfWeek(addDays(dataAtual, -7), {
+    weekStartsOn: 1,
+  });
+  const proximaSemana = startOfWeek(addDays(dataAtual, 7), {
+    weekStartsOn: 1,
+  });
+  const podeVoltarSemana = semanaTemDataSelecionavel(semanaAnterior);
+  const podeAvancarSemana = semanaTemDataSelecionavel(proximaSemana);
 
   return (
     <div className="mb-2">
@@ -69,7 +116,7 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
         <button
           type="button"
           onClick={voltarSemana}
-          disabled={!podeSelecionar(addDays(dataAtual, -7))}
+          disabled={!podeVoltarSemana}
           className=""
         >
           <ChevronLeft className="h-3 w-3" />
@@ -104,7 +151,7 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
         <button
           type="button"
           onClick={avancarSemana}
-          
+          disabled={!podeAvancarSemana}
         >
           <ChevronRight className="h-3 w-3" />
         </button>
@@ -115,7 +162,7 @@ export function AgendaCalendar({ dataSelecionada, onSelectData }: Props) {
           <Calendar
             mode="single"
             selected={dataAtual}
-            disabled={(date) => isBefore(startOfDay(date), hoje)}
+            disabled={(date) => !podeSelecionar(date)}
             onSelect={(date) => {
               if (!date || !podeSelecionar(date)) return;
 

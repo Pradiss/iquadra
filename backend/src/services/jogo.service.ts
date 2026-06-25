@@ -1,3 +1,5 @@
+import { env } from "../config/env";
+import { badRequest } from "../errors/app-error";
 import { prisma } from "../lib/prisma";
 import {
   lockAgendaSlot,
@@ -10,12 +12,15 @@ import {
   CreateJogoData,
 } from "../schemas/jogo.schema";
 import {
+  addDaysToDateOnly,
   formatInAppTimeZone,
   getDiaSemana,
   getLocalDayRange,
   resolvePeriod,
   timeToMinutes,
 } from "../utils/date-time";
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function validarPeriodo(inicio: Date, fim: Date) {
   if (fim <= inicio) {
@@ -212,10 +217,63 @@ function getStatusPorTotalParticipantes(total: number, maximo: number) {
   return total >= maximo ? "COMPLETO" : "ABERTO";
 }
 
+function validarAntecedenciaMaxima(inicio: Date) {
+  const limiteMs = env.MAX_DIAS_AGENDAMENTO * MS_PER_DAY;
+  const diferencaMs = inicio.getTime() - Date.now();
+
+  if (diferencaMs > limiteMs) {
+    throw badRequest(
+      `Você só pode agendar jogos com até ${
+        env.MAX_DIAS_AGENDAMENTO * 24
+      } horas de antecedência.`
+    );
+  }
+}
+
+function getLocalWeekRange(date: Date) {
+  const dataLocal = formatInAppTimeZone(date).data;
+  const diaSemana = getDiaSemana(dataLocal);
+  const offsetSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+  const inicioSemanaData = addDaysToDateOnly(dataLocal, offsetSegunda);
+  const fimSemanaData = addDaysToDateOnly(inicioSemanaData, 7);
+
+  return {
+    inicio: getLocalDayRange(inicioSemanaData).inicio,
+    fim: getLocalDayRange(fimSemanaData).inicio,
+  };
+}
+
+async function validarLimiteJogosSemana(
+  db: DbClient,
+  usuarioId: string,
+  inicio: Date
+) {
+  const semana = getLocalWeekRange(inicio);
+  const totalJogosSemana = await db.jogo.count({
+    where: {
+      criado_por_usuario_id: usuarioId,
+      status: {
+        not: "CANCELADO",
+      },
+      inicio_em: {
+        gte: semana.inicio,
+        lt: semana.fim,
+      },
+    },
+  });
+
+  if (totalJogosSemana >= env.MAX_JOGOS_SEMANA) {
+    throw badRequest(
+      `Você atingiu o limite de ${env.MAX_JOGOS_SEMANA} jogos por semana.`
+    );
+  }
+}
+
 export async function createJogo(usuarioId: string, data: CreateJogoData) {
   const { inicio, fim } = resolvePeriod(data);
 
   validarPeriodo(inicio, fim);
+  validarAntecedenciaMaxima(inicio);
 
   const jogo = await prisma.$transaction(async (tx) => {
     await lockAgendaSlot(tx, data.quadra_id, inicio);
@@ -240,6 +298,7 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
 
     await validarHorarioFuncionamento(tx, data.quadra_id, inicio, fim);
     await validarConflitoAgenda(tx, data.quadra_id, inicio, fim);
+    await validarLimiteJogosSemana(tx, usuarioId, inicio);
 
     const maximoParticipantes = getMaximoParticipantes(data.tipo_jogo, quadra);
 
