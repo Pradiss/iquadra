@@ -50,7 +50,7 @@ function corLinha(horario: Horario) {
   }
 
   if (!horario.jogo) {
-    return horario.disponivel ? "bg-[#DFF3D8]" : "bg-zinc-300";
+    return horario.disponivel ? "bg-[#D4D4D8]" : "bg-zinc-300";
   }
 
   if (horario.vagasDisponiveis > 0) {
@@ -66,7 +66,7 @@ function corHorario(horario: Horario) {
   }
 
   if (!horario.jogo) {
-    return horario.disponivel ? "bg-[#8DCE87]" : "bg-[#C7C7CF]";
+    return horario.disponivel ? "bg-[#C7C7D0]" : "bg-[#C7C7CF]";
   }
 
   if (horario.vagasDisponiveis > 0) {
