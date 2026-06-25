@@ -18,6 +18,7 @@ type Horario = {
   hora: string;
   horaFim: string;
   quadraNome: string;
+  disponivel?: boolean;
   motivo: "JOGO" | "AULA" | "BLOQUEADO" | null;
   capacidadeMaxima: number;
   vagasDisponiveis: number;
@@ -49,7 +50,7 @@ function corLinha(horario: Horario) {
   }
 
   if (!horario.jogo) {
-    return "bg-zinc-300";
+    return horario.disponivel ? "bg-[#DFF3D8]" : "bg-zinc-300";
   }
 
   if (horario.vagasDisponiveis > 0) {
@@ -65,7 +66,7 @@ function corHorario(horario: Horario) {
   }
 
   if (!horario.jogo) {
-    return "bg-[#C7C7CF]";
+    return horario.disponivel ? "bg-[#8DCE87]" : "bg-[#C7C7CF]";
   }
 
   if (horario.vagasDisponiveis > 0) {
@@ -153,23 +154,42 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
       <TableCell
         className={["rounded-r-2xl px-2", corLinha(horario)].join(" ")}
       >
-        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <Jogador jogador={jogadoresSlots[0]} label="Jogador 1" />
+        {!horario.jogo ? (
+          <div className="flex min-h-12 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-[12.5px] font-black text-zinc-950">
+                {horario.disponivel ? "Horário livre" : "Indisponível"}
+              </p>
+              <p className="truncate text-[11px] font-semibold text-zinc-700">
+                {horario.disponivel ? "Disponível para reserva" : "Sem reserva"}
+              </p>
+            </div>
 
-          <span className="text-xs font-black text-zinc-950">X</span>
+            {horario.disponivel && (
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-zinc-900">
+                <Plus className="h-4 w-4" />
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <Jogador jogador={jogadoresSlots[0]} label="Jogador 1" />
 
-          <Jogador jogador={jogadoresSlots[1]} label="Jogador 2" />
+            <span className="text-xs font-black text-zinc-950">X</span>
 
-          {jogadoresSlots.length > 2 && (
-            <>
-              <Jogador jogador={jogadoresSlots[2]} label="Jogador 3" />
+            <Jogador jogador={jogadoresSlots[1]} label="Jogador 2" />
 
-              <span className="text-xs font-medium text-zinc-950 ">X</span>
+            {jogadoresSlots.length > 2 && (
+              <>
+                <Jogador jogador={jogadoresSlots[2]} label="Jogador 3" />
 
-              <Jogador jogador={jogadoresSlots[3]} label="Jogador 4" />
-            </>
-          )}
-        </div>
+                <span className="text-xs font-medium text-zinc-950 ">X</span>
+
+                <Jogador jogador={jogadoresSlots[3]} label="Jogador 4" />
+              </>
+            )}
+          </div>
+        )}
       </TableCell>
     </TableRow>
   );

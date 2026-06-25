@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { useParams } from "next/navigation";
-import { Clock, MapPin, Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 
 import {
   AgendaFilterBar,
@@ -23,7 +23,6 @@ import {
   obterDisponibilidadeAcademia,
 } from "@/services/jogador.service";
 import { salvarUltimaAcademia } from "@/lib/last-academia";
-import { Button } from "@/components/ui/button";
 
 type Academia = AcademiaBusca;
 type DuracaoReserva = 60 | 90 | 120;
@@ -64,6 +63,7 @@ type Quadra = {
   intervalo_entre_reservas_minutos?: number;
   granularidade_agendamento_minutos?: number;
   duracoes_reserva_minutos?: DuracaoReserva[];
+  duracao_slot_minutos?: number | null;
   eventos_ocupados?: EventoOcupado[];
 };
 
@@ -99,6 +99,8 @@ type HorarioAgenda = {
     observacoes?: string | null;
     participantes: Participante[];
   } | null;
+  duracaoMinutos?: DuracaoReserva;
+  duracoesDisponiveis?: DuracaoReserva[];
 };
 
 type HorarioSelecionado = {
@@ -154,6 +156,7 @@ type DisponibilidadeResponse = {
   intervalo_entre_reservas_minutos?: number;
   granularidade_agendamento_minutos?: number;
   duracoes_reserva_minutos?: DuracaoReserva[];
+  duracao_slot_minutos?: number | null;
   eventos_ocupados?: EventoOcupado[];
   slots?: SlotDisponibilidade[];
 };
@@ -170,7 +173,7 @@ type AgendaCacheSnapshot = {
   savedAt: number;
 };
 
-const AGENDA_CACHE_PREFIX = "playfy_agenda_snapshot_v2";
+const AGENDA_CACHE_PREFIX = "playfy_agenda_snapshot_v3";
 const AGENDA_CACHE_MAX_AGE_MS = 60 * 1000;
 const MAX_DIAS_AGENDAMENTO = 1;
 const DURACOES_PADRAO: DuracaoReserva[] = [60, 90, 120];
@@ -267,6 +270,261 @@ function validarConflitoLocal(
   });
 }
 
+function validarSobreposicaoLocal(
+  eventos: EventoOcupado[],
+  horaInicio: string,
+  horaFim: string,
+) {
+  const inicioMinutos = timeToMinutes(horaInicio);
+  const fimMinutos = timeToMinutes(horaFim);
+
+  return eventos.find((evento) => {
+    const eventoInicio = timeToMinutes(evento.inicio);
+    const eventoFim = timeToMinutes(evento.fim);
+
+    return eventoInicio < fimMinutos && eventoFim > inicioMinutos;
+  });
+}
+
+function getDuracaoSlotMinutos(
+  quadra: Quadra,
+  response: DisponibilidadeResponse,
+) {
+  const duracao = Number(
+    response.duracao_slot_minutos ?? quadra.duracao_slot_minutos ?? 90,
+  );
+
+  return Number.isFinite(duracao) && duracao > 0 ? duracao : 90;
+}
+
+function getDuracaoPreferida(
+  duracoes: DuracaoReserva[],
+  duracaoPreferida?: number | null,
+) {
+  if (duracaoPreferida && duracoes.includes(duracaoPreferida as DuracaoReserva)) {
+    return duracaoPreferida as DuracaoReserva;
+  }
+
+  return duracoes[0] ?? DURACOES_PADRAO[0];
+}
+
+function getDuracoesValidasParaInicio(
+  quadra: Quadra,
+  data: string,
+  horaInicio: string,
+) {
+  if (!quadra.aberta || !quadra.abre_as || !quadra.fecha_as) return [];
+
+  const granularidade =
+    quadra.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
+  const intervalo =
+    quadra.intervalo_entre_reservas_minutos ?? INTERVALO_PADRAO_MINUTOS;
+  const inicioMinutos = timeToMinutes(horaInicio);
+  const abreMinutos = timeToMinutes(quadra.abre_as);
+  const fechaMinutos = timeToMinutes(quadra.fecha_as);
+  const minHoraHoje = getMinHoraParaData(data, granularidade);
+
+  if (inicioMinutos % granularidade !== 0) return [];
+  if (inicioMinutos < abreMinutos) return [];
+  if (minHoraHoje && inicioMinutos < timeToMinutes(minHoraHoje)) return [];
+
+  return normalizarDuracoes(quadra.duracoes_reserva_minutos).filter(
+    (duracao) => {
+      const fimMinutos = inicioMinutos + duracao;
+
+      if (fimMinutos > fechaMinutos) return false;
+
+      return !validarConflitoLocal(
+        quadra.eventos_ocupados ?? [],
+        horaInicio,
+        minutesToTime(fimMinutos),
+        intervalo,
+      );
+    },
+  );
+}
+
+function montarHorarioJogo(
+  quadra: Quadra,
+  response: DisponibilidadeResponse,
+  evento: EventoOcupado,
+): HorarioAgenda {
+  const participantes = evento.jogo?.participantes ?? [];
+  const capacidadeMaxima = Number(
+    evento.jogo?.maximo_participantes ??
+      response.quadra?.capacidade_maxima ??
+      quadra.capacidade_maxima ??
+      4,
+  );
+  const jogadoresConfirmados = Number(
+    evento.jogo?.jogadores_confirmados ?? participantes.length,
+  );
+
+  return {
+    id: `${quadra.id}-${evento.id}`,
+    hora: evento.inicio,
+    horaFim: evento.fim,
+    quadraId: quadra.id,
+    quadraNome: quadra.nome,
+    disponivel: false,
+    motivo: "JOGO",
+    capacidadeMinima: Number(
+      response.quadra?.capacidade_minima ?? quadra.capacidade_minima ?? 2,
+    ),
+    capacidadeMaxima,
+    permiteSimples: Boolean(
+      response.quadra?.permite_simples ?? quadra.permite_simples ?? true,
+    ),
+    permiteDupla: Boolean(
+      response.quadra?.permite_dupla ?? quadra.permite_dupla ?? true,
+    ),
+    jogadoresConfirmados,
+    vagasDisponiveis: Number(
+      evento.jogo?.vagas_disponiveis ??
+        Math.max(capacidadeMaxima - jogadoresConfirmados, 0),
+    ),
+    jogo: evento.jogo
+      ? {
+          id: evento.jogo.id,
+          criador_usuario_id: evento.jogo.criador_usuario_id,
+          tipo_jogo: evento.jogo.tipo_jogo,
+          status: evento.jogo.status,
+          maximo_participantes: evento.jogo.maximo_participantes,
+          jogadores_confirmados: jogadoresConfirmados,
+          vagas_disponiveis: evento.jogo.vagas_disponiveis,
+          observacoes: evento.jogo.observacoes,
+          participantes,
+        }
+      : null,
+  };
+}
+
+function montarHorarioSlot(
+  quadra: Quadra,
+  response: DisponibilidadeResponse,
+  data: string,
+  slot: SlotDisponibilidade,
+  slotIndex: number,
+): HorarioAgenda {
+  const duracaoSlot = Math.max(
+    timeToMinutes(slot.fim) - timeToMinutes(slot.inicio),
+    0,
+  );
+  const duracoesValidas = getDuracoesValidasParaInicio(
+    quadra,
+    data,
+    slot.inicio,
+  );
+  const duracaoMinutos = getDuracaoPreferida(
+    duracoesValidas.length > 0
+      ? duracoesValidas
+      : normalizarDuracoes(quadra.duracoes_reserva_minutos),
+    duracaoSlot,
+  );
+  const slotEstaLivre =
+    slot.disponivel !== false && !slot.motivo && duracoesValidas.length > 0;
+  const participantes = slot.jogo?.participantes ?? [];
+
+  const capacidadeMinima = Number(
+    slot.capacidade_minima ??
+      response.quadra?.capacidade_minima ??
+      quadra.capacidade_minima ??
+      2,
+  );
+
+  const capacidadeMaxima = Number(
+    slot.capacidade_maxima ??
+      response.quadra?.capacidade_maxima ??
+      quadra.capacidade_maxima ??
+      4,
+  );
+
+  const jogadoresConfirmados = Number(
+    slot.jogadores_confirmados ??
+      slot.jogo?.jogadores_confirmados ??
+      participantes.length,
+  );
+
+  const maximoParticipantesJogo =
+    slot.jogo?.maximo_participantes ?? capacidadeMaxima;
+
+  return {
+    id: `${quadra.id}-${slot.inicio}-${slot.fim}-${slotIndex}`,
+    hora: slot.inicio,
+    horaFim: slotEstaLivre ? addMinutesToTime(slot.inicio, duracaoMinutos) : slot.fim,
+    quadraId: quadra.id,
+    quadraNome: quadra.nome,
+    disponivel: slotEstaLivre,
+    motivo: slotEstaLivre ? null : (slot.motivo ?? "BLOQUEADO"),
+    capacidadeMinima,
+    capacidadeMaxima,
+    permiteSimples: Boolean(
+      slot.permite_simples ??
+        response.quadra?.permite_simples ??
+        quadra.permite_simples ??
+        true,
+    ),
+    permiteDupla: Boolean(
+      slot.permite_dupla ??
+        response.quadra?.permite_dupla ??
+        quadra.permite_dupla ??
+        true,
+    ),
+    jogadoresConfirmados,
+    vagasDisponiveis: Number(
+      slot.vagas_disponiveis ??
+        slot.jogo?.vagas_disponiveis ??
+        Math.max(maximoParticipantesJogo - jogadoresConfirmados, 0),
+    ),
+    jogo: slot.jogo
+      ? {
+          ...slot.jogo,
+          participantes,
+        }
+      : null,
+    duracaoMinutos: slotEstaLivre ? duracaoMinutos : undefined,
+    duracoesDisponiveis: duracoesValidas,
+  };
+}
+
+function gerarSlotsVisuais(
+  quadra: Quadra,
+  response: DisponibilidadeResponse,
+): SlotDisponibilidade[] {
+  if (!quadra.aberta || !quadra.abre_as || !quadra.fecha_as) return [];
+
+  const duracaoSlot = getDuracaoSlotMinutos(quadra, response);
+  const duracoes = normalizarDuracoes(quadra.duracoes_reserva_minutos);
+  const menorDuracao = Math.min(...duracoes);
+  const eventos = quadra.eventos_ocupados ?? [];
+  const slots: SlotDisponibilidade[] = [];
+
+  let atual = timeToMinutes(quadra.abre_as);
+  const fechamento = timeToMinutes(quadra.fecha_as);
+
+  while (atual + menorDuracao <= fechamento) {
+    const inicio = minutesToTime(atual);
+    const fim = minutesToTime(Math.min(atual + duracaoSlot, fechamento));
+    const eventoSobreposto = validarSobreposicaoLocal(eventos, inicio, fim);
+
+    slots.push({
+      inicio,
+      fim,
+      disponivel: !eventoSobreposto,
+      motivo: eventoSobreposto
+        ? eventoSobreposto.tipo === "BLOQUEIO"
+          ? "BLOQUEADO"
+          : eventoSobreposto.tipo
+        : null,
+      jogo: eventoSobreposto?.jogo ?? null,
+    });
+
+    atual += duracaoSlot;
+  }
+
+  return slots;
+}
+
 function readAgendaSnapshot(academiaId: string, data: string) {
   const raw = safeStorageGet(getAgendaCacheKey(academiaId, data));
   if (!raw) return null;
@@ -312,130 +570,37 @@ function invalidateAgendaSnapshot(academiaId: string, data: string) {
 function montarHorariosDaQuadra(
   quadra: Quadra,
   response: DisponibilidadeResponse,
+  data: string,
 ): HorarioAgenda[] {
   const eventos = Array.isArray(response.eventos_ocupados)
     ? response.eventos_ocupados
     : [];
+  const horarios: HorarioAgenda[] = [];
+  const jogosAdicionados = new Set<string>();
 
-  if (eventos.length > 0) {
-    return eventos
-      .filter((evento) => evento.tipo === "JOGO" && evento.jogo)
-      .map((evento): HorarioAgenda => {
-        const participantes = evento.jogo?.participantes ?? [];
-        const capacidadeMaxima = Number(
-          evento.jogo?.maximo_participantes ??
-            response.quadra?.capacidade_maxima ??
-            quadra.capacidade_maxima ??
-            4,
-        );
-        const jogadoresConfirmados = Number(
-          evento.jogo?.jogadores_confirmados ?? participantes.length,
-        );
+  eventos
+    .filter((evento) => evento.tipo === "JOGO" && evento.jogo)
+    .forEach((evento) => {
+      horarios.push(montarHorarioJogo(quadra, response, evento));
+      jogosAdicionados.add(evento.jogo?.id ?? evento.id);
+    });
 
-        return {
-          id: `${quadra.id}-${evento.id}`,
-          hora: evento.inicio,
-          horaFim: evento.fim,
-          quadraId: quadra.id,
-          quadraNome: quadra.nome,
-          disponivel: false,
-          motivo: "JOGO",
-          capacidadeMinima: Number(
-            response.quadra?.capacidade_minima ??
-              quadra.capacidade_minima ??
-              2,
-          ),
-          capacidadeMaxima,
-          permiteSimples: Boolean(
-            response.quadra?.permite_simples ?? quadra.permite_simples ?? true,
-          ),
-          permiteDupla: Boolean(
-            response.quadra?.permite_dupla ?? quadra.permite_dupla ?? true,
-          ),
-          jogadoresConfirmados,
-          vagasDisponiveis: Number(
-            evento.jogo?.vagas_disponiveis ??
-              Math.max(capacidadeMaxima - jogadoresConfirmados, 0),
-          ),
-          jogo: {
-            id: evento.jogo!.id,
-            criador_usuario_id: evento.jogo!.criador_usuario_id,
-            tipo_jogo: evento.jogo!.tipo_jogo,
-            status: evento.jogo!.status,
-            maximo_participantes: evento.jogo!.maximo_participantes,
-            jogadores_confirmados: jogadoresConfirmados,
-            vagas_disponiveis: evento.jogo!.vagas_disponiveis,
-            observacoes: evento.jogo!.observacoes,
-            participantes,
-          },
-        };
-      });
-  }
+  const slots =
+    Array.isArray(response.slots) && response.slots.length > 0
+      ? response.slots
+      : gerarSlotsVisuais(quadra, response);
 
-  const slots = Array.isArray(response.slots) ? response.slots : [];
+  slots.forEach((slot, slotIndex) => {
+    if (slot.jogo?.id && jogosAdicionados.has(slot.jogo.id)) return;
 
-  return slots.filter((slot) => slot.jogo).map((slot): HorarioAgenda => {
-    const participantes = slot.jogo?.participantes ?? [];
+    horarios.push(montarHorarioSlot(quadra, response, data, slot, slotIndex));
 
-    const capacidadeMinima = Number(
-      slot.capacidade_minima ??
-        response.quadra?.capacidade_minima ??
-        quadra.capacidade_minima ??
-        2,
-    );
-
-    const capacidadeMaxima = Number(
-      slot.capacidade_maxima ??
-        response.quadra?.capacidade_maxima ??
-        quadra.capacidade_maxima ??
-        4,
-    );
-
-    const jogadoresConfirmados = Number(
-      slot.jogadores_confirmados ??
-        slot.jogo?.jogadores_confirmados ??
-        participantes.length,
-    );
-
-    const maximoParticipantesJogo =
-      slot.jogo?.maximo_participantes ?? capacidadeMaxima;
-
-    return {
-      id: `${quadra.id}-${slot.inicio}`,
-      hora: slot.inicio,
-      horaFim: slot.fim,
-      quadraId: quadra.id,
-      quadraNome: quadra.nome,
-      disponivel: slot.disponivel,
-      motivo: slot.motivo,
-      capacidadeMinima,
-      capacidadeMaxima,
-      permiteSimples: Boolean(
-        slot.permite_simples ??
-          response.quadra?.permite_simples ??
-          quadra.permite_simples ??
-          true,
-      ),
-      permiteDupla: Boolean(
-        slot.permite_dupla ??
-          response.quadra?.permite_dupla ??
-          quadra.permite_dupla ??
-          true,
-      ),
-      jogadoresConfirmados,
-      vagasDisponiveis: Number(
-        slot.vagas_disponiveis ??
-          slot.jogo?.vagas_disponiveis ??
-          Math.max(maximoParticipantesJogo - jogadoresConfirmados, 0),
-      ),
-      jogo: slot.jogo
-        ? {
-            ...slot.jogo,
-            participantes,
-          }
-        : null,
-    };
+    if (slot.jogo?.id) {
+      jogosAdicionados.add(slot.jogo.id);
+    }
   });
+
+  return horarios;
 }
 
 function formatarAcademiaAtual(academia?: Academia | null) {
@@ -448,7 +613,7 @@ function formatarAcademiaAtual(academia?: Academia | null) {
   return local ? `${academia.nome} • ${local}` : academia.nome;
 }
 
-function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse) {
+function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse, data: string) {
   const quadrasDisponibilidade = Array.isArray(disponibilidade.quadras)
     ? disponibilidade.quadras
     : [];
@@ -481,6 +646,7 @@ function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse) {
       duracoes_reserva_minutos: normalizarDuracoes(
         item.duracoes_reserva_minutos,
       ),
+      duracao_slot_minutos: item.duracao_slot_minutos ?? null,
       eventos_ocupados: Array.isArray(item.eventos_ocupados)
         ? item.eventos_ocupados
         : [],
@@ -495,7 +661,7 @@ function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse) {
       const quadraId = item.quadra?.id;
       const quadra = quadraId ? quadrasById.get(quadraId) : null;
 
-      return quadra ? montarHorariosDaQuadra(quadra, item) : [];
+      return quadra ? montarHorariosDaQuadra(quadra, item, data) : [];
     })
     .sort((a, b) => {
       const porHora = a.hora.localeCompare(b.hora);
@@ -532,11 +698,6 @@ export default function AcademiaAgendaPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [horarioSelecionado, setHorarioSelecionado] =
     useState<HorarioSelecionado | null>(null);
-  const [quadraReservaId, setQuadraReservaId] = useState("");
-  const [horaInicioReserva, setHoraInicioReserva] = useState("");
-  const [duracaoReserva, setDuracaoReserva] =
-    useState<DuracaoReserva>(DURACOES_PADRAO[0]);
-  const [erroReserva, setErroReserva] = useState("");
 
   const academiaId = academia?.id ?? params.id ?? "";
 
@@ -585,103 +746,6 @@ export default function AcademiaAgendaPage() {
     const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
     return horarios.filter((horario) => idsPermitidos.has(horario.quadraId));
   }, [horarios, quadrasFiltradas]);
-
-  const quadraReserva = useMemo(() => {
-    return (
-      quadrasFiltradas.find((quadra) => quadra.id === quadraReservaId) ??
-      quadrasFiltradas[0] ??
-      null
-    );
-  }, [quadrasFiltradas, quadraReservaId]);
-
-  const duracoesReserva = useMemo(
-    () => normalizarDuracoes(quadraReserva?.duracoes_reserva_minutos),
-    [quadraReserva?.duracoes_reserva_minutos],
-  );
-  const duracaoReservaAtual = duracoesReserva.includes(duracaoReserva)
-    ? duracaoReserva
-    : duracoesReserva[0];
-
-  const granularidadeReserva =
-    quadraReserva?.granularidade_agendamento_minutos ??
-    GRANULARIDADE_PADRAO_MINUTOS;
-  const intervaloReserva =
-    quadraReserva?.intervalo_entre_reservas_minutos ??
-    INTERVALO_PADRAO_MINUTOS;
-  const minHoraHoje = getMinHoraParaData(dataSelecionada, granularidadeReserva);
-  const horaMinimaReserva =
-    minHoraHoje && quadraReserva?.abre_as
-      ? minutesToTime(
-          Math.max(
-            timeToMinutes(minHoraHoje),
-            timeToMinutes(quadraReserva.abre_as),
-          ),
-        )
-      : (minHoraHoje ?? quadraReserva?.abre_as ?? undefined);
-  const horaInicioReservaAtual = useMemo(() => {
-    const fallback = horaMinimaReserva ?? quadraReserva?.abre_as ?? "";
-
-    if (!horaInicioReserva) return fallback;
-    if (
-      horaMinimaReserva &&
-      timeToMinutes(horaInicioReserva) < timeToMinutes(horaMinimaReserva)
-    ) {
-      return horaMinimaReserva;
-    }
-
-    return horaInicioReserva;
-  }, [horaInicioReserva, horaMinimaReserva, quadraReserva?.abre_as]);
-  const horaFimReserva = horaInicioReservaAtual
-    ? addMinutesToTime(horaInicioReservaAtual, duracaoReservaAtual)
-    : "";
-
-  const erroValidacaoReserva = useMemo(() => {
-    if (!quadraReserva) return "Selecione uma quadra.";
-    if (!quadraReserva.aberta) {
-      return quadraReserva.motivo || "Quadra fechada nesta data.";
-    }
-    if (!quadraReserva.abre_as || !quadraReserva.fecha_as) {
-      return "Quadra sem horário configurado para esta data.";
-    }
-    if (!horaInicioReservaAtual) return "Informe o horário inicial.";
-
-    const inicioMinutos = timeToMinutes(horaInicioReservaAtual);
-    const fimMinutos = timeToMinutes(horaFimReserva);
-    const abreMinutos = timeToMinutes(quadraReserva.abre_as);
-    const fechaMinutos = timeToMinutes(quadraReserva.fecha_as);
-
-    if (inicioMinutos % granularidadeReserva !== 0) {
-      return `Escolha horários em intervalos de ${granularidadeReserva} minutos.`;
-    }
-
-    if (inicioMinutos < abreMinutos || fimMinutos > fechaMinutos) {
-      return `Reserva deve ficar entre ${quadraReserva.abre_as} e ${quadraReserva.fecha_as}.`;
-    }
-
-    if (minHoraHoje && inicioMinutos < timeToMinutes(minHoraHoje)) {
-      return "Escolha um horário futuro para hoje.";
-    }
-
-    if (
-      validarConflitoLocal(
-        quadraReserva.eventos_ocupados ?? [],
-        horaInicioReservaAtual,
-        horaFimReserva,
-        intervaloReserva,
-      )
-    ) {
-      return `Este horário conflita com outra reserva ou com o intervalo de ${intervaloReserva} minutos.`;
-    }
-
-    return "";
-  }, [
-    granularidadeReserva,
-    horaFimReserva,
-    horaInicioReservaAtual,
-    intervaloReserva,
-    minHoraHoje,
-    quadraReserva,
-  ]);
 
   useEffect(() => {
     let ativo = true;
@@ -741,7 +805,7 @@ export default function AcademiaAgendaPage() {
 
         if (requestId !== requestRef.current) return;
 
-        const agenda = montarAgenda(disponibilidade);
+        const agenda = montarAgenda(disponibilidade, dataSelecionada);
 
         salvarUltimaAcademia(agenda.academia?.id ?? academiaId);
 
@@ -787,10 +851,6 @@ export default function AcademiaAgendaPage() {
     setQuadras([]);
     setHorarios([]);
     setHorarioSelecionado(null);
-    setQuadraReservaId("");
-    setHoraInicioReserva("");
-    setDuracaoReserva(DURACOES_PADRAO[0]);
-    setErroReserva("");
     setDialogOpen(false);
     setErro("");
     setFiltrosQuadra(agendaFiltroInicial);
@@ -798,33 +858,6 @@ export default function AcademiaAgendaPage() {
 
   function selecionarData(data: string) {
     setDataSelecionada(data);
-    setHoraInicioReserva("");
-    setErroReserva("");
-  }
-
-  function continuarReservaManual() {
-    const erroFormulario = erroValidacaoReserva;
-
-    if (erroFormulario || !quadraReserva) {
-      setErroReserva(erroFormulario || "Selecione uma quadra.");
-      return;
-    }
-
-    setErroReserva("");
-    setHorarioSelecionado({
-      id: `manual-${quadraReserva.id}-${horaInicioReservaAtual}-${duracaoReservaAtual}`,
-      hora: horaInicioReservaAtual,
-      fim: horaFimReserva,
-      duracaoMinutos: duracaoReservaAtual,
-      quadraId: quadraReserva.id,
-      quadraNome: quadraReserva.nome,
-      capacidadeMaxima: quadraReserva.capacidade_maxima ?? 4,
-      permiteSimples: quadraReserva.permite_simples ?? true,
-      permiteDupla: quadraReserva.permite_dupla ?? true,
-      participantes: [],
-    });
-
-    setDialogOpen(true);
   }
 
   function selecionarHorario(horario: HorarioAgenda) {
@@ -832,6 +865,7 @@ export default function AcademiaAgendaPage() {
       id: horario.id,
       hora: horario.hora,
       fim: horario.horaFim,
+      duracaoMinutos: horario.duracaoMinutos,
       quadraId: horario.quadraId,
       quadraNome: horario.quadraNome,
       capacidadeMaxima: horario.capacidadeMaxima,
@@ -891,115 +925,6 @@ export default function AcademiaAgendaPage() {
             maxDiasAgendamento={MAX_DIAS_AGENDAMENTO}
           />
 
-          <div className="mb-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-green-800">
-                <Clock className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-base font-black text-zinc-950">
-                  Nova reserva
-                </h2>
-                <p className="text-xs font-semibold text-zinc-500">
-                  {quadraReserva?.abre_as && quadraReserva?.fecha_as
-                    ? `${quadraReserva.abre_as} ate ${quadraReserva.fecha_as}`
-                    : "Escolha uma quadra disponível"}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-[1.4fr_0.8fr]">
-              <label className="grid gap-1.5 text-sm font-bold text-zinc-700">
-                Quadra
-                <select
-                  value={quadraReserva?.id ?? ""}
-                  onChange={(event) => {
-                    setQuadraReservaId(event.target.value);
-                    setHoraInicioReserva("");
-                    setErroReserva("");
-                  }}
-                  disabled={loading || quadrasFiltradas.length === 0}
-                  className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-900 outline-none transition focus:border-green-700"
-                >
-                  {quadrasFiltradas.length === 0 ? (
-                    <option value="">Nenhuma quadra</option>
-                  ) : (
-                    quadrasFiltradas.map((quadra) => (
-                      <option key={quadra.id} value={quadra.id}>
-                        {quadra.nome}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </label>
-
-              <label className="grid gap-1.5 text-sm font-bold text-zinc-700">
-                Início
-                <input
-                  type="time"
-                  value={horaInicioReservaAtual}
-                  min={horaMinimaReserva}
-                  max={quadraReserva?.fecha_as ?? undefined}
-                  step={granularidadeReserva * 60}
-                  onChange={(event) => {
-                    setHoraInicioReserva(event.target.value);
-                    setErroReserva("");
-                  }}
-                  disabled={loading || !quadraReserva?.aberta}
-                  className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-900 outline-none transition focus:border-green-700"
-                />
-              </label>
-            </div>
-
-            <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <div className="grid gap-1.5">
-                <span className="text-sm font-bold text-zinc-700">
-                  Duração
-                </span>
-                <div className="grid grid-cols-3 gap-2">
-                  {duracoesReserva.map((duracao) => (
-                    <button
-                      key={duracao}
-                      type="button"
-                      onClick={() => {
-                        setDuracaoReserva(duracao);
-                        setErroReserva("");
-                      }}
-                      className={[
-                        "h-10 rounded-xl border text-sm font-black transition",
-                        duracaoReservaAtual === duracao
-                          ? "border-green-800 bg-green-800 text-white"
-                          : "border-zinc-200 bg-white text-zinc-700 hover:border-green-700",
-                      ].join(" ")}
-                    >
-                      {duracao} min
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-700">
-                <span className="block text-xs text-zinc-500">Final</span>
-                {horaFimReserva || "--:--"}
-              </div>
-            </div>
-
-            {(erroReserva || (!loading && erroValidacaoReserva)) && (
-              <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-600">
-                {erroReserva || erroValidacaoReserva}
-              </p>
-            )}
-
-            <Button
-              type="button"
-              onClick={continuarReservaManual}
-              disabled={loading || Boolean(erroValidacaoReserva)}
-              className="mt-4 h-11 w-full rounded-xl"
-            >
-              Continuar
-            </Button>
-          </div>
-
           {erro && (
             <p className="mb-3 rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-600">
               {erro}
@@ -1010,7 +935,7 @@ export default function AcademiaAgendaPage() {
             <p className="text-sm text-zinc-500">Carregando agenda...</p>
           ) : horariosFiltrados.length === 0 ? (
             <p className="rounded-2xl bg-zinc-50 p-4 text-sm text-zinc-500">
-              Nenhum jogo criado para os filtros selecionados.
+              Nenhum horário encontrado para os filtros selecionados.
             </p>
           ) : (
             <AgendaList
@@ -1033,6 +958,7 @@ export default function AcademiaAgendaPage() {
         open={dialogOpen}
         onOpenChange={fecharDialog}
         horario={horarioSelecionado}
+        quadras={quadrasFiltradas}
         data={dataSelecionada}
         academiaId={academiaId}
         onSuccess={handleAgendaMutationSuccess}

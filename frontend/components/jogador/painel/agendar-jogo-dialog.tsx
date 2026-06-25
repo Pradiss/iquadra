@@ -62,11 +62,36 @@ type Participante = {
   };
 };
 
+type DuracaoReserva = 60 | 90 | 120;
+
+type EventoOcupado = {
+  tipo: "JOGO" | "AULA" | "BLOQUEIO";
+  id: string;
+  inicio: string;
+  fim: string;
+};
+
+export type QuadraReservaOpcao = {
+  id: string;
+  nome: string;
+  capacidade_maxima?: number;
+  permite_simples?: boolean;
+  permite_dupla?: boolean;
+  aberta?: boolean;
+  motivo?: string | null;
+  abre_as?: string | null;
+  fecha_as?: string | null;
+  intervalo_entre_reservas_minutos?: number;
+  granularidade_agendamento_minutos?: number;
+  duracoes_reserva_minutos?: DuracaoReserva[];
+  eventos_ocupados?: EventoOcupado[];
+};
+
 type HorarioSelecionado = {
   id: string;
   hora: string;
   fim?: string;
-  duracaoMinutos?: 60 | 90 | 120;
+  duracaoMinutos?: DuracaoReserva;
   quadraId: string;
   quadraNome: string;
   capacidadeMaxima: number;
@@ -86,10 +111,88 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   horario: HorarioSelecionado | null;
+  quadras?: QuadraReservaOpcao[];
   data: string;
   academiaId: string;
   onSuccess?: () => void;
 };
+
+const DURACOES_PADRAO: DuracaoReserva[] = [60, 90, 120];
+const GRANULARIDADE_PADRAO_MINUTOS = 5;
+const INTERVALO_PADRAO_MINUTOS = 10;
+
+function timeToMinutes(time: string) {
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const remainingMinutes = (minutes % 60).toString().padStart(2, "0");
+
+  return `${hours}:${remainingMinutes}`;
+}
+
+function addMinutesToTime(time: string, minutes: number) {
+  return minutesToTime(timeToMinutes(time) + minutes);
+}
+
+function roundUpToGranularity(minutes: number, granularity: number) {
+  return Math.ceil(minutes / granularity) * granularity;
+}
+
+function getMinutosAgora(granularity: number) {
+  const agora = new Date();
+  return roundUpToGranularity(
+    agora.getHours() * 60 + agora.getMinutes() + 1,
+    granularity,
+  );
+}
+
+function getMinHoraParaData(data: string, granularity: number) {
+  const agora = new Date();
+  const hoje = [
+    agora.getFullYear(),
+    String(agora.getMonth() + 1).padStart(2, "0"),
+    String(agora.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  if (data !== hoje) return null;
+
+  const minutos = getMinutosAgora(granularity);
+  return minutos >= 24 * 60 ? null : minutesToTime(minutos);
+}
+
+function normalizarDuracoes(duracoes?: number[] | null): DuracaoReserva[] {
+  const permitidas = new Set(DURACOES_PADRAO);
+  const normalizadas = (duracoes ?? []).filter((duracao) =>
+    permitidas.has(duracao as DuracaoReserva),
+  ) as DuracaoReserva[];
+
+  return normalizadas.length > 0 ? normalizadas : DURACOES_PADRAO;
+}
+
+function validarConflitoLocal(
+  eventos: EventoOcupado[],
+  horaInicio: string,
+  horaFim: string,
+  intervaloMinutos: number,
+) {
+  const inicioMinutos = timeToMinutes(horaInicio);
+  const fimMinutos = timeToMinutes(horaFim);
+
+  return eventos.some((evento) => {
+    const eventoInicio = timeToMinutes(evento.inicio);
+    const eventoFim = timeToMinutes(evento.fim);
+
+    return (
+      eventoInicio < fimMinutos + intervaloMinutos &&
+      eventoFim > inicioMinutos - intervaloMinutos
+    );
+  });
+}
 
 function nomeUsuario(usuario: Usuario) {
   return usuario.nome || usuario.name || usuario.email || "Jogador";
@@ -234,11 +337,16 @@ export function AgendarJogoDialog({
   open,
   onOpenChange,
   horario,
+  quadras = [],
   data,
   academiaId,
   onSuccess,
 }: Props) {
   const [tipoJogo, setTipoJogo] = useState<"SIMPLES" | "DUPLA">("SIMPLES");
+  const [quadraReservaId, setQuadraReservaId] = useState("");
+  const [horaInicioReserva, setHoraInicioReserva] = useState("");
+  const [duracaoReserva, setDuracaoReserva] =
+    useState<DuracaoReserva>(DURACOES_PADRAO[0]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [busca, setBusca] = useState("");
   const [buscandoIndex, setBuscandoIndex] = useState<
@@ -257,6 +365,116 @@ export function AgendarJogoDialog({
 
   const usuarioLogado = useMemo(() => getUsuario() as Usuario | null, []);
   const entrandoEmJogo = Boolean(horario?.jogoId);
+  const quadraReserva = useMemo(() => {
+    return (
+      quadras.find((quadra) => quadra.id === quadraReservaId) ??
+      quadras.find((quadra) => quadra.id === horario?.quadraId) ??
+      null
+    );
+  }, [horario?.quadraId, quadraReservaId, quadras]);
+  const duracoesReserva = useMemo(
+    () => normalizarDuracoes(quadraReserva?.duracoes_reserva_minutos),
+    [quadraReserva?.duracoes_reserva_minutos],
+  );
+  const duracaoReservaAtual = duracoesReserva.includes(duracaoReserva)
+    ? duracaoReserva
+    : (duracoesReserva[0] ?? DURACOES_PADRAO[0]);
+  const granularidadeReserva =
+    quadraReserva?.granularidade_agendamento_minutos ??
+    GRANULARIDADE_PADRAO_MINUTOS;
+  const intervaloReserva =
+    quadraReserva?.intervalo_entre_reservas_minutos ??
+    INTERVALO_PADRAO_MINUTOS;
+  const minHoraHoje = getMinHoraParaData(data, granularidadeReserva);
+  const horaMinimaReserva =
+    minHoraHoje && quadraReserva?.abre_as
+      ? minutesToTime(
+          Math.max(
+            timeToMinutes(minHoraHoje),
+            timeToMinutes(quadraReserva.abre_as),
+          ),
+        )
+      : (minHoraHoje ?? quadraReserva?.abre_as ?? undefined);
+  const horaInicioReservaAtual = useMemo(() => {
+    const fallback = horaMinimaReserva ?? quadraReserva?.abre_as ?? "";
+
+    if (!horaInicioReserva) return fallback;
+    if (
+      horaMinimaReserva &&
+      timeToMinutes(horaInicioReserva) < timeToMinutes(horaMinimaReserva)
+    ) {
+      return horaMinimaReserva;
+    }
+
+    return horaInicioReserva;
+  }, [horaInicioReserva, horaMinimaReserva, quadraReserva?.abre_as]);
+  const horaFimReserva = horaInicioReservaAtual
+    ? addMinutesToTime(horaInicioReservaAtual, duracaoReservaAtual)
+    : "";
+  const permiteSimplesAtual = entrandoEmJogo
+    ? (horario?.permiteSimples ?? true)
+    : (quadraReserva?.permite_simples ?? horario?.permiteSimples ?? true);
+  const permiteDuplaAtual = entrandoEmJogo
+    ? (horario?.permiteDupla ?? true)
+    : (quadraReserva?.permite_dupla ?? horario?.permiteDupla ?? true);
+  const erroValidacaoReserva = useMemo(() => {
+    if (entrandoEmJogo) return "";
+    if (!quadraReserva) return "Selecione uma quadra.";
+    if (!quadraReserva.aberta) {
+      return quadraReserva.motivo || "Quadra fechada nesta data.";
+    }
+    if (!quadraReserva.abre_as || !quadraReserva.fecha_as) {
+      return "Quadra sem horário configurado para esta data.";
+    }
+    if (!horaInicioReservaAtual) return "Informe o horário inicial.";
+    if (tipoJogo === "SIMPLES" && !permiteSimplesAtual) {
+      return "Esta quadra não permite jogo simples.";
+    }
+    if (tipoJogo === "DUPLA" && !permiteDuplaAtual) {
+      return "Esta quadra não permite jogo em dupla.";
+    }
+
+    const inicioMinutos = timeToMinutes(horaInicioReservaAtual);
+    const fimMinutos = timeToMinutes(horaFimReserva);
+    const abreMinutos = timeToMinutes(quadraReserva.abre_as);
+    const fechaMinutos = timeToMinutes(quadraReserva.fecha_as);
+
+    if (inicioMinutos % granularidadeReserva !== 0) {
+      return `Escolha horários em intervalos de ${granularidadeReserva} minutos.`;
+    }
+
+    if (inicioMinutos < abreMinutos || fimMinutos > fechaMinutos) {
+      return `Reserva deve ficar entre ${quadraReserva.abre_as} e ${quadraReserva.fecha_as}.`;
+    }
+
+    if (minHoraHoje && inicioMinutos < timeToMinutes(minHoraHoje)) {
+      return "Escolha um horário futuro para hoje.";
+    }
+
+    if (
+      validarConflitoLocal(
+        quadraReserva.eventos_ocupados ?? [],
+        horaInicioReservaAtual,
+        horaFimReserva,
+        intervaloReserva,
+      )
+    ) {
+      return `Este horário conflita com outra reserva ou com o intervalo de ${intervaloReserva} minutos.`;
+    }
+
+    return "";
+  }, [
+    entrandoEmJogo,
+    granularidadeReserva,
+    horaFimReserva,
+    horaInicioReservaAtual,
+    intervaloReserva,
+    minHoraHoje,
+    permiteDuplaAtual,
+    permiteSimplesAtual,
+    quadraReserva,
+    tipoJogo,
+  ]);
   const maximoParticipantes =
     horario?.maximoParticipantes ?? (tipoJogo === "SIMPLES" ? 2 : 4);
   const participantes = useMemo(() => {
@@ -328,6 +546,9 @@ export function AgendarJogoDialog({
       setBuscandoIndex(null);
       setJogadores([null, null, null]);
       setParticipantesAtuais(horario.participantes ?? []);
+      setQuadraReservaId(horario.quadraId);
+      setHoraInicioReserva(horario.hora);
+      setDuracaoReserva(horario.duracaoMinutos ?? DURACOES_PADRAO[0]);
       setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
       setUsuarios([]);
     }, 0);
@@ -454,6 +675,11 @@ export function AgendarJogoDialog({
       return;
     }
 
+    if (!horario.jogoId && (erroValidacaoReserva || !quadraReserva)) {
+      setErro(erroValidacaoReserva || "Selecione uma quadra.");
+      return;
+    }
+
     setLoading(true);
     setErro("");
 
@@ -465,13 +691,11 @@ export function AgendarJogoDialog({
       } else {
         const payload = {
           academia_id: academiaId,
-          quadra_id: horario.quadraId,
+          quadra_id: quadraReserva!.id,
           tipo_jogo: tipoJogo,
           data,
-          hora_inicio: horario.hora,
-          ...(horario.duracaoMinutos
-            ? { duracao_minutos: horario.duracaoMinutos }
-            : { hora_fim: horario.fim || horario.hora }),
+          hora_inicio: horaInicioReservaAtual,
+          duracao_minutos: duracaoReservaAtual,
         };
         const jogo = await criarJogo({
           ...payload,
@@ -516,10 +740,10 @@ export function AgendarJogoDialog({
     ? "Sua participação"
     : entrandoEmJogo
       ? "Jogo criado"
-      : "Quem vai jogar?";
+      : "Agendar jogo";
   const descricao = entrandoEmJogo
     ? "Confira os jogadores confirmados neste horário."
-    : "Você entra como Jogador 1 e pode adicionar os demais.";
+    : "Ajuste a reserva e convide os jogadores.";
   const textoBotaoPrincipal = loading
     ? "Confirmando..."
     : jaParticipa
@@ -528,9 +752,12 @@ export function AgendarJogoDialog({
         ? temVaga
           ? "Entrar no jogo"
           : "Jogo completo"
-        : "Confirmar jogo";
+        : "Confirmar reserva";
   const desabilitarBotaoPrincipal =
-    loading || !horario || (entrandoEmJogo && !jaParticipa && !temVaga);
+    loading ||
+    !horario ||
+    (entrandoEmJogo && !jaParticipa && !temVaga) ||
+    (!entrandoEmJogo && Boolean(erroValidacaoReserva));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -552,7 +779,9 @@ export function AgendarJogoDialog({
             <div className="grid gap-2 text-sm">
               <div className="flex items-center gap-2 font-bold text-zinc-900">
                 <MapPin className="h-4 w-4 text-green-700" />
-                {horario.quadraNome}
+                {entrandoEmJogo
+                  ? horario.quadraNome
+                  : (quadraReserva?.nome ?? horario.quadraNome)}
               </div>
 
               <div className="flex items-center gap-2 text-zinc-600">
@@ -562,9 +791,111 @@ export function AgendarJogoDialog({
 
               <div className="flex items-center gap-2 text-zinc-600">
                 <Clock className="h-4 w-4" />
-                {horario.hora} {horario.fim ? `até ${horario.fim}` : ""}
+                {entrandoEmJogo
+                  ? `${horario.hora}${horario.fim ? ` até ${horario.fim}` : ""}`
+                  : `${horaInicioReservaAtual || "--:--"} até ${
+                      horaFimReserva || "--:--"
+                    }`}
               </div>
             </div>
+          </div>
+        )}
+
+        {!entrandoEmJogo && horario && (
+          <div className="grid gap-3 rounded-2xl border border-zinc-200 p-3">
+            <label className="grid gap-1.5 text-sm font-bold text-zinc-700">
+              Quadra
+              <select
+                value={quadraReserva?.id ?? ""}
+                onChange={(event) => {
+                  const proximaQuadra = quadras.find(
+                    (quadra) => quadra.id === event.target.value,
+                  );
+
+                  setQuadraReservaId(event.target.value);
+                  if (
+                    tipoJogo === "SIMPLES" &&
+                    proximaQuadra?.permite_simples === false &&
+                    proximaQuadra?.permite_dupla !== false
+                  ) {
+                    setTipoJogo("DUPLA");
+                  } else if (
+                    tipoJogo === "DUPLA" &&
+                    proximaQuadra?.permite_dupla === false &&
+                    proximaQuadra?.permite_simples !== false
+                  ) {
+                    setTipoJogo("SIMPLES");
+                  }
+                  setErro("");
+                }}
+                disabled={loading || quadras.length === 0}
+                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-900 outline-none transition focus:border-green-700"
+              >
+                {quadras.length === 0 ? (
+                  <option value="">Nenhuma quadra</option>
+                ) : (
+                  quadras.map((quadra) => (
+                    <option key={quadra.id} value={quadra.id}>
+                      {quadra.nome}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <label className="grid gap-1.5 text-sm font-bold text-zinc-700">
+                Início
+                <input
+                  type="time"
+                  value={horaInicioReservaAtual}
+                  min={horaMinimaReserva}
+                  max={quadraReserva?.fecha_as ?? undefined}
+                  step={granularidadeReserva * 60}
+                  onChange={(event) => {
+                    setHoraInicioReserva(event.target.value);
+                    setErro("");
+                  }}
+                  disabled={loading || !quadraReserva?.aberta}
+                  className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-900 outline-none transition focus:border-green-700"
+                />
+              </label>
+
+              <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-700">
+                <span className="block text-xs text-zinc-500">Final</span>
+                {horaFimReserva || "--:--"}
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <span className="text-sm font-bold text-zinc-700">Duração</span>
+              <div className="grid grid-cols-3 gap-2">
+                {duracoesReserva.map((duracao) => (
+                  <button
+                    key={duracao}
+                    type="button"
+                    onClick={() => {
+                      setDuracaoReserva(duracao);
+                      setErro("");
+                    }}
+                    className={[
+                      "h-10 rounded-xl border text-sm font-black transition",
+                      duracaoReservaAtual === duracao
+                        ? "border-green-800 bg-green-800 text-white"
+                        : "border-zinc-200 bg-white text-zinc-700 hover:border-green-700",
+                    ].join(" ")}
+                  >
+                    {duracao} min
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {erroValidacaoReserva && (
+              <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-600">
+                {erroValidacaoReserva}
+              </p>
+            )}
           </div>
         )}
 
@@ -702,7 +1033,7 @@ export function AgendarJogoDialog({
             <Button
               type="button"
               variant={tipoJogo === "SIMPLES" ? "default" : "outline"}
-              disabled={!horario?.permiteSimples}
+              disabled={!permiteSimplesAtual}
               onClick={() => setTipoJogo("SIMPLES")}
             >
               Simples
@@ -711,7 +1042,7 @@ export function AgendarJogoDialog({
             <Button
               type="button"
               variant={tipoJogo === "DUPLA" ? "default" : "outline"}
-              disabled={!horario?.permiteDupla}
+              disabled={!permiteDuplaAtual}
               onClick={() => setTipoJogo("DUPLA")}
             >
               Dupla
