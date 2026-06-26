@@ -8,15 +8,24 @@ import { getSafeImageUrl } from "@/lib/safe-image";
 
 type Participante = {
   id?: string;
-  nome: string;
+  nome?: string;
   foto_perfil?: string | null;
   categoria?: string | null;
+  usuario?: {
+    id?: string;
+    nome?: string;
+    foto_perfil?: string | null;
+    perfil_cliente?: {
+      categoria?: string | null;
+    } | null;
+  } | null;
 };
 
 type Horario = {
   id: string;
   hora: string;
   horaFim: string;
+  inicioPermitido?: string;
   quadraNome: string;
   disponivel?: boolean;
   motivo: "JOGO" | "AULA" | "BLOQUEADO" | null;
@@ -40,8 +49,25 @@ function inicial(nome: string) {
 
 function inicialCategoria(categoria?: string | null) {
   if (!categoria) return "";
-
   return categoria.charAt(0).toUpperCase();
+}
+
+function getNomeParticipante(jogador?: Participante, fallback = "Jogador") {
+  return jogador?.usuario?.nome || jogador?.nome || fallback;
+}
+
+function getFotoParticipante(jogador?: Participante) {
+  return getSafeImageUrl(
+    jogador?.usuario?.foto_perfil || jogador?.foto_perfil || null,
+  );
+}
+
+function getCategoriaParticipante(jogador?: Participante) {
+  return (
+    jogador?.usuario?.perfil_cliente?.categoria ||
+    jogador?.categoria ||
+    null
+  );
 }
 
 function corLinha(horario: Horario) {
@@ -83,19 +109,18 @@ function Jogador({
   jogador?: Participante;
   label: string;
 }) {
-  const fotoPerfil = getSafeImageUrl(jogador?.foto_perfil);
-  const categoria = inicialCategoria(jogador?.categoria);
+  const nome = getNomeParticipante(jogador, label);
+  const fotoPerfil = getFotoParticipante(jogador);
+  const categoria = inicialCategoria(getCategoriaParticipante(jogador));
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
       <div className="relative shrink-0">
         <Avatar className="h-9 w-9 bg-white">
-          {fotoPerfil && (
-            <AvatarImage src={fotoPerfil} alt={jogador?.nome ?? label} />
-          )}
+          {fotoPerfil ? <AvatarImage src={fotoPerfil} alt={nome} /> : null}
 
           <AvatarFallback className="bg-white text-[13px] font-black text-zinc-800">
-            {jogador ? inicial(jogador.nome) : <Plus className="h-3.5 w-3.5" />}
+            {jogador ? inicial(nome) : <Plus className="h-3.5 w-3.5" />}
           </AvatarFallback>
         </Avatar>
 
@@ -108,7 +133,7 @@ function Jogador({
 
       <div className="min-w-0">
         <p className="truncate text-[12.5px] font-bold text-zinc-950">
-          {jogador?.nome ?? label}
+          {nome}
         </p>
       </div>
     </div>
@@ -117,17 +142,24 @@ function Jogador({
 
 export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
   const jogadores = horario.jogo?.participantes ?? [];
+
   const totalJogadores = Math.min(Math.max(jogadores.length, 2), 4);
+
   const jogadoresSlots = Array.from(
     { length: totalJogadores },
     (_, index) => jogadores[index],
   );
 
+  const subtituloLivre =
+    horario.inicioPermitido && horario.inicioPermitido !== horario.hora
+      ? `Disponível a partir de ${horario.inicioPermitido}`
+      : "Disponível para reserva";
+
   return (
     <TableRow
-  onClick={canSelect ? onSelect : undefined}
-  className={canSelect ? "cursor-pointer" : "cursor-default"}
->
+      onClick={canSelect ? onSelect : undefined}
+      className={canSelect ? "cursor-pointer" : "cursor-default"}
+    >
       <TableCell
         className={[
           "w-[20px] rounded-l-[14px] bg-black/5 px-2 text-zinc-950",
@@ -151,17 +183,16 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
         {horario.quadraNome}
       </TableCell>
 
-      <TableCell
-        className={["rounded-r-2xl px-2", corLinha(horario)].join(" ")}
-      >
+      <TableCell className={["rounded-r-2xl px-2", corLinha(horario)].join(" ")}>
         {!horario.jogo ? (
           <div className="flex min-h-12 items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-[12.5px] font-black text-zinc-950">
                 {horario.disponivel ? "Horário livre" : "Indisponível"}
               </p>
+
               <p className="truncate text-[11px] font-semibold text-zinc-700">
-                {horario.disponivel ? "Disponível para reserva" : "Sem reserva"}
+                {horario.disponivel ? subtituloLivre : "Sem reserva"}
               </p>
             </div>
 
@@ -183,7 +214,7 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
               <>
                 <Jogador jogador={jogadoresSlots[2]} label="Jogador 3" />
 
-                <span className="text-xs font-medium text-zinc-950 ">X</span>
+                <span className="text-xs font-medium text-zinc-950">X</span>
 
                 <Jogador jogador={jogadoresSlots[3]} label="Jogador 4" />
               </>

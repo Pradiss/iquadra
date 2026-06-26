@@ -78,6 +78,8 @@ type HorarioAgenda = {
   id: string;
   hora: string;
   horaFim: string;
+  inicioPermitido?: string;
+  fimPermitido?: string;
   quadraId: string;
   quadraNome: string;
   disponivel: boolean;
@@ -107,7 +109,10 @@ type HorarioSelecionado = {
   id: string;
   hora: string;
   fim?: string;
+  inicioPermitido?: string;
+  fimPermitido?: string;
   duracaoMinutos?: DuracaoReserva;
+  duracoesDisponiveis?: DuracaoReserva[];
   quadraId: string;
   quadraNome: string;
   capacidadeMaxima: number;
@@ -218,10 +223,6 @@ function minutesToTime(minutes: number) {
   return `${hours}:${remainingMinutes}`;
 }
 
-function addMinutesToTime(time: string, minutes: number) {
-  return minutesToTime(timeToMinutes(time) + minutes);
-}
-
 function roundUpToGranularity(minutes: number, granularity: number) {
   return Math.ceil(minutes / granularity) * granularity;
 }
@@ -292,6 +293,7 @@ function getDuracoesValidasParaInicio(
   quadra: Quadra,
   data: string,
   horaInicio: string,
+  horaFimLimite?: string,
 ) {
   if (!quadra.aberta || !quadra.abre_as || !quadra.fecha_as) return [];
 
@@ -299,7 +301,10 @@ function getDuracoesValidasParaInicio(
     quadra.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
   const inicioMinutos = timeToMinutes(horaInicio);
   const abreMinutos = timeToMinutes(quadra.abre_as);
-  const fechaMinutos = timeToMinutes(quadra.fecha_as);
+  const fechaMinutos = Math.min(
+    timeToMinutes(quadra.fecha_as),
+    horaFimLimite ? timeToMinutes(horaFimLimite) : Number.POSITIVE_INFINITY,
+  );
   const minHoraHoje = getMinHoraParaData(data, granularidade);
 
   if (inicioMinutos % granularidade !== 0) return [];
@@ -319,6 +324,24 @@ function getDuracoesValidasParaInicio(
       );
     },
   );
+}
+
+function getInicioPermitidoParaSlot(
+  quadra: Quadra,
+  data: string,
+  slotInicio: string,
+) {
+  const granularidade =
+    quadra.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
+  const candidatos = [
+    slotInicio,
+    quadra.abre_as,
+    getMinHoraParaData(data, granularidade),
+  ].filter(Boolean) as string[];
+
+  if (candidatos.length === 0) return slotInicio;
+
+  return minutesToTime(Math.max(...candidatos.map(timeToMinutes)));
 }
 
 function montarHorarioJogo(
@@ -387,10 +410,16 @@ function montarHorarioSlot(
     timeToMinutes(slot.fim) - timeToMinutes(slot.inicio),
     0,
   );
-  const duracoesValidas = getDuracoesValidasParaInicio(
+  const inicioPermitido = getInicioPermitidoParaSlot(
     quadra,
     data,
     slot.inicio,
+  );
+  const duracoesValidas = getDuracoesValidasParaInicio(
+    quadra,
+    data,
+    inicioPermitido,
+    slot.fim,
   );
   const duracaoMinutos = getDuracaoPreferida(
     duracoesValidas.length > 0
@@ -428,7 +457,9 @@ function montarHorarioSlot(
   return {
     id: `${quadra.id}-${slot.inicio}-${slot.fim}-${slotIndex}`,
     hora: slot.inicio,
-    horaFim: slotEstaLivre ? addMinutesToTime(slot.inicio, duracaoMinutos) : slot.fim,
+    horaFim: slot.fim,
+    inicioPermitido: slotEstaLivre ? inicioPermitido : undefined,
+    fimPermitido: slotEstaLivre ? slot.fim : undefined,
     quadraId: quadra.id,
     quadraNome: quadra.nome,
     disponivel: slotEstaLivre,
@@ -842,7 +873,10 @@ export default function AcademiaAgendaPage() {
       id: horario.id,
       hora: horario.hora,
       fim: horario.horaFim,
+      inicioPermitido: horario.inicioPermitido,
+      fimPermitido: horario.fimPermitido,
       duracaoMinutos: horario.duracaoMinutos,
+      duracoesDisponiveis: horario.duracoesDisponiveis,
       quadraId: horario.quadraId,
       quadraNome: horario.quadraNome,
       capacidadeMaxima: horario.capacidadeMaxima,

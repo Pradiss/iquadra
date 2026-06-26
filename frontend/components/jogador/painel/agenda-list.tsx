@@ -11,10 +11,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+type Participante = {
+  id?: string;
+  nome?: string;
+  foto_perfil?: string | null;
+  categoria?: string | null;
+  usuario?: {
+    id?: string;
+    nome?: string;
+    foto_perfil?: string | null;
+    perfil_cliente?: {
+      categoria?: string | null;
+    } | null;
+  } | null;
+};
+
 type Horario = {
   id: string;
   hora: string;
   horaFim: string;
+  inicioPermitido?: string;
+  fimPermitido?: string;
   quadraId: string;
   quadraNome: string;
   disponivel: boolean;
@@ -29,12 +46,7 @@ type Horario = {
     id: string;
     criador_usuario_id?: string;
     maximo_participantes?: number;
-    participantes: {
-      id?: string;
-      nome: string;
-      foto_perfil?: string | null;
-      categoria?: string | null;
-    }[];
+    participantes: Participante[];
     observacoes?: string | null;
   } | null;
 };
@@ -56,6 +68,10 @@ function sobrepoeHorario(a: Horario, b: Horario) {
   const bFim = timeToMinutes(b.horaFim);
 
   return aInicio < bFim && aFim > bInicio;
+}
+
+function getParticipanteId(participante: Participante) {
+  return participante.usuario?.id ?? participante.id;
 }
 
 export function AgendaList<T extends Horario = Horario>({
@@ -99,7 +115,8 @@ export function AgendaList<T extends Horario = Horario>({
             const usuarioParticipa = Boolean(
               usuarioLogado?.id &&
                 horario.jogo?.participantes.some(
-                  (participante) => participante.id === usuarioLogado.id,
+                  (participante) =>
+                    getParticipanteId(participante) === usuarioLogado.id,
                 ),
             );
 

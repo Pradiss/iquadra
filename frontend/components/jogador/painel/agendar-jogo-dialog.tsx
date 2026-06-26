@@ -29,13 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -102,7 +95,10 @@ type HorarioSelecionado = {
   id: string;
   hora: string;
   fim?: string;
+  inicioPermitido?: string;
+  fimPermitido?: string;
   duracaoMinutos?: DuracaoReserva;
+  duracoesDisponiveis?: DuracaoReserva[];
   quadraId: string;
   quadraNome: string;
   capacidadeMaxima: number;
@@ -193,12 +189,48 @@ function validarConflitoLocal(
   });
 }
 
-function nomeUsuario(usuario: Usuario) {
-  return usuario.nome || usuario.name || usuario.email || "Jogador";
+function getDuracoesValidasParaReserva({
+  quadra,
+  data,
+  horaInicio,
+  fimLimite,
+  duracoesBase,
+}: {
+  quadra: QuadraReservaOpcao | null;
+  data: string;
+  horaInicio: string;
+  fimLimite?: string;
+  duracoesBase: DuracaoReserva[];
+}) {
+  if (!quadra?.aberta || !quadra.abre_as || !quadra.fecha_as || !horaInicio) {
+    return [];
+  }
+
+  const granularidade =
+    quadra.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
+  const inicioMinutos = timeToMinutes(horaInicio);
+  const abreMinutos = timeToMinutes(quadra.abre_as);
+  const fechaMinutos = Math.min(
+    timeToMinutes(quadra.fecha_as),
+    fimLimite ? timeToMinutes(fimLimite) : Number.POSITIVE_INFINITY,
+  );
+  const minHoraHoje = getMinHoraParaData(data, granularidade);
+
+  if (inicioMinutos % granularidade !== 0) return [];
+  if (inicioMinutos < abreMinutos) return [];
+  if (minHoraHoje && inicioMinutos < timeToMinutes(minHoraHoje)) return [];
+
+  return duracoesBase.filter((duracao) => {
+    const fim = minutesToTime(inicioMinutos + duracao);
+
+    if (inicioMinutos + duracao > fechaMinutos) return false;
+
+    return !validarConflitoLocal(quadra.eventos_ocupados ?? [], horaInicio, fim);
+  });
 }
 
-function fotoUsuario(usuario?: Usuario | null) {
-  return getSafeImageUrl(usuario?.foto_perfil);
+function nomeUsuario(usuario: Usuario) {
+  return usuario.nome || usuario.name || usuario.email || "Jogador";
 }
 
 function normalizarUsuarios(response: unknown): Usuario[] {
@@ -437,9 +469,7 @@ function InfoCard({
 }
 
 function ReservationForm({
-  quadras,
   quadraReserva,
-  quadraReservaId,
   horaInicioReservaAtual,
   horaMinimaReserva,
   horaFimReserva,
@@ -451,14 +481,11 @@ function ReservationForm({
   permiteDuplaAtual,
   loading,
   erroValidacaoReserva,
-  onQuadraChange,
   onHoraChange,
   onDuracaoChange,
   onTipoJogoChange,
 }: {
-  quadras: QuadraReservaOpcao[];
   quadraReserva: QuadraReservaOpcao | null;
-  quadraReservaId: string;
   horaInicioReservaAtual: string;
   horaMinimaReserva?: string;
   horaFimReserva: string;
@@ -470,7 +497,6 @@ function ReservationForm({
   permiteDuplaAtual: boolean;
   loading: boolean;
   erroValidacaoReserva: string;
-  onQuadraChange: (quadraId: string) => void;
   onHoraChange: (hora: string) => void;
   onDuracaoChange: (duracao: DuracaoReserva) => void;
   onTipoJogoChange: (tipo: TipoJogo) => void;
@@ -478,28 +504,6 @@ function ReservationForm({
   return (
     <Card className="shadow-none">
       <CardContent className="grid gap-4 ">
-        {/* {quadras.length > 1 ? (
-          <div className="grid gap-1.5">
-            <Label>Quadra</Label>
-            <Select
-              value={quadraReservaId || quadraReserva?.id || ""}
-              disabled={loading || quadras.length === 0}
-              onValueChange={onQuadraChange}
-            >
-              <SelectTrigger className="h-11 rounded-xl">
-                <SelectValue placeholder="Selecione uma quadra" />
-              </SelectTrigger>
-              <SelectContent>
-                {quadras.map((quadra) => (
-                  <SelectItem key={quadra.id} value={quadra.id}>
-                    {quadra.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null} */}
-
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="grid gap-1.5">
             <Label>Início</Label>
@@ -819,22 +823,32 @@ export function AgendarJogoDialog({
     );
   }, [horario?.quadraId, quadraReservaId, quadras]);
 
-  const duracoesReserva = useMemo(
-    () => normalizarDuracoes(quadraReserva?.duracoes_reserva_minutos),
-    [quadraReserva?.duracoes_reserva_minutos],
-  );
-
-  const duracaoReservaAtual = duracoesReserva.includes(duracaoReserva)
-    ? duracaoReserva
-    : (duracoesReserva[0] ?? DURACOES_PADRAO[0]);
-
   const granularidadeReserva = quadraReserva?.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
   const minHoraHoje = getMinHoraParaData(data, granularidadeReserva);
+  const fimLimiteReserva = !entrandoEmJogo
+    ? (horario?.fimPermitido ?? horario?.fim ?? quadraReserva?.fecha_as ?? undefined)
+    : undefined;
+  const duracoesBaseReserva = horario?.duracoesDisponiveis?.length
+    ? normalizarDuracoes(horario.duracoesDisponiveis)
+    : normalizarDuracoes(quadraReserva?.duracoes_reserva_minutos);
 
-  const horaMinimaReserva =
-    minHoraHoje && quadraReserva?.abre_as
-      ? minutesToTime(Math.max(timeToMinutes(minHoraHoje), timeToMinutes(quadraReserva.abre_as)))
-      : (minHoraHoje ?? quadraReserva?.abre_as ?? undefined);
+  const horaMinimaReserva = useMemo(() => {
+    const candidatos = [
+      minHoraHoje,
+      quadraReserva?.abre_as,
+      !entrandoEmJogo ? (horario?.inicioPermitido ?? horario?.hora) : null,
+    ].filter(Boolean) as string[];
+
+    if (candidatos.length === 0) return undefined;
+
+    return minutesToTime(Math.max(...candidatos.map(timeToMinutes)));
+  }, [
+    entrandoEmJogo,
+    horario?.hora,
+    horario?.inicioPermitido,
+    minHoraHoje,
+    quadraReserva?.abre_as,
+  ]);
 
   const horaInicioReservaAtual = useMemo(() => {
     const fallback = horaMinimaReserva ?? quadraReserva?.abre_as ?? "";
@@ -846,6 +860,18 @@ export function AgendarJogoDialog({
 
     return horaInicioReserva;
   }, [horaInicioReserva, horaMinimaReserva, quadraReserva?.abre_as]);
+
+  const duracoesReserva = getDuracoesValidasParaReserva({
+    quadra: quadraReserva,
+    data,
+    horaInicio: horaInicioReservaAtual,
+    fimLimite: fimLimiteReserva,
+    duracoesBase: duracoesBaseReserva,
+  });
+
+  const duracaoReservaAtual = duracoesReserva.includes(duracaoReserva)
+    ? duracaoReserva
+    : (duracoesReserva[0] ?? DURACOES_PADRAO[0]);
 
   const horaFimReserva = horaInicioReservaAtual
     ? addMinutesToTime(horaInicioReservaAtual, duracaoReservaAtual)
@@ -867,11 +893,17 @@ export function AgendarJogoDialog({
     if (!horaInicioReservaAtual) return "Informe o horário inicial.";
     if (tipoJogo === "SIMPLES" && !permiteSimplesAtual) return "Esta quadra não permite jogo simples.";
     if (tipoJogo === "DUPLA" && !permiteDuplaAtual) return "Esta quadra não permite jogo em dupla.";
+    if (duracoesReserva.length === 0) {
+      return "Não há duração disponível para este intervalo.";
+    }
 
     const inicioMinutos = timeToMinutes(horaInicioReservaAtual);
     const fimMinutos = timeToMinutes(horaFimReserva);
     const abreMinutos = timeToMinutes(quadraReserva.abre_as);
     const fechaMinutos = timeToMinutes(quadraReserva.fecha_as);
+    const fimLimiteMinutos = fimLimiteReserva
+      ? timeToMinutes(fimLimiteReserva)
+      : fechaMinutos;
 
     if (inicioMinutos % granularidadeReserva !== 0) {
       return `Escolha horários em intervalos de ${granularidadeReserva} minutos.`;
@@ -879,6 +911,10 @@ export function AgendarJogoDialog({
 
     if (inicioMinutos < abreMinutos || fimMinutos > fechaMinutos) {
       return `Reserva deve ficar entre ${quadraReserva.abre_as} e ${quadraReserva.fecha_as}.`;
+    }
+
+    if (fimMinutos > fimLimiteMinutos) {
+      return `Reserva deve terminar até ${fimLimiteReserva}.`;
     }
 
     if (minHoraHoje && inicioMinutos < timeToMinutes(minHoraHoje)) {
@@ -892,6 +928,8 @@ export function AgendarJogoDialog({
     return "";
   }, [
     entrandoEmJogo,
+    duracoesReserva.length,
+    fimLimiteReserva,
     granularidadeReserva,
     horaFimReserva,
     horaInicioReservaAtual,
@@ -950,7 +988,7 @@ export function AgendarJogoDialog({
       setJogadores([null, null, null]);
       setParticipantesAtuais(horario.participantes ?? []);
       setQuadraReservaId(horario.quadraId);
-      setHoraInicioReserva(horario.hora);
+      setHoraInicioReserva(horario.inicioPermitido ?? horario.hora);
       setDuracaoReserva(horario.duracaoMinutos ?? DURACOES_PADRAO[0]);
       setTipoJogo(horario.permiteSimples ? "SIMPLES" : "DUPLA");
       setUsuarios([]);
@@ -1003,20 +1041,6 @@ export function AgendarJogoDialog({
 
   function removerJogador(index: number) {
     setJogadores((atual) => atual.map((item, i) => (i === index ? null : item)));
-  }
-
-  function alterarQuadra(quadraId: string) {
-    const proximaQuadra = quadras.find((quadra) => quadra.id === quadraId);
-
-    setQuadraReservaId(quadraId);
-
-    if (tipoJogo === "SIMPLES" && proximaQuadra?.permite_simples === false && proximaQuadra?.permite_dupla !== false) {
-      setTipoJogo("DUPLA");
-    } else if (tipoJogo === "DUPLA" && proximaQuadra?.permite_dupla === false && proximaQuadra?.permite_simples !== false) {
-      setTipoJogo("SIMPLES");
-    }
-
-    setErro("");
   }
 
   async function adicionarJogadorAoJogo(usuario: Usuario) {
@@ -1165,9 +1189,7 @@ export function AgendarJogoDialog({
 
         {!entrandoEmJogo && horario ? (
           <ReservationForm
-            quadras={quadras}
             quadraReserva={quadraReserva}
-            quadraReservaId={quadraReservaId}
             horaInicioReservaAtual={horaInicioReservaAtual}
             horaMinimaReserva={horaMinimaReserva}
             horaFimReserva={horaFimReserva}
@@ -1179,7 +1201,6 @@ export function AgendarJogoDialog({
             permiteDuplaAtual={permiteDuplaAtual}
             loading={loading}
             erroValidacaoReserva={erroValidacaoReserva}
-            onQuadraChange={alterarQuadra}
             onHoraChange={(hora) => {
               setHoraInicioReserva(hora);
               setErro("");
