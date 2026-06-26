@@ -117,20 +117,12 @@ function validarGranularidadeAgendamento(inicio: Date) {
   }
 }
 
-function addMinutes(date: Date, minutes: number) {
-  return new Date(date.getTime() + minutes * MS_PER_MINUTE);
-}
-
 async function validarConflitoAgenda(
   db: DbClient,
   quadraId: string,
   inicio: Date,
   fim: Date
 ) {
-  const intervalo = env.INTERVALO_ENTRE_RESERVAS_MINUTOS;
-  const inicioComIntervalo = addMinutes(inicio, -intervalo);
-  const fimComIntervalo = addMinutes(fim, intervalo);
-
   const jogoConflitante = await db.jogo.findFirst({
     where: {
       quadra_id: quadraId,
@@ -138,10 +130,10 @@ async function validarConflitoAgenda(
         in: ["ABERTO", "COMPLETO"],
       },
       inicio_em: {
-        lt: fimComIntervalo,
+        lt: fim,
       },
       fim_em: {
-        gt: inicioComIntervalo,
+        gt: inicio,
       },
     },
   });
@@ -155,10 +147,10 @@ async function validarConflitoAgenda(
       quadra_id: quadraId,
       status: "CONFIRMADA",
       inicio_em: {
-        lt: fimComIntervalo,
+        lt: fim,
       },
       fim_em: {
-        gt: inicioComIntervalo,
+        gt: inicio,
       },
     },
   });
@@ -171,10 +163,10 @@ async function validarConflitoAgenda(
     where: {
       quadra_id: quadraId,
       inicio_em: {
-        lt: fimComIntervalo,
+        lt: fim,
       },
       fim_em: {
-        gt: inicioComIntervalo,
+        gt: inicio,
       },
     },
   });

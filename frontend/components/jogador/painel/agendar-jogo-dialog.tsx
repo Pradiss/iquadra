@@ -130,7 +130,6 @@ type Props = {
 
 const DURACOES_PADRAO: DuracaoReserva[] = [60, 90, 120];
 const GRANULARIDADE_PADRAO_MINUTOS = 5;
-const INTERVALO_PADRAO_MINUTOS = 10;
 
 function timeToMinutes(time: string) {
   const [hours = 0, minutes = 0] = time.split(":").map(Number);
@@ -182,7 +181,6 @@ function validarConflitoLocal(
   eventos: EventoOcupado[],
   horaInicio: string,
   horaFim: string,
-  intervaloMinutos: number,
 ) {
   const inicioMinutos = timeToMinutes(horaInicio);
   const fimMinutos = timeToMinutes(horaFim);
@@ -191,10 +189,7 @@ function validarConflitoLocal(
     const eventoInicio = timeToMinutes(evento.inicio);
     const eventoFim = timeToMinutes(evento.fim);
 
-    return (
-      eventoInicio < fimMinutos + intervaloMinutos &&
-      eventoFim > inicioMinutos - intervaloMinutos
-    );
+    return eventoInicio < fimMinutos && eventoFim > inicioMinutos;
   });
 }
 
@@ -834,7 +829,6 @@ export function AgendarJogoDialog({
     : (duracoesReserva[0] ?? DURACOES_PADRAO[0]);
 
   const granularidadeReserva = quadraReserva?.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
-  const intervaloReserva = quadraReserva?.intervalo_entre_reservas_minutos ?? INTERVALO_PADRAO_MINUTOS;
   const minHoraHoje = getMinHoraParaData(data, granularidadeReserva);
 
   const horaMinimaReserva =
@@ -891,8 +885,8 @@ export function AgendarJogoDialog({
       return "Escolha um horário futuro para hoje.";
     }
 
-    if (validarConflitoLocal(quadraReserva.eventos_ocupados ?? [], horaInicioReservaAtual, horaFimReserva, intervaloReserva)) {
-      return `Este horário conflita com outra reserva ou com o intervalo de ${intervaloReserva} minutos.`;
+    if (validarConflitoLocal(quadraReserva.eventos_ocupados ?? [], horaInicioReservaAtual, horaFimReserva)) {
+      return "Este horário conflita com outra reserva.";
     }
 
     return "";
@@ -901,7 +895,6 @@ export function AgendarJogoDialog({
     granularidadeReserva,
     horaFimReserva,
     horaInicioReservaAtual,
-    intervaloReserva,
     minHoraHoje,
     permiteDuplaAtual,
     permiteSimplesAtual,

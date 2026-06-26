@@ -447,7 +447,7 @@ function montarDisponibilidadeQuadra({
       data,
       aberta: false,
       motivo: "Quadra sem horário configurado para esta data",
-      intervalo_entre_reservas_minutos: env.INTERVALO_ENTRE_RESERVAS_MINUTOS,
+      intervalo_entre_reservas_minutos: 0,
       granularidade_agendamento_minutos:
         env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
       duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
@@ -462,7 +462,7 @@ function montarDisponibilidadeQuadra({
       data,
       aberta: false,
       motivo: horarioEspecial.motivo || "Quadra fechada nesta data",
-      intervalo_entre_reservas_minutos: env.INTERVALO_ENTRE_RESERVAS_MINUTOS,
+      intervalo_entre_reservas_minutos: 0,
       granularidade_agendamento_minutos:
         env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
       duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
@@ -635,7 +635,7 @@ function montarDisponibilidadeQuadra({
     aberta: true,
     abre_as: abreAs,
     fecha_as: fechaAs,
-    intervalo_entre_reservas_minutos: env.INTERVALO_ENTRE_RESERVAS_MINUTOS,
+    intervalo_entre_reservas_minutos: 0,
     granularidade_agendamento_minutos: env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
     duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
     eventos_ocupados: eventosOcupados,

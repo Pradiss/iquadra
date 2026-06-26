@@ -32,7 +32,7 @@ const envSchema = z.object({
     .int()
     .min(0)
     .max(120)
-    .default(10),
+    .default(0),
   GRANULARIDADE_AGENDAMENTO_MINUTOS: z.coerce
     .number()
     .int()

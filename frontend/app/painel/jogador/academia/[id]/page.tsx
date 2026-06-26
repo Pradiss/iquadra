@@ -178,7 +178,7 @@ const AGENDA_CACHE_MAX_AGE_MS = 60 * 1000;
 const MAX_DIAS_AGENDAMENTO = 1;
 const DURACOES_PADRAO: DuracaoReserva[] = [60, 90, 120];
 const GRANULARIDADE_PADRAO_MINUTOS = 5;
-const INTERVALO_PADRAO_MINUTOS = 10;
+const INTERVALO_PADRAO_MINUTOS = 0;
 
 function getAgendaCacheKey(academiaId: string, data: string) {
   return `${AGENDA_CACHE_PREFIX}:${academiaId}:${data}`;
@@ -250,26 +250,6 @@ function normalizarDuracoes(duracoes?: number[] | null): DuracaoReserva[] {
   return normalizadas.length > 0 ? normalizadas : DURACOES_PADRAO;
 }
 
-function validarConflitoLocal(
-  eventos: EventoOcupado[],
-  horaInicio: string,
-  horaFim: string,
-  intervaloMinutos: number,
-) {
-  const inicioMinutos = timeToMinutes(horaInicio);
-  const fimMinutos = timeToMinutes(horaFim);
-
-  return eventos.some((evento) => {
-    const eventoInicio = timeToMinutes(evento.inicio);
-    const eventoFim = timeToMinutes(evento.fim);
-
-    return (
-      eventoInicio < fimMinutos + intervaloMinutos &&
-      eventoFim > inicioMinutos - intervaloMinutos
-    );
-  });
-}
-
 function validarSobreposicaoLocal(
   eventos: EventoOcupado[],
   horaInicio: string,
@@ -317,8 +297,6 @@ function getDuracoesValidasParaInicio(
 
   const granularidade =
     quadra.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
-  const intervalo =
-    quadra.intervalo_entre_reservas_minutos ?? INTERVALO_PADRAO_MINUTOS;
   const inicioMinutos = timeToMinutes(horaInicio);
   const abreMinutos = timeToMinutes(quadra.abre_as);
   const fechaMinutos = timeToMinutes(quadra.fecha_as);
@@ -334,11 +312,10 @@ function getDuracoesValidasParaInicio(
 
       if (fimMinutos > fechaMinutos) return false;
 
-      return !validarConflitoLocal(
+      return !validarSobreposicaoLocal(
         quadra.eventos_ocupados ?? [],
         horaInicio,
         minutesToTime(fimMinutos),
-        intervalo,
       );
     },
   );
