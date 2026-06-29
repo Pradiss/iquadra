@@ -68,6 +68,7 @@ export async function buscarDisponibilidadePublicaPorSlug(
       slug: academia.slug,
       cidade: academia.cidade,
       estado: academia.estado,
+      duracoes_reserva_minutos: disponibilidade.academia.duracoes_reserva_minutos,
     },
     data,
     quadras: disponibilidade.quadras.map((item) => ({
@@ -86,6 +87,7 @@ export async function buscarDisponibilidadePublicaPorSlug(
       motivo: item.motivo,
       abre_as: item.abre_as,
       fecha_as: item.fecha_as,
+      duracoes_reserva_minutos: item.duracoes_reserva_minutos,
       duracao_slot_minutos: item.duracao_slot_minutos,
       slots: item.slots.map((slot) => ({
         inicio: slot.inicio,

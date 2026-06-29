@@ -10,8 +10,12 @@ import { invalidateQuadraCache } from "../lib/cache";
 import {
   AdicionarParticipanteJogoData,
   CreateJogoData,
-  DURACOES_RESERVA_MINUTOS,
 } from "../schemas/jogo.schema";
+import {
+  DURACOES_RESERVA_MINUTOS,
+  normalizarDuracoesReserva,
+  type DuracaoReservaMinutos,
+} from "../schemas/reserva.schema";
 import {
   addDaysToDateOnly,
   buildDateTime,
@@ -97,6 +101,31 @@ function validarDuracaoReserva(inicio: Date, fim: Date) {
     )
   ) {
     throw badRequest("Duração da reserva deve ser 60, 90 ou 120 minutos.");
+  }
+}
+
+function formatarDuracoes(duracoes: readonly number[]) {
+  if (duracoes.length <= 1) return `${duracoes[0]} minutos`;
+
+  const primeiras = duracoes.slice(0, -1).join(", ");
+  const ultima = duracoes[duracoes.length - 1];
+
+  return `${primeiras} ou ${ultima} minutos`;
+}
+
+function validarDuracaoReservaAcademia(
+  inicio: Date,
+  fim: Date,
+  duracoesPermitidas: readonly DuracaoReservaMinutos[]
+) {
+  const duracao = getDuracaoMinutos(inicio, fim);
+
+  if (!duracoesPermitidas.includes(duracao as DuracaoReservaMinutos)) {
+    throw badRequest(
+      `DuraÃ§Ã£o nesta academia deve ser ${formatarDuracoes(
+        duracoesPermitidas
+      )}.`
+    );
   }
 }
 
@@ -331,6 +360,13 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
       where: {
         id: data.quadra_id,
       },
+      include: {
+        academia: {
+          select: {
+            duracoes_reserva_minutos: true,
+          },
+        },
+      },
     });
 
     if (!quadra) {
@@ -344,6 +380,12 @@ export async function createJogo(usuarioId: string, data: CreateJogoData) {
     if (quadra.academia_id !== data.academia_id) {
       throw new Error("Quadra não pertence à academia informada");
     }
+
+    validarDuracaoReservaAcademia(
+      inicio,
+      fim,
+      normalizarDuracoesReserva(quadra.academia.duracoes_reserva_minutos)
+    );
 
     await validarHorarioFuncionamento(tx, data.quadra_id, inicio, fim);
     await validarConflitoAgenda(tx, data.quadra_id, inicio, fim);

@@ -215,6 +215,7 @@ model Academia {
 
   limite_jogos_padrao  Int                @default(3)
   periodo_limite_jogos PeriodoLimiteJogos @default(SEMANA)
+  duracoes_reserva_minutos Int[]              @default([60, 90, 120])
 
   usuarios           AcademiaUsuario[]
   quadras            Quadra[]

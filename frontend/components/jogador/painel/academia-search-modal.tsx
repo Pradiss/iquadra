@@ -4,13 +4,18 @@ import { Check, MapPin, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUsuario } from "@/lib/auth-storage";
+import { getSafeImageUrl } from "@/lib/safe-image";
 
 export type AcademiaBusca = {
   id: string;
   nome: string;
   cidade?: string | null;
   estado?: string | null;
+  logo_url?: string | null;
+  logo?: string | null;
+  imagem?: string | null;
 };
 
 type Props = {
@@ -265,6 +270,10 @@ function AcademiaItem({
   selected: boolean;
   onClick: () => void;
 }) {
+  const logoUrl = getSafeImageUrl(
+    academia.logo_url || academia.logo || academia.imagem || null
+  );
+
   return (
     <button
       type="button"
@@ -274,9 +283,12 @@ function AcademiaItem({
         selected ? "bg-green-50" : "hover:bg-zinc-50",
       ].join(" ")}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-black text-green-800">
-        {academia.nome.charAt(0).toUpperCase()}
-      </span>
+      <Avatar className="h-10 w-10 shrink-0 bg-green-100">
+        {logoUrl ? <AvatarImage src={logoUrl} alt={academia.nome} /> : null}
+        <AvatarFallback className="bg-green-100 text-sm font-black text-green-800">
+          {academia.nome.charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-zinc-950">

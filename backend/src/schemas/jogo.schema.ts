@@ -6,6 +6,10 @@ import {
   timeSchema,
   uuidSchema,
 } from "./common";
+import {
+  DURACOES_RESERVA_MINUTOS,
+  duracaoReservaSchema,
+} from "./reserva.schema";
 
 const createJogoBaseSchema = z
   .object({
@@ -15,14 +19,6 @@ const createJogoBaseSchema = z
     observacoes: optionalMediumTextSchema,
   })
   .strict();
-
-export const DURACOES_RESERVA_MINUTOS = [60, 90, 120] as const;
-
-const duracaoReservaSchema = z.union([
-  z.literal(60),
-  z.literal(90),
-  z.literal(120),
-]);
 
 export const createJogoSchema = z.union([
   createJogoBaseSchema

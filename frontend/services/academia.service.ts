@@ -6,6 +6,8 @@ import {
 
 export const ACADEMIA_LOGO_ACCEPT = AVATAR_ACCEPT;
 
+export type DuracaoReserva = 60 | 90 | 120;
+
 type ApiData<T> = {
   data?: T;
 };
@@ -23,6 +25,7 @@ export type AcademiaDetalhes = {
   cep?: string | null;
   status?: string | null;
   logo_url?: string | null;
+  duracoes_reserva_minutos?: DuracaoReserva[] | null;
 };
 
 export type AtualizarAcademiaPayload = Partial<{
@@ -35,6 +38,7 @@ export type AtualizarAcademiaPayload = Partial<{
   cidade: string | null;
   estado: string | null;
   cep: string | null;
+  duracoes_reserva_minutos: DuracaoReserva[];
 }>;
 
 function getData<T>(response: { data: unknown }): T {

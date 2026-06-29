@@ -178,6 +178,11 @@ type AgendaCacheSnapshot = {
   savedAt: number;
 };
 
+type AgoraAgenda = {
+  data: string;
+  hora: string;
+};
+
 const AGENDA_CACHE_PREFIX = "playfy_agenda_snapshot_v3";
 const AGENDA_CACHE_MAX_AGE_MS = 60 * 1000;
 const MAX_DIAS_AGENDAMENTO = 1;
@@ -187,6 +192,25 @@ const INTERVALO_PADRAO_MINUTOS = 0;
 
 function getAgendaCacheKey(academiaId: string, data: string) {
   return `${AGENDA_CACHE_PREFIX}:${academiaId}:${data}`;
+}
+
+function getAgoraAgenda(): AgoraAgenda {
+  const agora = new Date();
+
+  return {
+    data: format(agora, "yyyy-MM-dd"),
+    hora: format(agora, "HH:mm"),
+  };
+}
+
+function horarioAindaNaoPassou(
+  data: string,
+  hora: string,
+  agora: AgoraAgenda,
+) {
+  if (data !== agora.data) return true;
+
+  return hora >= agora.hora;
 }
 
 function safeStorageGet(key: string) {
@@ -419,7 +443,6 @@ function montarHorarioSlot(
     quadra,
     data,
     inicioPermitido,
-    slot.fim,
   );
   const duracaoMinutos = getDuracaoPreferida(
     duracoesValidas.length > 0
@@ -459,7 +482,7 @@ function montarHorarioSlot(
     hora: slot.inicio,
     horaFim: slot.fim,
     inicioPermitido: slotEstaLivre ? inicioPermitido : undefined,
-    fimPermitido: slotEstaLivre ? slot.fim : undefined,
+    fimPermitido: slotEstaLivre ? (quadra.fecha_as ?? slot.fim) : undefined,
     quadraId: quadra.id,
     quadraNome: quadra.nome,
     disponivel: slotEstaLivre,
@@ -698,6 +721,7 @@ export default function AcademiaAgendaPage() {
 
   const [filtrosQuadra, setFiltrosQuadra] =
     useState<AgendaFiltros>(agendaFiltroInicial);
+  const [agoraAgenda, setAgoraAgenda] = useState(getAgoraAgenda);
 
   const [dataSelecionada, setDataSelecionada] = useState(
     format(new Date(), "yyyy-MM-dd"),
@@ -752,8 +776,30 @@ export default function AcademiaAgendaPage() {
     if (quadrasFiltradas.length === 0) return [];
 
     const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
-    return horarios.filter((horario) => idsPermitidos.has(horario.quadraId));
-  }, [horarios, quadrasFiltradas]);
+    return horarios.filter(
+      (horario) =>
+        idsPermitidos.has(horario.quadraId) &&
+        horarioAindaNaoPassou(dataSelecionada, horario.hora, agoraAgenda),
+    );
+  }, [agoraAgenda, dataSelecionada, horarios, quadrasFiltradas]);
+
+  useEffect(() => {
+    const atualizarAgora = () => {
+      setAgoraAgenda((atual) => {
+        const novo = getAgoraAgenda();
+
+        return atual.data === novo.data && atual.hora === novo.hora
+          ? atual
+          : novo;
+      });
+    };
+
+    atualizarAgora();
+
+    const intervalId = window.setInterval(atualizarAgora, 30 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     let ativo = true;

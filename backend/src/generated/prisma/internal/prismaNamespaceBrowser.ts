@@ -146,6 +146,7 @@ export const AcademiaScalarFieldEnum = {
   status: 'status',
   limite_jogos_padrao: 'limite_jogos_padrao',
   periodo_limite_jogos: 'periodo_limite_jogos',
+  duracoes_reserva_minutos: 'duracoes_reserva_minutos',
   criado_em: 'criado_em',
   atualizado_em: 'atualizado_em'
 } as const

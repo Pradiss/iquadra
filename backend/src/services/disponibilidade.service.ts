@@ -1,7 +1,8 @@
 import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { CACHE_TTL, getOrSetCache } from "../lib/cache";
-import { DURACOES_RESERVA_MINUTOS } from "../schemas/jogo.schema";
+import { normalizarDuracoesReserva } from "../schemas/reserva.schema";
+import { withSignedAvatar } from "./avatar-url.service";
 import {
   buildDateTime,
   formatInAppTimeZone,
@@ -30,6 +31,7 @@ type QuadraDisponibilidade = {
   ativa: boolean;
   academia?: {
     nome: string;
+    duracoes_reserva_minutos: number[];
   } | null;
 };
 
@@ -67,6 +69,8 @@ type JogoAgenda = PeriodoAgenda & {
       id: string;
       nome: string;
       foto_perfil: string | null;
+      fotoUrl: string | null;
+      fotoPath: string | null;
       perfil_cliente: {
         categoria: string;
       } | null;
@@ -90,6 +94,17 @@ type BloqueioAgenda = PeriodoAgenda & {
   motivo: string;
   tipo_bloqueio: string;
 };
+
+function getDisponibilidadeCacheKey(
+  scope: string,
+  data: string,
+  includeParticipantDetails: boolean
+) {
+  const agora = formatInAppTimeZone(new Date());
+  const minutoAtual = data === agora.data ? `:agora:${agora.hora}` : "";
+
+  return `${scope}:data:${data}${minutoAtual}:details:${includeParticipantDetails}`;
+}
 
 function montarResumoQuadra(quadra: QuadraDisponibilidade) {
   return {
@@ -154,13 +169,44 @@ function montarPeriodoOcupado(
   };
 }
 
+async function montarParticipantesJogo(
+  participantes: JogoAgenda["participantes"],
+  includeParticipantDetails: boolean
+) {
+  if (!includeParticipantDetails) {
+    return participantes.map((p) => ({
+      id: p.usuario_id,
+      nome: "Jogador",
+      foto_perfil: null,
+      categoria: null,
+    }));
+  }
+
+  return Promise.all(
+    participantes.map(async (p) => {
+      const usuario = p.usuario ? await withSignedAvatar(p.usuario) : null;
+
+      return {
+        id: usuario?.id ?? p.usuario_id,
+        nome: usuario?.nome ?? "Jogador",
+        foto_perfil: usuario?.foto_perfil ?? usuario?.fotoUrl ?? null,
+        categoria: usuario?.perfil_cliente?.categoria ?? "Sem ranking",
+      };
+    })
+  );
+}
+
 export async function getDisponibilidadeQuadra(
   quadraId: string,
   data: string,
   options: DisponibilidadeOptions = {}
 ) {
   const includeParticipantDetails = Boolean(options.includeParticipantDetails);
-  const cacheKey = `disponibilidade:quadra:${quadraId}:data:${data}:details:${includeParticipantDetails}`;
+  const cacheKey = getDisponibilidadeCacheKey(
+    `disponibilidade:quadra:${quadraId}`,
+    data,
+    includeParticipantDetails
+  );
 
   const loader = async () => {
     const quadra = await prisma.quadra.findUnique({
@@ -169,6 +215,7 @@ export async function getDisponibilidadeQuadra(
         academia: {
           select: {
             nome: true,
+            duracoes_reserva_minutos: true,
           },
         },
       },
@@ -204,7 +251,11 @@ export async function getDisponibilidadeAcademia(
   options: DisponibilidadeOptions = {}
 ) {
   const includeParticipantDetails = Boolean(options.includeParticipantDetails);
-  const cacheKey = `disponibilidade:academia:${academiaId}:data:${data}:details:${includeParticipantDetails}`;
+  const cacheKey = getDisponibilidadeCacheKey(
+    `disponibilidade:academia:${academiaId}`,
+    data,
+    includeParticipantDetails
+  );
 
   const loader = async () => {
     const [academia, quadras] = await Promise.all([
@@ -219,6 +270,7 @@ export async function getDisponibilidadeAcademia(
           cidade: true,
           estado: true,
           status: true,
+          duracoes_reserva_minutos: true,
         },
       }),
       prisma.quadra.findMany({
@@ -230,6 +282,7 @@ export async function getDisponibilidadeAcademia(
           academia: {
             select: {
               nome: true,
+              duracoes_reserva_minutos: true,
             },
           },
         },
@@ -347,6 +400,8 @@ async function buildDisponibilidades(
                     id: true,
                     nome: true,
                     foto_perfil: true,
+                    fotoUrl: true,
+                    fotoPath: true,
                     perfil_cliente: {
                       select: {
                         categoria: true,
@@ -408,7 +463,7 @@ async function buildDisponibilidades(
   const jogosByQuadra = groupByQuadraId(jogos);
   const aulasByQuadra = groupByQuadraId(aulas);
 
-  return quadras.map((quadra) =>
+  return Promise.all(quadras.map((quadra) =>
     montarDisponibilidadeQuadra({
       quadra,
       data,
@@ -419,10 +474,10 @@ async function buildDisponibilidades(
       jogos: jogosByQuadra.get(quadra.id) ?? [],
       aulas: aulasByQuadra.get(quadra.id) ?? [],
     })
-  );
+  ));
 }
 
-function montarDisponibilidadeQuadra({
+async function montarDisponibilidadeQuadra({
   quadra,
   data,
   includeParticipantDetails,
@@ -441,6 +496,10 @@ function montarDisponibilidadeQuadra({
   jogos: JogoAgenda[];
   aulas: AulaAgenda[];
 }) {
+  const duracoesReserva = normalizarDuracoesReserva(
+    quadra.academia?.duracoes_reserva_minutos
+  );
+
   if (!horarioPadrao) {
     return {
       quadra: montarResumoQuadra(quadra),
@@ -450,7 +509,7 @@ function montarDisponibilidadeQuadra({
       intervalo_entre_reservas_minutos: 0,
       granularidade_agendamento_minutos:
         env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
-      duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
+      duracoes_reserva_minutos: duracoesReserva,
       eventos_ocupados: [],
       slots: [],
     };
@@ -465,7 +524,7 @@ function montarDisponibilidadeQuadra({
       intervalo_entre_reservas_minutos: 0,
       granularidade_agendamento_minutos:
         env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
-      duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
+      duracoes_reserva_minutos: duracoesReserva,
       eventos_ocupados: [],
       slots: [],
     };
@@ -475,20 +534,14 @@ function montarDisponibilidadeQuadra({
   const fechaAs = horarioEspecial?.fecha_as || horarioPadrao.fecha_as;
   const duracao = horarioPadrao.duracao_slot_minutos;
   const slots = [];
-  const eventosOcupados = [
-    ...jogos.map((jogo) => {
-      const participantes = jogo.participantes.map((p) => ({
-        id: p.usuario?.id ?? p.usuario_id,
-        nome: includeParticipantDetails
-          ? (p.usuario?.nome ?? "Jogador")
-          : "Jogador",
-        foto_perfil: includeParticipantDetails
-          ? (p.usuario?.foto_perfil ?? null)
-          : null,
-        categoria: includeParticipantDetails
-          ? (p.usuario?.perfil_cliente?.categoria ?? "Sem ranking")
-          : null,
-      }));
+  const agora = formatInAppTimeZone(new Date());
+  const ocultarSlotsPassados = data === agora.data;
+  const eventosJogos = await Promise.all(
+    jogos.map(async (jogo) => {
+      const participantes = await montarParticipantesJogo(
+        jogo.participantes,
+        includeParticipantDetails
+      );
       const jogadoresConfirmados = participantes.length;
       const vagasDisponiveis = Math.max(
         jogo.maximo_participantes - jogadoresConfirmados,
@@ -508,10 +561,13 @@ function montarDisponibilidadeQuadra({
           jogadores_confirmados: jogadoresConfirmados,
           vagas_disponiveis: vagasDisponiveis,
           observacoes: includeParticipantDetails ? jogo.observacoes : null,
-          participantes: includeParticipantDetails ? participantes : [],
+          participantes,
         },
       };
-    }),
+    })
+  );
+  const eventosOcupados = [
+    ...eventosJogos,
     ...aulas.map((aula) => ({
       ...montarPeriodoOcupado("AULA", aula),
       aula: {
@@ -535,6 +591,10 @@ function montarDisponibilidadeQuadra({
   });
 
   for (const slot of generateTimeSlots(abreAs, fechaAs, duracao)) {
+    if (ocultarSlotsPassados && slot.inicio < agora.hora) {
+      continue;
+    }
+
     const slotInicio = buildDateTime(data, slot.inicio);
     const slotFim = buildDateTime(data, slot.fim);
 
@@ -552,18 +612,10 @@ function montarDisponibilidadeQuadra({
 
     const disponivel = !conflitoBloqueio && !jogoConflitante && !aulaConflitante;
     const participantes = jogoConflitante
-      ? jogoConflitante.participantes.map((p) => ({
-          id: p.usuario?.id ?? p.usuario_id,
-          nome: includeParticipantDetails
-            ? (p.usuario?.nome ?? "Jogador")
-            : "Jogador",
-          foto_perfil: includeParticipantDetails
-            ? (p.usuario?.foto_perfil ?? null)
-            : null,
-          categoria: includeParticipantDetails
-            ? (p.usuario?.perfil_cliente?.categoria ?? "Sem ranking")
-            : null,
-        }))
+      ? await montarParticipantesJogo(
+          jogoConflitante.participantes,
+          includeParticipantDetails
+        )
       : [];
     const maximoParticipantes =
       jogoConflitante?.maximo_participantes ?? quadra.capacidade_maxima;
@@ -604,7 +656,7 @@ function montarDisponibilidadeQuadra({
             observacoes: includeParticipantDetails
               ? jogoConflitante.observacoes
               : null,
-            participantes: includeParticipantDetails ? participantes : [],
+            participantes,
           }
         : null,
       bloqueio: conflitoBloqueio
@@ -637,7 +689,7 @@ function montarDisponibilidadeQuadra({
     fecha_as: fechaAs,
     intervalo_entre_reservas_minutos: 0,
     granularidade_agendamento_minutos: env.GRANULARIDADE_AGENDAMENTO_MINUTOS,
-    duracoes_reserva_minutos: DURACOES_RESERVA_MINUTOS,
+    duracoes_reserva_minutos: duracoesReserva,
     eventos_ocupados: eventosOcupados,
     duracao_slot_minutos: duracao,
     slots,

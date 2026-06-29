@@ -10,11 +10,15 @@ type Participante = {
   id?: string;
   nome?: string;
   foto_perfil?: string | null;
+  fotoUrl?: string | null;
+  foto_url?: string | null;
   categoria?: string | null;
   usuario?: {
     id?: string;
     nome?: string;
     foto_perfil?: string | null;
+    fotoUrl?: string | null;
+    foto_url?: string | null;
     perfil_cliente?: {
       categoria?: string | null;
     } | null;
@@ -58,7 +62,13 @@ function getNomeParticipante(jogador?: Participante, fallback = "Jogador") {
 
 function getFotoParticipante(jogador?: Participante) {
   return getSafeImageUrl(
-    jogador?.usuario?.foto_perfil || jogador?.foto_perfil || null,
+    jogador?.usuario?.foto_perfil ||
+      jogador?.usuario?.fotoUrl ||
+      jogador?.usuario?.foto_url ||
+      jogador?.foto_perfil ||
+      jogador?.fotoUrl ||
+      jogador?.foto_url ||
+      null,
   );
 }
 

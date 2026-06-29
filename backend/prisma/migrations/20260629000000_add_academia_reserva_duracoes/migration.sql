@@ -1,0 +1,2 @@
+ALTER TABLE "academias"
+  ADD COLUMN IF NOT EXISTS "duracoes_reserva_minutos" INTEGER[] NOT NULL DEFAULT ARRAY[60, 90, 120];

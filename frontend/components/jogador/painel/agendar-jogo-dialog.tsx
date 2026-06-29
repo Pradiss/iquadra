@@ -30,7 +30,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type UsuarioAcademia = {
   academia_id?: string;
@@ -45,6 +44,8 @@ type Usuario = {
   name?: string;
   email?: string;
   foto_perfil?: string | null;
+  fotoUrl?: string | null;
+  foto_url?: string | null;
   perfil_cliente?: { categoria?: string | null } | null;
   academias?: UsuarioAcademia[];
 };
@@ -54,12 +55,16 @@ type Participante = {
   usuario_id?: string;
   nome: string;
   foto_perfil?: string | null;
+  fotoUrl?: string | null;
+  foto_url?: string | null;
   categoria?: string | null;
   status?: string;
   usuario?: {
     id?: string;
     nome?: string;
     foto_perfil?: string | null;
+    fotoUrl?: string | null;
+    foto_url?: string | null;
     perfil_cliente?: { categoria?: string | null } | null;
   };
 };
@@ -133,7 +138,9 @@ function timeToMinutes(time: string) {
 }
 
 function minutesToTime(minutes: number) {
-  const hours = Math.floor(minutes / 60).toString().padStart(2, "0");
+  const hours = Math.floor(minutes / 60)
+    .toString()
+    .padStart(2, "0");
   const remainingMinutes = (minutes % 60).toString().padStart(2, "0");
   return `${hours}:${remainingMinutes}`;
 }
@@ -225,12 +232,32 @@ function getDuracoesValidasParaReserva({
 
     if (inicioMinutos + duracao > fechaMinutos) return false;
 
-    return !validarConflitoLocal(quadra.eventos_ocupados ?? [], horaInicio, fim);
+    return !validarConflitoLocal(
+      quadra.eventos_ocupados ?? [],
+      horaInicio,
+      fim,
+    );
   });
 }
 
 function nomeUsuario(usuario: Usuario) {
   return usuario.nome || usuario.name || usuario.email || "Jogador";
+}
+
+function fotoUsuario(usuario?: Usuario | null) {
+  return usuario?.foto_perfil || usuario?.fotoUrl || usuario?.foto_url || null;
+}
+
+function fotoParticipante(participante?: Participante) {
+  return (
+    participante?.usuario?.foto_perfil ||
+    participante?.usuario?.fotoUrl ||
+    participante?.usuario?.foto_url ||
+    participante?.foto_perfil ||
+    participante?.fotoUrl ||
+    participante?.foto_url ||
+    null
+  );
 }
 
 function normalizarUsuarios(response: unknown): Usuario[] {
@@ -268,7 +295,7 @@ function normalizarParticipantesConfirmados(response: unknown): Participante[] {
         id,
         usuario_id: participante.usuario_id || usuario?.id || id,
         nome: usuario?.nome || participante.nome || "Jogador",
-        foto_perfil: usuario?.foto_perfil ?? participante.foto_perfil ?? null,
+        foto_perfil: fotoParticipante(participante),
         categoria:
           usuario?.perfil_cliente?.categoria ?? participante.categoria ?? null,
         status: participante.status,
@@ -295,7 +322,9 @@ function getErrorMessage(error: unknown) {
     message?: string;
   };
 
-  return maybeApiError.response?.data?.message || maybeApiError.message || fallback;
+  return (
+    maybeApiError.response?.data?.message || maybeApiError.message || fallback
+  );
 }
 
 function usuarioEhAdminDaAcademia(usuario: Usuario | null, academiaId: string) {
@@ -345,12 +374,21 @@ function PlayerRow({
   placeholder?: string;
   action?: React.ReactNode;
 }) {
-  const nome = participante?.nome || (usuario ? nomeUsuario(usuario) : placeholder) || "Jogador";
-  const foto = participante?.foto_perfil ?? usuario?.foto_perfil;
+  const nome =
+    participante?.nome ||
+    (usuario ? nomeUsuario(usuario) : placeholder) ||
+    "Jogador";
+  const foto = fotoParticipante(participante) ?? fotoUsuario(usuario);
 
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white p-2 text-sm font-semibold text-zinc-700">
-      <PlayerAvatar nome={nome} foto={foto} icon={!participante && !usuario ? <Plus className="h-4 w-4" /> : undefined} />
+      <PlayerAvatar
+        nome={nome}
+        foto={foto}
+        icon={
+          !participante && !usuario ? <Plus className="h-4 w-4" /> : undefined
+        }
+      />
       <div className="min-w-0 flex-1">
         <p className="truncate font-bold">{nome}</p>
         {participante?.categoria ? (
@@ -421,7 +459,10 @@ function UserSearchBox({
               onClick={() => onSelect(usuario)}
               className="mb-1 h-auto w-full justify-start gap-2 py-2"
             >
-              <PlayerAvatar nome={nomeUsuario(usuario)} foto={usuario.foto_perfil} />
+              <PlayerAvatar
+                nome={nomeUsuario(usuario)}
+                foto={fotoUsuario(usuario)}
+              />
               <span className="truncate">{nomeUsuario(usuario)}</span>
             </Button>
           ))
@@ -469,107 +510,40 @@ function InfoCard({
 }
 
 function ReservationForm({
-  quadraReserva,
-  horaInicioReservaAtual,
-  horaMinimaReserva,
-  horaFimReserva,
-  granularidadeReserva,
-  duracoesReserva,
-  duracaoReservaAtual,
   tipoJogo,
   permiteSimplesAtual,
   permiteDuplaAtual,
-  loading,
   erroValidacaoReserva,
-  onHoraChange,
-  onDuracaoChange,
   onTipoJogoChange,
 }: {
-  quadraReserva: QuadraReservaOpcao | null;
-  horaInicioReservaAtual: string;
-  horaMinimaReserva?: string;
-  horaFimReserva: string;
-  granularidadeReserva: number;
-  duracoesReserva: DuracaoReserva[];
-  duracaoReservaAtual: DuracaoReserva;
   tipoJogo: TipoJogo;
   permiteSimplesAtual: boolean;
   permiteDuplaAtual: boolean;
-  loading: boolean;
   erroValidacaoReserva: string;
-  onHoraChange: (hora: string) => void;
-  onDuracaoChange: (duracao: DuracaoReserva) => void;
   onTipoJogoChange: (tipo: TipoJogo) => void;
 }) {
   return (
-    <Card className="shadow-none">
-      <CardContent className="grid gap-4 ">
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <div className="grid gap-1.5">
-            <Label>Início</Label>
-            <Input
-              type="time"
-              value={horaInicioReservaAtual}
-              min={horaMinimaReserva}
-              max={quadraReserva?.fecha_as ?? undefined}
-              step={granularidadeReserva * 60}
-              disabled={loading || !quadraReserva?.aberta}
-              onChange={(event) => onHoraChange(event.target.value)}
-              className="h-11 rounded-xl font-semibold"
-            />
-          </div>
-
-          <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-700">
-            <span className="block text-xs text-zinc-500">Final</span>
-            {horaFimReserva || "--:--"}
-          </div>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label>Duração</Label>
-          <ToggleGroup
-            type="single"
-            value={String(duracaoReservaAtual)}
-            onValueChange={(value) => value && onDuracaoChange(Number(value) as DuracaoReserva)}
-            className="grid grid-cols-3 gap-2"
-          >
-            {duracoesReserva.map((duracao) => (
-              <ToggleGroupItem
-                key={duracao}
-                value={String(duracao)}
-                className="h-10 rounded-xl border text-sm font-black data-[state=on]:bg-green-800 data-[state=on]:text-white"
-              >
-                {duracao} min
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label>Tipo de jogo</Label>
-          <RadioGroup
-            value={tipoJogo}
-            onValueChange={(value) => onTipoJogoChange(value as TipoJogo)}
-            className="grid grid-cols-2 gap-2"
-          >
-            <Label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border has-[:checked]:border-green-800 has-[:checked]:bg-green-800 has-[:checked]:text-white">
-              <RadioGroupItem value="SIMPLES" disabled={!permiteSimplesAtual} />
-              Simples
-            </Label>
-            <Label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border has-[:checked]:border-green-800 has-[:checked]:bg-green-800 has-[:checked]:text-white">
-              <RadioGroupItem value="DUPLA" disabled={!permiteDuplaAtual} />
-              Dupla
-            </Label>
-          </RadioGroup>
-        </div>
-
-        {erroValidacaoReserva ? (
-          <Alert variant="destructive">
-            <AlertDescription>{erroValidacaoReserva}</AlertDescription>
-          </Alert>
-        ) : null}
-      </CardContent>
-    </Card>
+    <div className="">
+      <RadioGroup
+        value={tipoJogo}
+        onValueChange={(value) => onTipoJogoChange(value as TipoJogo)}
+        className="grid grid-cols-2 gap-2"
+      >
+        <Label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border has-[:checked]:border-green-800 has-[:checked]:bg-green-800 has-[:checked]:text-white">
+          <RadioGroupItem value="SIMPLES" disabled={!permiteSimplesAtual} />
+          Simples
+        </Label>
+        <Label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border has-[:checked]:border-green-800 has-[:checked]:bg-green-800 has-[:checked]:text-white">
+          <RadioGroupItem value="DUPLA" disabled={!permiteDuplaAtual} />
+          Dupla
+        </Label>
+      </RadioGroup>
+      {erroValidacaoReserva ? (
+        <Alert variant="destructive">
+          <AlertDescription>{erroValidacaoReserva}</AlertDescription>
+        </Alert>
+      ) : null}
+    </div>
   );
 }
 
@@ -610,7 +584,9 @@ function ExistingGameParticipants({
     <Card className="bg-zinc-50 shadow-none">
       <CardContent className="space-y-3 p-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-bold text-zinc-500">Jogadores confirmados</p>
+          <p className="text-xs font-bold text-zinc-500">
+            Jogadores confirmados
+          </p>
           <span className="text-xs font-black text-zinc-700">
             {jogadoresConfirmados}/{maximoParticipantes}
           </span>
@@ -623,7 +599,8 @@ function ExistingGameParticipants({
                 key={participante.id}
                 participante={participante}
                 action={
-                  podeGerenciarParticipantes && participante.id !== usuarioLogadoId ? (
+                  podeGerenciarParticipantes &&
+                  participante.id !== usuarioLogadoId ? (
                     <Button
                       type="button"
                       variant="ghost"
@@ -725,11 +702,19 @@ function InvitePlayers({
               placeholder={`Jogador ${index + 2}`}
               action={
                 jogador ? (
-                  <Button type="button" variant="ghost" onClick={() => onRemoverJogador(index)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => onRemoverJogador(index)}
+                  >
                     Remover
                   </Button>
                 ) : (
-                  <Button type="button" variant="ghost" onClick={() => onAbrirBusca(index)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => onAbrirBusca(index)}
+                  >
                     Adicionar
                   </Button>
                 )
@@ -767,7 +752,11 @@ function DialogActions({
         type="button"
         disabled={disabled}
         onClick={onConfirmar}
-        className={jaParticipa ? "h-11 w-full bg-red-600 text-white hover:bg-red-700" : "h-11 w-full"}
+        className={
+          jaParticipa
+            ? "h-11 w-full bg-red-600 text-white hover:bg-red-700"
+            : "h-11 w-full"
+        }
       >
         {textoBotaoPrincipal}
       </Button>
@@ -784,7 +773,12 @@ function DialogActions({
         </Button>
       ) : null}
 
-      <Button type="button" variant="outline" onClick={onFechar} className="h-11 w-full">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onFechar}
+        className="h-11 w-full"
+      >
         Fechar
       </Button>
     </div>
@@ -803,12 +797,20 @@ export function AgendarJogoDialog({
   const [tipoJogo, setTipoJogo] = useState<TipoJogo>("SIMPLES");
   const [quadraReservaId, setQuadraReservaId] = useState("");
   const [horaInicioReserva, setHoraInicioReserva] = useState("");
-  const [duracaoReserva, setDuracaoReserva] = useState<DuracaoReserva>(DURACOES_PADRAO[0]);
+  const [duracaoReserva, setDuracaoReserva] = useState<DuracaoReserva>(
+    DURACOES_PADRAO[0],
+  );
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [busca, setBusca] = useState("");
   const [buscandoIndex, setBuscandoIndex] = useState<BuscaIndex>(null);
-  const [jogadores, setJogadores] = useState<(Usuario | null)[]>([null, null, null]);
-  const [participantesAtuais, setParticipantesAtuais] = useState<Participante[]>([]);
+  const [jogadores, setJogadores] = useState<(Usuario | null)[]>([
+    null,
+    null,
+    null,
+  ]);
+  const [participantesAtuais, setParticipantesAtuais] = useState<
+    Participante[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -823,10 +825,15 @@ export function AgendarJogoDialog({
     );
   }, [horario?.quadraId, quadraReservaId, quadras]);
 
-  const granularidadeReserva = quadraReserva?.granularidade_agendamento_minutos ?? GRANULARIDADE_PADRAO_MINUTOS;
+  const granularidadeReserva =
+    quadraReserva?.granularidade_agendamento_minutos ??
+    GRANULARIDADE_PADRAO_MINUTOS;
   const minHoraHoje = getMinHoraParaData(data, granularidadeReserva);
   const fimLimiteReserva = !entrandoEmJogo
-    ? (horario?.fimPermitido ?? horario?.fim ?? quadraReserva?.fecha_as ?? undefined)
+    ? (horario?.fimPermitido ??
+      horario?.fim ??
+      quadraReserva?.fecha_as ??
+      undefined)
     : undefined;
   const duracoesBaseReserva = horario?.duracoesDisponiveis?.length
     ? normalizarDuracoes(horario.duracoesDisponiveis)
@@ -854,7 +861,10 @@ export function AgendarJogoDialog({
     const fallback = horaMinimaReserva ?? quadraReserva?.abre_as ?? "";
 
     if (!horaInicioReserva) return fallback;
-    if (horaMinimaReserva && timeToMinutes(horaInicioReserva) < timeToMinutes(horaMinimaReserva)) {
+    if (
+      horaMinimaReserva &&
+      timeToMinutes(horaInicioReserva) < timeToMinutes(horaMinimaReserva)
+    ) {
       return horaMinimaReserva;
     }
 
@@ -888,11 +898,15 @@ export function AgendarJogoDialog({
   const erroValidacaoReserva = useMemo(() => {
     if (entrandoEmJogo) return "";
     if (!quadraReserva) return "Selecione uma quadra.";
-    if (!quadraReserva.aberta) return quadraReserva.motivo || "Quadra fechada nesta data.";
-    if (!quadraReserva.abre_as || !quadraReserva.fecha_as) return "Quadra sem horário configurado para esta data.";
+    if (!quadraReserva.aberta)
+      return quadraReserva.motivo || "Quadra fechada nesta data.";
+    if (!quadraReserva.abre_as || !quadraReserva.fecha_as)
+      return "Quadra sem horário configurado para esta data.";
     if (!horaInicioReservaAtual) return "Informe o horário inicial.";
-    if (tipoJogo === "SIMPLES" && !permiteSimplesAtual) return "Esta quadra não permite jogo simples.";
-    if (tipoJogo === "DUPLA" && !permiteDuplaAtual) return "Esta quadra não permite jogo em dupla.";
+    if (tipoJogo === "SIMPLES" && !permiteSimplesAtual)
+      return "Esta quadra não permite jogo simples.";
+    if (tipoJogo === "DUPLA" && !permiteDuplaAtual)
+      return "Esta quadra não permite jogo em dupla.";
     if (duracoesReserva.length === 0) {
       return "Não há duração disponível para este intervalo.";
     }
@@ -921,7 +935,13 @@ export function AgendarJogoDialog({
       return "Escolha um horário futuro para hoje.";
     }
 
-    if (validarConflitoLocal(quadraReserva.eventos_ocupados ?? [], horaInicioReservaAtual, horaFimReserva)) {
+    if (
+      validarConflitoLocal(
+        quadraReserva.eventos_ocupados ?? [],
+        horaInicioReservaAtual,
+        horaFimReserva,
+      )
+    ) {
       return "Este horário conflita com outra reserva.";
     }
 
@@ -940,22 +960,30 @@ export function AgendarJogoDialog({
     tipoJogo,
   ]);
 
-  const maximoParticipantes = horario?.maximoParticipantes ?? (tipoJogo === "SIMPLES" ? 2 : 4);
+  const maximoParticipantes =
+    horario?.maximoParticipantes ?? (tipoJogo === "SIMPLES" ? 2 : 4);
   const participantes = useMemo(
-    () => (entrandoEmJogo ? participantesAtuais : (horario?.participantes ?? [])),
+    () =>
+      entrandoEmJogo ? participantesAtuais : (horario?.participantes ?? []),
     [entrandoEmJogo, horario?.participantes, participantesAtuais],
   );
   const jogadoresConfirmados = participantes.length;
   const vagasDisponiveis = entrandoEmJogo
     ? Math.max(maximoParticipantes - jogadoresConfirmados, 0)
-    : (horario?.vagasDisponiveis ?? Math.max(maximoParticipantes - jogadoresConfirmados, 0));
+    : (horario?.vagasDisponiveis ??
+      Math.max(maximoParticipantes - jogadoresConfirmados, 0));
   const temVaga = vagasDisponiveis > 0;
 
   const jaParticipa = Boolean(
-    usuarioLogado?.id && participantes.some((participante) => participante.id === usuarioLogado.id),
+    usuarioLogado?.id &&
+    participantes.some((participante) => participante.id === usuarioLogado.id),
   );
-  const usuarioCriador = Boolean(usuarioLogado?.id && horario?.criadorUsuarioId === usuarioLogado.id);
-  const podeCancelarJogoInteiro = entrandoEmJogo && (usuarioCriador || usuarioEhAdminDaAcademia(usuarioLogado, academiaId));
+  const usuarioCriador = Boolean(
+    usuarioLogado?.id && horario?.criadorUsuarioId === usuarioLogado.id,
+  );
+  const podeCancelarJogoInteiro =
+    entrandoEmJogo &&
+    (usuarioCriador || usuarioEhAdminDaAcademia(usuarioLogado, academiaId));
   const podeGerenciarParticipantes = podeCancelarJogoInteiro;
   const podeAdicionarParticipante = podeGerenciarParticipantes && temVaga;
 
@@ -969,10 +997,19 @@ export function AgendarJogoDialog({
       .filter((usuario) => {
         const nome = nomeUsuario(usuario).toLowerCase();
         const email = usuario.email?.toLowerCase() || "";
-        const jaSelecionado = jogadores.some((jogador) => jogador?.id === usuario.id);
-        const jaParticipaDoJogo = participantes.some((participante) => participante.id === usuario.id);
+        const jaSelecionado = jogadores.some(
+          (jogador) => jogador?.id === usuario.id,
+        );
+        const jaParticipaDoJogo = participantes.some(
+          (participante) => participante.id === usuario.id,
+        );
 
-        if (usuario.id === usuarioLogado?.id || jaSelecionado || jaParticipaDoJogo) return false;
+        if (
+          usuario.id === usuarioLogado?.id ||
+          jaSelecionado ||
+          jaParticipaDoJogo
+        )
+          return false;
         return nome.includes(termo) || email.includes(termo);
       })
       .slice(0, 10);
@@ -1035,12 +1072,16 @@ export function AgendarJogoDialog({
       return;
     }
 
-    setJogadores((atual) => atual.map((item, index) => (index === buscandoIndex ? usuario : item)));
+    setJogadores((atual) =>
+      atual.map((item, index) => (index === buscandoIndex ? usuario : item)),
+    );
     fecharBusca();
   }
 
   function removerJogador(index: number) {
-    setJogadores((atual) => atual.map((item, i) => (i === index ? null : item)));
+    setJogadores((atual) =>
+      atual.map((item, i) => (i === index ? null : item)),
+    );
   }
 
   async function adicionarJogadorAoJogo(usuario: Usuario) {
@@ -1050,8 +1091,13 @@ export function AgendarJogoDialog({
     setErro("");
 
     try {
-      const jogoAtualizado = await adicionarParticipanteJogo(horario.jogoId, usuario.id);
-      setParticipantesAtuais(normalizarParticipantesConfirmados(jogoAtualizado));
+      const jogoAtualizado = await adicionarParticipanteJogo(
+        horario.jogoId,
+        usuario.id,
+      );
+      setParticipantesAtuais(
+        normalizarParticipantesConfirmados(jogoAtualizado),
+      );
       fecharBusca();
       onSuccess?.();
     } catch (error: unknown) {
@@ -1068,8 +1114,12 @@ export function AgendarJogoDialog({
     setErro("");
 
     try {
-      const jogoAtualizado = await removerParticipanteJogo(horario.jogoId, usuarioId);
-      const participantesConfirmados = normalizarParticipantesConfirmados(jogoAtualizado);
+      const jogoAtualizado = await removerParticipanteJogo(
+        horario.jogoId,
+        usuarioId,
+      );
+      const participantesConfirmados =
+        normalizarParticipantesConfirmados(jogoAtualizado);
 
       setParticipantesAtuais(participantesConfirmados);
       onSuccess?.();
@@ -1116,7 +1166,9 @@ export function AgendarJogoDialog({
           duracao_minutos: duracaoReservaAtual,
         });
 
-        const jogadoresSelecionados = jogadoresExibidos.filter(Boolean) as Usuario[];
+        const jogadoresSelecionados = jogadoresExibidos.filter(
+          Boolean,
+        ) as Usuario[];
         for (const jogador of jogadoresSelecionados) {
           await adicionarParticipanteJogo(jogo.id, jogador.id);
         }
@@ -1148,8 +1200,14 @@ export function AgendarJogoDialog({
     }
   }
 
-  const titulo = jaParticipa ? "Sua participação" : entrandoEmJogo ? "Jogo criado" : "Agendar jogo";
-  const descricao = entrandoEmJogo ? "Confira os jogadores confirmados neste horário." : "Ajuste a reserva e convide os jogadores.";
+  const titulo = jaParticipa
+    ? "Sua participação"
+    : entrandoEmJogo
+      ? "Jogo criado"
+      : "Agendar jogo";
+  const descricao = entrandoEmJogo
+    ? "Confira os jogadores confirmados neste horário."
+    : "Ajuste a reserva e convide os jogadores.";
   const textoBotaoPrincipal = loading
     ? "Confirmando..."
     : jaParticipa
@@ -1172,7 +1230,9 @@ export function AgendarJogoDialog({
           <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white">
             <UsersRound className="h-5 w-5 text-zinc-700" />
           </div>
-          <DialogTitle className="text-lg font-black text-zinc-950 ">{titulo}</DialogTitle>
+          <DialogTitle className="text-lg font-black text-zinc-950 ">
+            {titulo}
+          </DialogTitle>
           <p className="text-sm text-zinc-500">{descricao}</p>
         </DialogHeader>
 
@@ -1181,7 +1241,11 @@ export function AgendarJogoDialog({
             horario={horario}
             data={data}
             entrandoEmJogo={entrandoEmJogo}
-            quadraNome={entrandoEmJogo ? horario.quadraNome : (quadraReserva?.nome ?? horario.quadraNome)}
+            quadraNome={
+              entrandoEmJogo
+                ? horario.quadraNome
+                : (quadraReserva?.nome ?? horario.quadraNome)
+            }
             horaInicio={horaInicioReservaAtual}
             horaFim={horaFimReserva}
           />
@@ -1189,26 +1253,10 @@ export function AgendarJogoDialog({
 
         {!entrandoEmJogo && horario ? (
           <ReservationForm
-            quadraReserva={quadraReserva}
-            horaInicioReservaAtual={horaInicioReservaAtual}
-            horaMinimaReserva={horaMinimaReserva}
-            horaFimReserva={horaFimReserva}
-            granularidadeReserva={granularidadeReserva}
-            duracoesReserva={duracoesReserva}
-            duracaoReservaAtual={duracaoReservaAtual}
             tipoJogo={tipoJogo}
             permiteSimplesAtual={permiteSimplesAtual}
             permiteDuplaAtual={permiteDuplaAtual}
-            loading={loading}
             erroValidacaoReserva={erroValidacaoReserva}
-            onHoraChange={(hora) => {
-              setHoraInicioReserva(hora);
-              setErro("");
-            }}
-            onDuracaoChange={(duracao) => {
-              setDuracaoReserva(duracao);
-              setErro("");
-            }}
             onTipoJogoChange={(tipo) => setTipoJogo(tipo)}
           />
         ) : null}

@@ -12,6 +12,7 @@ import {
   shortTextSchema,
   slugSchema,
 } from "./common";
+import { duracoesReservaSchema } from "./reserva.schema";
 
 const estadoSchema = z.preprocess(
   emptyToUndefined,
@@ -34,6 +35,7 @@ export const createAcademiaSchema = z
     cidade: optionalShortTextSchema,
     estado: estadoSchema,
     cep: optionalCepSchema,
+    duracoes_reserva_minutos: duracoesReservaSchema.optional(),
   })
   .strict();
 
@@ -94,6 +96,7 @@ export const updateAcademiaSchema = z
     cidade: optionalNullableShortTextSchema,
     estado: nullableEstadoSchema,
     cep: optionalNullableCepSchema,
+    duracoes_reserva_minutos: duracoesReservaSchema.optional(),
   })
   .strict();
 

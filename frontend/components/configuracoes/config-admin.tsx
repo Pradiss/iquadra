@@ -11,10 +11,12 @@ import {
   uploadAcademiaLogoFile,
   validateAcademiaLogoFile,
   type AcademiaDetalhes,
+  type DuracaoReserva,
 } from "@/services/academia.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   getUsuario,
   updateStoredUsuario,
@@ -33,6 +35,8 @@ import { getSafeImageUrl } from "@/lib/safe-image";
 import { getAdminAcademias } from "@/lib/user-role";
 
 type AbaConfig = "perfil" | "academia";
+
+const DURACOES_RESERVA: DuracaoReserva[] = [60, 90, 120];
 
 type AdminContext = {
   usuario: UsuarioLogado;
@@ -441,6 +445,7 @@ function ConfigAcademia({
     estado: "",
     cep: "",
     logo_url: "",
+    duracoes_reserva_minutos: DURACOES_RESERVA,
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -478,6 +483,10 @@ function ConfigAcademia({
           estado: academia.estado ?? "",
           cep: academia.cep ?? "",
           logo_url: academia.logo_url ?? "",
+          duracoes_reserva_minutos:
+            academia.duracoes_reserva_minutos?.length
+              ? academia.duracoes_reserva_minutos
+              : DURACOES_RESERVA,
         });
       } catch {
         setErro("Nao foi possivel carregar os dados da academia.");
@@ -494,6 +503,21 @@ function ConfigAcademia({
       ...current,
       [field]: value,
     }));
+  }
+
+  function toggleDuracao(duracao: DuracaoReserva, checked: boolean) {
+    setForm((current) => {
+      const duracoes = checked
+        ? [...current.duracoes_reserva_minutos, duracao]
+        : current.duracoes_reserva_minutos.filter((item) => item !== duracao);
+
+      return {
+        ...current,
+        duracoes_reserva_minutos: DURACOES_RESERVA.filter((item) =>
+          duracoes.includes(item),
+        ),
+      };
+    });
   }
 
   function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -533,6 +557,9 @@ function ConfigAcademia({
     if (form.estado && form.estado.trim().length !== 2) {
       return "Informe o estado com 2 letras.";
     }
+    if (form.duracoes_reserva_minutos.length === 0) {
+      return "Selecione pelo menos uma duracao de reserva.";
+    }
 
     return "";
   }
@@ -560,6 +587,7 @@ function ConfigAcademia({
         cidade: form.cidade.trim() || null,
         estado: form.estado.trim().toUpperCase() || null,
         cep: onlyNumbers(form.cep) || null,
+        duracoes_reserva_minutos: form.duracoes_reserva_minutos,
       });
 
       if (logoFile) {
@@ -582,6 +610,10 @@ function ConfigAcademia({
         estado: academia.estado ?? "",
         cep: academia.cep ?? "",
         logo_url: academia.logo_url ?? current.logo_url,
+        duracoes_reserva_minutos:
+          academia.duracoes_reserva_minutos?.length
+            ? academia.duracoes_reserva_minutos
+            : current.duracoes_reserva_minutos,
       }));
       mergeAcademiaNoUsuario(academia);
       clearAcademiasCache();
@@ -731,6 +763,36 @@ function ConfigAcademia({
                 />
               </Campo>
             </div>
+
+            <Campo label="Duracoes de reserva">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {DURACOES_RESERVA.map((duracao) => {
+                  const checked =
+                    form.duracoes_reserva_minutos.includes(duracao);
+
+                  return (
+                    <label
+                      key={duracao}
+                      className={[
+                        "flex h-[50px] items-center gap-3 rounded-xl border px-4 text-sm font-bold transition",
+                        checked
+                          ? "border-zinc-950 bg-zinc-950 text-white"
+                          : "border-zinc-200 bg-zinc-50 text-zinc-700",
+                      ].join(" ")}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) =>
+                          toggleDuracao(duracao, value === true)
+                        }
+                        className="border-zinc-300 data-checked:border-white data-checked:bg-white data-checked:text-zinc-950"
+                      />
+                      <span>{duracao} min</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Campo>
 
             <Button
               type="button"

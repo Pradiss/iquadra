@@ -28,10 +28,12 @@ export type AggregateAcademia = {
 
 export type AcademiaAvgAggregateOutputType = {
   limite_jogos_padrao: number | null
+  duracoes_reserva_minutos: number | null
 }
 
 export type AcademiaSumAggregateOutputType = {
   limite_jogos_padrao: number | null
+  duracoes_reserva_minutos: number[]
 }
 
 export type AcademiaMinAggregateOutputType = {
@@ -87,6 +89,7 @@ export type AcademiaCountAggregateOutputType = {
   status: number
   limite_jogos_padrao: number
   periodo_limite_jogos: number
+  duracoes_reserva_minutos: number
   criado_em: number
   atualizado_em: number
   _all: number
@@ -95,10 +98,12 @@ export type AcademiaCountAggregateOutputType = {
 
 export type AcademiaAvgAggregateInputType = {
   limite_jogos_padrao?: true
+  duracoes_reserva_minutos?: true
 }
 
 export type AcademiaSumAggregateInputType = {
   limite_jogos_padrao?: true
+  duracoes_reserva_minutos?: true
 }
 
 export type AcademiaMinAggregateInputType = {
@@ -154,6 +159,7 @@ export type AcademiaCountAggregateInputType = {
   status?: true
   limite_jogos_padrao?: true
   periodo_limite_jogos?: true
+  duracoes_reserva_minutos?: true
   criado_em?: true
   atualizado_em?: true
   _all?: true
@@ -260,6 +266,7 @@ export type AcademiaGroupByOutputType = {
   status: $Enums.StatusUsuario
   limite_jogos_padrao: number
   periodo_limite_jogos: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos: number[]
   criado_em: Date
   atualizado_em: Date
   _count: AcademiaCountAggregateOutputType | null
@@ -302,6 +309,7 @@ export type AcademiaWhereInput = {
   status?: Prisma.EnumStatusUsuarioFilter<"Academia"> | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFilter<"Academia"> | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFilter<"Academia"> | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.IntNullableListFilter<"Academia">
   criado_em?: Prisma.DateTimeFilter<"Academia"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Academia"> | Date | string
   usuarios?: Prisma.AcademiaUsuarioListRelationFilter
@@ -328,6 +336,7 @@ export type AcademiaOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
+  duracoes_reserva_minutos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
   usuarios?: Prisma.AcademiaUsuarioOrderByRelationAggregateInput
@@ -357,6 +366,7 @@ export type AcademiaWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumStatusUsuarioFilter<"Academia"> | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFilter<"Academia"> | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFilter<"Academia"> | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.IntNullableListFilter<"Academia">
   criado_em?: Prisma.DateTimeFilter<"Academia"> | Date | string
   atualizado_em?: Prisma.DateTimeFilter<"Academia"> | Date | string
   usuarios?: Prisma.AcademiaUsuarioListRelationFilter
@@ -383,6 +393,7 @@ export type AcademiaOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
+  duracoes_reserva_minutos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
   _count?: Prisma.AcademiaCountOrderByAggregateInput
@@ -410,6 +421,7 @@ export type AcademiaScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumStatusUsuarioWithAggregatesFilter<"Academia"> | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntWithAggregatesFilter<"Academia"> | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosWithAggregatesFilter<"Academia"> | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.IntNullableListFilter<"Academia">
   criado_em?: Prisma.DateTimeWithAggregatesFilter<"Academia"> | Date | string
   atualizado_em?: Prisma.DateTimeWithAggregatesFilter<"Academia"> | Date | string
 }
@@ -429,6 +441,7 @@ export type AcademiaCreateInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -455,6 +468,7 @@ export type AcademiaUncheckedCreateInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -481,6 +495,7 @@ export type AcademiaUpdateInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -507,6 +522,7 @@ export type AcademiaUncheckedUpdateInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -533,6 +549,7 @@ export type AcademiaCreateManyInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
 }
@@ -552,6 +569,7 @@ export type AcademiaUpdateManyMutationInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -571,8 +589,17 @@ export type AcademiaUncheckedUpdateManyInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type IntNullableListFilter<$PrismaModel = never> = {
+  equals?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  has?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
+  hasEvery?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  hasSome?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type AcademiaCountOrderByAggregateInput = {
@@ -590,12 +617,14 @@ export type AcademiaCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   limite_jogos_padrao?: Prisma.SortOrder
   periodo_limite_jogos?: Prisma.SortOrder
+  duracoes_reserva_minutos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   atualizado_em?: Prisma.SortOrder
 }
 
 export type AcademiaAvgOrderByAggregateInput = {
   limite_jogos_padrao?: Prisma.SortOrder
+  duracoes_reserva_minutos?: Prisma.SortOrder
 }
 
 export type AcademiaMaxOrderByAggregateInput = {
@@ -638,6 +667,7 @@ export type AcademiaMinOrderByAggregateInput = {
 
 export type AcademiaSumOrderByAggregateInput = {
   limite_jogos_padrao?: Prisma.SortOrder
+  duracoes_reserva_minutos?: Prisma.SortOrder
 }
 
 export type AcademiaScalarRelationFilter = {
@@ -650,6 +680,10 @@ export type AcademiaNullableScalarRelationFilter = {
   isNot?: Prisma.AcademiaWhereInput | null
 }
 
+export type AcademiaCreateduracoes_reserva_minutosInput = {
+  set: number[]
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
@@ -660,6 +694,11 @@ export type IntFieldUpdateOperationsInput = {
 
 export type EnumPeriodoLimiteJogosFieldUpdateOperationsInput = {
   set?: $Enums.PeriodoLimiteJogos
+}
+
+export type AcademiaUpdateduracoes_reserva_minutosInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type AcademiaCreateNestedOneWithoutUsuariosInput = {
@@ -777,6 +816,7 @@ export type AcademiaCreateWithoutUsuariosInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   quadras?: Prisma.QuadraCreateNestedManyWithoutAcademiaInput
@@ -802,6 +842,7 @@ export type AcademiaUncheckedCreateWithoutUsuariosInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   quadras?: Prisma.QuadraUncheckedCreateNestedManyWithoutAcademiaInput
@@ -843,6 +884,7 @@ export type AcademiaUpdateWithoutUsuariosInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   quadras?: Prisma.QuadraUpdateManyWithoutAcademiaNestedInput
@@ -868,6 +910,7 @@ export type AcademiaUncheckedUpdateWithoutUsuariosInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   quadras?: Prisma.QuadraUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -893,6 +936,7 @@ export type AcademiaCreateWithoutQuadrasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -918,6 +962,7 @@ export type AcademiaUncheckedCreateWithoutQuadrasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -959,6 +1004,7 @@ export type AcademiaUpdateWithoutQuadrasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -984,6 +1030,7 @@ export type AcademiaUncheckedUpdateWithoutQuadrasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -1009,6 +1056,7 @@ export type AcademiaCreateWithoutJogosInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -1034,6 +1082,7 @@ export type AcademiaUncheckedCreateWithoutJogosInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -1075,6 +1124,7 @@ export type AcademiaUpdateWithoutJogosInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -1100,6 +1150,7 @@ export type AcademiaUncheckedUpdateWithoutJogosInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -1125,6 +1176,7 @@ export type AcademiaCreateWithoutAulasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -1150,6 +1202,7 @@ export type AcademiaUncheckedCreateWithoutAulasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -1191,6 +1244,7 @@ export type AcademiaUpdateWithoutAulasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -1216,6 +1270,7 @@ export type AcademiaUncheckedUpdateWithoutAulasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -1241,6 +1296,7 @@ export type AcademiaCreateWithoutRecorrencias_aulasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -1266,6 +1322,7 @@ export type AcademiaUncheckedCreateWithoutRecorrencias_aulasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -1307,6 +1364,7 @@ export type AcademiaUpdateWithoutRecorrencias_aulasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -1332,6 +1390,7 @@ export type AcademiaUncheckedUpdateWithoutRecorrencias_aulasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -1357,6 +1416,7 @@ export type AcademiaCreateWithoutAssinaturasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -1382,6 +1442,7 @@ export type AcademiaUncheckedCreateWithoutAssinaturasInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -1423,6 +1484,7 @@ export type AcademiaUpdateWithoutAssinaturasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -1448,6 +1510,7 @@ export type AcademiaUncheckedUpdateWithoutAssinaturasInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -1473,6 +1536,7 @@ export type AcademiaCreateWithoutLogsInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioCreateNestedManyWithoutAcademiaInput
@@ -1498,6 +1562,7 @@ export type AcademiaUncheckedCreateWithoutLogsInput = {
   status?: $Enums.StatusUsuario
   limite_jogos_padrao?: number
   periodo_limite_jogos?: $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaCreateduracoes_reserva_minutosInput | number[]
   criado_em?: Date | string
   atualizado_em?: Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedCreateNestedManyWithoutAcademiaInput
@@ -1539,6 +1604,7 @@ export type AcademiaUpdateWithoutLogsInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUpdateManyWithoutAcademiaNestedInput
@@ -1564,6 +1630,7 @@ export type AcademiaUncheckedUpdateWithoutLogsInput = {
   status?: Prisma.EnumStatusUsuarioFieldUpdateOperationsInput | $Enums.StatusUsuario
   limite_jogos_padrao?: Prisma.IntFieldUpdateOperationsInput | number
   periodo_limite_jogos?: Prisma.EnumPeriodoLimiteJogosFieldUpdateOperationsInput | $Enums.PeriodoLimiteJogos
+  duracoes_reserva_minutos?: Prisma.AcademiaUpdateduracoes_reserva_minutosInput | number[]
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   atualizado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarios?: Prisma.AcademiaUsuarioUncheckedUpdateManyWithoutAcademiaNestedInput
@@ -1674,6 +1741,7 @@ export type AcademiaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
+  duracoes_reserva_minutos?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
   usuarios?: boolean | Prisma.Academia$usuariosArgs<ExtArgs>
@@ -1701,6 +1769,7 @@ export type AcademiaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
+  duracoes_reserva_minutos?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
 }, ExtArgs["result"]["academia"]>
@@ -1720,6 +1789,7 @@ export type AcademiaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
+  duracoes_reserva_minutos?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
 }, ExtArgs["result"]["academia"]>
@@ -1739,11 +1809,12 @@ export type AcademiaSelectScalar = {
   status?: boolean
   limite_jogos_padrao?: boolean
   periodo_limite_jogos?: boolean
+  duracoes_reserva_minutos?: boolean
   criado_em?: boolean
   atualizado_em?: boolean
 }
 
-export type AcademiaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "slug" | "cnpj" | "telefone" | "email" | "endereco" | "cidade" | "estado" | "cep" | "logoPath" | "status" | "limite_jogos_padrao" | "periodo_limite_jogos" | "criado_em" | "atualizado_em", ExtArgs["result"]["academia"]>
+export type AcademiaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "slug" | "cnpj" | "telefone" | "email" | "endereco" | "cidade" | "estado" | "cep" | "logoPath" | "status" | "limite_jogos_padrao" | "periodo_limite_jogos" | "duracoes_reserva_minutos" | "criado_em" | "atualizado_em", ExtArgs["result"]["academia"]>
 export type AcademiaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   usuarios?: boolean | Prisma.Academia$usuariosArgs<ExtArgs>
   quadras?: boolean | Prisma.Academia$quadrasArgs<ExtArgs>
@@ -1783,6 +1854,7 @@ export type $AcademiaPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     status: $Enums.StatusUsuario
     limite_jogos_padrao: number
     periodo_limite_jogos: $Enums.PeriodoLimiteJogos
+    duracoes_reserva_minutos: number[]
     criado_em: Date
     atualizado_em: Date
   }, ExtArgs["result"]["academia"]>
@@ -2229,6 +2301,7 @@ export interface AcademiaFieldRefs {
   readonly status: Prisma.FieldRef<"Academia", 'StatusUsuario'>
   readonly limite_jogos_padrao: Prisma.FieldRef<"Academia", 'Int'>
   readonly periodo_limite_jogos: Prisma.FieldRef<"Academia", 'PeriodoLimiteJogos'>
+  readonly duracoes_reserva_minutos: Prisma.FieldRef<"Academia", 'Int[]'>
   readonly criado_em: Prisma.FieldRef<"Academia", 'DateTime'>
   readonly atualizado_em: Prisma.FieldRef<"Academia", 'DateTime'>
 }

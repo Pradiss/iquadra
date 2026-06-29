@@ -69,6 +69,30 @@ type HorarioAgendaPublico = {
 
 const AGENDAMENTO_PENDENTE_KEY = "playfy_agendamento_pendente";
 
+type AgoraAgenda = {
+  data: string;
+  hora: string;
+};
+
+function getAgoraAgenda(): AgoraAgenda {
+  const agora = new Date();
+
+  return {
+    data: format(agora, "yyyy-MM-dd"),
+    hora: format(agora, "HH:mm"),
+  };
+}
+
+function horarioAindaNaoPassou(
+  data: string,
+  hora: string,
+  agora: AgoraAgenda,
+) {
+  if (data !== agora.data) return true;
+
+  return hora >= agora.hora;
+}
+
 function safeStorageSet(key: string, value: string) {
   try {
     window.localStorage.setItem(key, value);
@@ -184,8 +208,27 @@ export default function AcademiaPublicaPage() {
   const [dataSelecionada, setDataSelecionada] = useState(
     format(new Date(), "yyyy-MM-dd"),
   );
+  const [agoraAgenda, setAgoraAgenda] = useState(getAgoraAgenda);
   const [filtrosQuadra, setFiltrosQuadra] =
     useState<AgendaFiltros>(agendaFiltroInicial);
+
+  useEffect(() => {
+    const atualizarAgora = () => {
+      setAgoraAgenda((atual) => {
+        const novo = getAgoraAgenda();
+
+        return atual.data === novo.data && atual.hora === novo.hora
+          ? atual
+          : novo;
+      });
+    };
+
+    atualizarAgora();
+
+    const intervalId = window.setInterval(atualizarAgora, 30 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -276,7 +319,11 @@ export default function AcademiaPublicaPage() {
     const idsPermitidos = new Set(quadrasFiltradas.map((quadra) => quadra.id));
 
     return horarios
-      .filter((horario) => idsPermitidos.has(horario.quadraId))
+      .filter(
+        (horario) =>
+          idsPermitidos.has(horario.quadraId) &&
+          horarioAindaNaoPassou(dataSelecionada, horario.hora, agoraAgenda),
+      )
       .sort((a, b) => {
         const porHora = a.hora.localeCompare(b.hora);
 
@@ -284,7 +331,7 @@ export default function AcademiaPublicaPage() {
 
         return a.quadraNome.localeCompare(b.quadraNome);
       });
-  }, [horarios, quadrasFiltradas]);
+  }, [agoraAgenda, dataSelecionada, horarios, quadrasFiltradas]);
 
   function escolherHorario(horario: HorarioAgendaPublico) {
     safeStorageSet(

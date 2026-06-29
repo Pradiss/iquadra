@@ -10,7 +10,10 @@ export type AcademiaPublica = {
   slug: string;
   cidade?: string | null;
   estado?: string | null;
+  duracoes_reserva_minutos?: DuracaoReserva[] | null;
 };
+
+export type DuracaoReserva = 60 | 90 | 120;
 
 export type QuadraPublica = {
   nome: string;
@@ -58,6 +61,7 @@ export type DisponibilidadeQuadraPublica = {
   motivo?: string | null;
   abre_as?: string | null;
   fecha_as?: string | null;
+  duracoes_reserva_minutos?: DuracaoReserva[] | null;
   duracao_slot_minutos?: number | null;
   slots: SlotPublico[];
 };

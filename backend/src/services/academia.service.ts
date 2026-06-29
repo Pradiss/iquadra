@@ -35,6 +35,7 @@ const academiaPublicSelect = {
   estado: true,
   cep: true,
   status: true,
+  duracoes_reserva_minutos: true,
   logoPath: true,
   criado_em: true,
   atualizado_em: true,
@@ -73,6 +74,7 @@ export async function listAcademias() {
         cidade: true,
         estado: true,
         status: true,
+        duracoes_reserva_minutos: true,
         logoPath: true,
       },
       orderBy: {
@@ -105,6 +107,7 @@ export async function getAcademiaById(id: string) {
           cep: true,
           cnpj: true,
           status: true,
+          duracoes_reserva_minutos: true,
           logoPath: true,
           criado_em: true,
           atualizado_em: true,
