@@ -15,6 +15,10 @@ type Academia = {
   cidade?: string;
   estado?: string;
   logo_url?: string | null;
+  logo?: string | null;
+  imagem?: string | null;
+  foto?: string | null;
+  foto_perfil?: string | null;
 };
 
 type AcademiasCache = {
@@ -25,6 +29,17 @@ type AcademiasCache = {
 const CACHE_KEY = "playfy_academias_cache:v2";
 const ULTIMA_ACADEMIA_KEY = "playfy_ultima_academia";
 const CACHE_TTL_MS = 1000 * 60 * 5;
+
+function getAcademiaFotoUrl(academia: Academia) {
+  return (
+    academia.logo_url ||
+    academia.logo ||
+    academia.imagem ||
+    academia.foto ||
+    academia.foto_perfil ||
+    undefined
+  );
+}
 
 function safeStorageGet(key: string) {
   try {
@@ -189,7 +204,7 @@ export default function PainelJogadorPage() {
               key={academia.id}
               nome={academia.nome}
               cidade={academia.cidade}
-              fotoUrl={academia.logo_url}
+              fotoUrl={getAcademiaFotoUrl(academia)}
               selected={false}
               onClick={() => selecionarAcademia(academia)}
             />

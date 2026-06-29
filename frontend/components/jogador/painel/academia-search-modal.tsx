@@ -3,8 +3,8 @@
 import { Check, MapPin, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { getUsuario } from "@/lib/auth-storage";
 import { getSafeImageUrl } from "@/lib/safe-image";
 
@@ -16,6 +16,8 @@ export type AcademiaBusca = {
   logo_url?: string | null;
   logo?: string | null;
   imagem?: string | null;
+  foto?: string | null;
+  foto_perfil?: string | null;
 };
 
 type Props = {
@@ -38,7 +40,7 @@ export function AcademiaSearchModal({
 }: Props) {
   const [busca, setBusca] = useState("");
   const [recentes, setRecentes] = useState<AcademiaBusca[]>(() =>
-    carregarRecentes()
+    carregarRecentes(),
   );
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export function AcademiaSearchModal({
   }, [open]);
 
   const usuario = useMemo(() => getUsuario(), []);
+
   const perfilCliente = usuario?.perfil_cliente as
     | { cidade?: string | null; estado?: string | null }
     | null
@@ -74,8 +77,8 @@ export function AcademiaSearchModal({
 
     return academias.filter((academia) =>
       normalizar(
-        `${academia.nome} ${academia.cidade ?? ""} ${academia.estado ?? ""}`
-      ).includes(termo)
+        `${academia.nome} ${academia.cidade ?? ""} ${academia.estado ?? ""}`,
+      ).includes(termo),
     );
   }, [academias, busca]);
 
@@ -129,8 +132,6 @@ export function AcademiaSearchModal({
       />
 
       <div className="relative z-10 flex max-h-[88vh] w-full max-w-xl flex-col rounded-b-[34px] bg-white px-5 pb-6 pt-6 shadow-[0_-20px_60px_rgba(15,23,42,0.22)]">
-        
-
         <div className="flex items-center gap-3">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-green-700" />
@@ -237,6 +238,7 @@ export function AcademiaSearchModal({
             </div>
           )}
         </div>
+
         <div className="mx-auto mt-5 h-1.5 w-14 rounded-full bg-zinc-200" />
       </div>
     </div>
@@ -271,7 +273,12 @@ function AcademiaItem({
   onClick: () => void;
 }) {
   const logoUrl = getSafeImageUrl(
-    academia.logo_url || academia.logo || academia.imagem || null
+    academia.logo_url ||
+      academia.logo ||
+      academia.imagem ||
+      academia.foto ||
+      academia.foto_perfil ||
+      null,
   );
 
   return (
@@ -285,6 +292,7 @@ function AcademiaItem({
     >
       <Avatar className="h-10 w-10 shrink-0 bg-green-100">
         {logoUrl ? <AvatarImage src={logoUrl} alt={academia.nome} /> : null}
+
         <AvatarFallback className="bg-green-100 text-sm font-black text-green-800">
           {academia.nome.charAt(0).toUpperCase()}
         </AvatarFallback>
@@ -325,9 +333,7 @@ function carregarRecentes() {
 
     if (!Array.isArray(parsed)) return [];
 
-    return parsed
-      .filter(isAcademiaBusca)
-      .slice(0, LIMITE_RECENTES);
+    return parsed.filter(isAcademiaBusca).slice(0, LIMITE_RECENTES);
   } catch {
     return [];
   }
@@ -335,6 +341,7 @@ function carregarRecentes() {
 
 function salvarRecente(academia: AcademiaBusca) {
   const recentes = carregarRecentes();
+
   const novosRecentes = [
     academia,
     ...recentes.filter((item) => item.id !== academia.id),

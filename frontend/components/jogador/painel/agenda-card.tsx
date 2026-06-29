@@ -160,11 +160,7 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
     (_, index) => jogadores[index],
   );
 
-  const subtituloLivre =
-    horario.inicioPermitido && horario.inicioPermitido !== horario.hora
-      ? `Disponível a partir de ${horario.inicioPermitido}`
-      : "Disponível para reserva";
-
+  
   return (
     <TableRow
       onClick={canSelect ? onSelect : undefined}
@@ -194,25 +190,7 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
       </TableCell>
 
       <TableCell className={["rounded-r-2xl px-2", corLinha(horario)].join(" ")}>
-        {!horario.jogo ? (
-          <div className="flex min-h-12 items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-[12.5px] font-black text-zinc-950">
-                {horario.disponivel ? "Horário livre" : "Indisponível"}
-              </p>
-
-              <p className="truncate text-[11px] font-semibold text-zinc-700">
-                {horario.disponivel ? subtituloLivre : "Sem reserva"}
-              </p>
-            </div>
-
-            {horario.disponivel && (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-zinc-900">
-                <Plus className="h-4 w-4" />
-              </span>
-            )}
-          </div>
-        ) : (
+       
           <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
             <Jogador jogador={jogadoresSlots[0]} label="Jogador 1" />
 
@@ -230,7 +208,7 @@ export function AgendaCard({ horario, canSelect = false, onSelect }: Props) {
               </>
             )}
           </div>
-        )}
+        
       </TableCell>
     </TableRow>
   );

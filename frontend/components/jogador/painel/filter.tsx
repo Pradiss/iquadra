@@ -22,6 +22,15 @@ type QuadraFiltros = {
   tipo_piso: string;
   cobertura: "TODAS" | "COBERTA" | "DESCOBERTA";
   jogadores: "TODOS" | "2" | "4";
+  status:
+    | "TODOS"
+    | "DISPONIVEL"
+    | "OCUPADO"
+    | "JOGO_ABERTO"
+    | "JOGO_COMPLETO"
+    | "AULA"
+    | "BLOQUEADO";
+  periodo: "TODOS" | "MANHA" | "TARDE" | "NOITE";
 };
 
 type Props = {
@@ -32,17 +41,19 @@ type Props = {
 
 export function QuadraFilter({ quadras, filtros, onChange }: Props) {
   const tipos = Array.from(
-    new Set(quadras.map((quadra) => quadra.tipo_piso).filter(Boolean))
+    new Set(quadras.map((quadra) => quadra.tipo_piso).filter(Boolean)),
   ) as string[];
 
   const totalFiltros =
     (filtros.tipo_piso !== "TODOS" ? 1 : 0) +
     (filtros.cobertura !== "TODAS" ? 1 : 0) +
-    (filtros.jogadores !== "TODOS" ? 1 : 0);
+    (filtros.jogadores !== "TODOS" ? 1 : 0) +
+    (filtros.status !== "TODOS" ? 1 : 0) +
+    (filtros.periodo !== "TODOS" ? 1 : 0);
 
   function atualizarFiltro<K extends keyof QuadraFiltros>(
     key: K,
-    value: QuadraFiltros[K]
+    value: QuadraFiltros[K],
   ) {
     onChange({
       ...filtros,
@@ -55,6 +66,8 @@ export function QuadraFilter({ quadras, filtros, onChange }: Props) {
       tipo_piso: "TODOS",
       cobertura: "TODAS",
       jogadores: "TODOS",
+      status: "TODOS",
+      periodo: "TODOS",
     });
   }
 
@@ -89,6 +102,87 @@ export function QuadraFilter({ quadras, filtros, onChange }: Props) {
         </div>
 
         <div className="grid gap-4">
+          <FiltroGrupo title="Status">
+            <FiltroBotao
+              active={filtros.status === "TODOS"}
+              onClick={() => atualizarFiltro("status", "TODOS")}
+            >
+              Todos
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.status === "DISPONIVEL"}
+              onClick={() => atualizarFiltro("status", "DISPONIVEL")}
+            >
+              Disponíveis
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.status === "OCUPADO"}
+              onClick={() => atualizarFiltro("status", "OCUPADO")}
+            >
+              Ocupadas
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.status === "JOGO_ABERTO"}
+              onClick={() => atualizarFiltro("status", "JOGO_ABERTO")}
+            >
+              Jogos abertos
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.status === "JOGO_COMPLETO"}
+              onClick={() => atualizarFiltro("status", "JOGO_COMPLETO")}
+            >
+              Jogos completos
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.status === "AULA"}
+              onClick={() => atualizarFiltro("status", "AULA")}
+            >
+              Aulas
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.status === "BLOQUEADO"}
+              onClick={() => atualizarFiltro("status", "BLOQUEADO")}
+            >
+              Bloqueadas
+            </FiltroBotao>
+          </FiltroGrupo>
+
+          <FiltroGrupo title="Período">
+            <FiltroBotao
+              active={filtros.periodo === "TODOS"}
+              onClick={() => atualizarFiltro("periodo", "TODOS")}
+            >
+              Todos
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.periodo === "MANHA"}
+              onClick={() => atualizarFiltro("periodo", "MANHA")}
+            >
+              Manhã
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.periodo === "TARDE"}
+              onClick={() => atualizarFiltro("periodo", "TARDE")}
+            >
+              Tarde
+            </FiltroBotao>
+
+            <FiltroBotao
+              active={filtros.periodo === "NOITE"}
+              onClick={() => atualizarFiltro("periodo", "NOITE")}
+            >
+              Noite
+            </FiltroBotao>
+          </FiltroGrupo>
+
           <FiltroGrupo title="Tipo de piso">
             <FiltroBotao
               active={filtros.tipo_piso === "TODOS"}

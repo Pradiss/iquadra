@@ -17,6 +17,7 @@ type PisoFiltro =
 type CoberturaFiltro = "TODAS" | "COBERTA" | "DESCOBERTA";
 type JogadoresFiltro = "TODOS" | "2" | "4";
 type PrecoFiltro = "TODOS" | "ATE_50" | "50_100" | "ACIMA_100";
+
 type ModalidadeFiltro =
   | "TODAS"
   | "TENIS"
@@ -25,12 +26,25 @@ type ModalidadeFiltro =
   | "PICKLEBALL"
   | "OUTRO";
 
+type StatusFiltro =
+  | "TODOS"
+  | "DISPONIVEL"
+  | "OCUPADO"
+  | "JOGO_ABERTO"
+  | "JOGO_COMPLETO"
+  | "AULA"
+  | "BLOQUEADO";
+
+type PeriodoFiltro = "TODOS" | "MANHA" | "TARDE" | "NOITE";
+
 export type AgendaFiltros = {
   piso: PisoFiltro;
   cobertura: CoberturaFiltro;
   jogadores: JogadoresFiltro;
   preco: PrecoFiltro;
   modalidade: ModalidadeFiltro;
+  status: StatusFiltro;
+  periodo: PeriodoFiltro;
 };
 
 type Props = {
@@ -44,14 +58,18 @@ const filtroInicial: AgendaFiltros = {
   jogadores: "TODOS",
   preco: "TODOS",
   modalidade: "TODAS",
+  status: "TODOS",
+  periodo: "TODOS",
 };
+
+export { filtroInicial as agendaFiltroInicial };
 
 const pisos: { value: PisoFiltro; label: string }[] = [
   { value: "TODOS", label: "Todos" },
   { value: "AREIA", label: "Areia" },
   { value: "SAIBRO", label: "Saibro" },
   { value: "HARD", label: "Hard" },
-  { value: "SINTETICA", label: "Sintetica" },
+  { value: "SINTETICA", label: "Sintética" },
   { value: "GRAMA", label: "Grama" },
   { value: "OUTRO", label: "Outro" },
 ];
@@ -70,21 +88,36 @@ const jogadores: { value: JogadoresFiltro; label: string }[] = [
 
 const precos: { value: PrecoFiltro; label: string }[] = [
   { value: "TODOS", label: "Todos" },
-  { value: "ATE_50", label: "Ate R$ 50" },
+  { value: "ATE_50", label: "Até R$ 50" },
   { value: "50_100", label: "R$ 50 a R$ 100" },
   { value: "ACIMA_100", label: "Acima de R$ 100" },
 ];
 
 const modalidades: { value: ModalidadeFiltro; label: string }[] = [
   { value: "TODAS", label: "Todas" },
-  { value: "TENIS", label: "Tenis" },
+  { value: "TENIS", label: "Tênis" },
   { value: "BEACH_TENNIS", label: "Beach Tennis" },
   { value: "PADEL", label: "Padel" },
   { value: "PICKLEBALL", label: "Pickleball" },
   { value: "OUTRO", label: "Outro" },
 ];
 
-export { filtroInicial as agendaFiltroInicial };
+const statusOptions: { value: StatusFiltro; label: string }[] = [
+  { value: "TODOS", label: "Todos" },
+  { value: "DISPONIVEL", label: "Disponíveis" },
+  { value: "OCUPADO", label: "Ocupados" },
+  { value: "JOGO_ABERTO", label: "Jogos abertos" },
+  { value: "JOGO_COMPLETO", label: "Jogos completos" },
+  { value: "AULA", label: "Aulas" },
+  { value: "BLOQUEADO", label: "Bloqueados" },
+];
+
+const periodos: { value: PeriodoFiltro; label: string }[] = [
+  { value: "TODOS", label: "Todos" },
+  { value: "MANHA", label: "Manhã" },
+  { value: "TARDE", label: "Tarde" },
+  { value: "NOITE", label: "Noite" },
+];
 
 export function AgendaFilterBar({ filtros, onChange }: Props) {
   const totalAtivos = [
@@ -93,6 +126,8 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
     filtros.jogadores !== "TODOS",
     filtros.preco !== "TODOS",
     filtros.modalidade !== "TODAS",
+    filtros.status !== "TODOS",
+    filtros.periodo !== "TODOS",
   ].filter(Boolean).length;
 
   function atualizar<K extends keyof AgendaFiltros>(
@@ -141,6 +176,34 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
             Limpar filtros
           </Button>
         </div>
+      </FilterChip>
+
+      <FilterChip label="Status" active={filtros.status !== "TODOS"}>
+        <FiltroGrupo title="Status">
+          {statusOptions.map((item) => (
+            <FiltroOpcao
+              key={item.value}
+              active={filtros.status === item.value}
+              onClick={() => atualizar("status", item.value)}
+            >
+              {item.label}
+            </FiltroOpcao>
+          ))}
+        </FiltroGrupo>
+      </FilterChip>
+
+      <FilterChip label="Período" active={filtros.periodo !== "TODOS"}>
+        <FiltroGrupo title="Período">
+          {periodos.map((item) => (
+            <FiltroOpcao
+              key={item.value}
+              active={filtros.periodo === item.value}
+              onClick={() => atualizar("periodo", item.value)}
+            >
+              {item.label}
+            </FiltroOpcao>
+          ))}
+        </FiltroGrupo>
       </FilterChip>
 
       <FilterChip label="Piso" active={filtros.piso !== "TODOS"}>
@@ -233,6 +296,7 @@ function FiltroGrupo({
     </div>
   );
 }
+
 function FiltroOpcao({
   active,
   onClick,

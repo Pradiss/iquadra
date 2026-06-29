@@ -213,6 +213,49 @@ function horarioAindaNaoPassou(
   return hora >= agora.hora;
 }
 
+function passaFiltroStatus(
+  horario: HorarioAgenda,
+  status: AgendaFiltros["status"],
+) {
+  if (status === "TODOS") return true;
+
+  const temJogo = Boolean(horario.jogo);
+
+  switch (status) {
+    case "DISPONIVEL":
+      return horario.disponivel && !temJogo && !horario.motivo;
+    case "OCUPADO":
+      return temJogo || Boolean(horario.motivo) || !horario.disponivel;
+    case "JOGO_ABERTO":
+      return temJogo && horario.vagasDisponiveis > 0;
+    case "JOGO_COMPLETO":
+      return temJogo && horario.vagasDisponiveis <= 0;
+    case "AULA":
+      return horario.motivo === "AULA";
+    case "BLOQUEADO":
+      return horario.motivo === "BLOQUEADO";
+    default:
+      return true;
+  }
+}
+
+function passaFiltroPeriodo(hora: string, periodo: AgendaFiltros["periodo"]) {
+  if (periodo === "TODOS") return true;
+
+  const [horas = 0] = hora.split(":").map(Number);
+
+  switch (periodo) {
+    case "MANHA":
+      return horas < 12;
+    case "TARDE":
+      return horas >= 12 && horas < 18;
+    case "NOITE":
+      return horas >= 18;
+    default:
+      return true;
+  }
+}
+
 function safeStorageGet(key: string) {
   try {
     return window.localStorage.getItem(key);
@@ -779,9 +822,18 @@ export default function AcademiaAgendaPage() {
     return horarios.filter(
       (horario) =>
         idsPermitidos.has(horario.quadraId) &&
-        horarioAindaNaoPassou(dataSelecionada, horario.hora, agoraAgenda),
+        horarioAindaNaoPassou(dataSelecionada, horario.hora, agoraAgenda) &&
+        passaFiltroStatus(horario, filtrosQuadra.status) &&
+        passaFiltroPeriodo(horario.hora, filtrosQuadra.periodo),
     );
-  }, [agoraAgenda, dataSelecionada, horarios, quadrasFiltradas]);
+  }, [
+    agoraAgenda,
+    dataSelecionada,
+    filtrosQuadra.periodo,
+    filtrosQuadra.status,
+    horarios,
+    quadrasFiltradas,
+  ]);
 
   useEffect(() => {
     const atualizarAgora = () => {
