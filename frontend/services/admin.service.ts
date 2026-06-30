@@ -108,10 +108,30 @@ export async function gerarHorarioQuadra(
     dia_semana: number;
     abre_as: string;
     fecha_as: string;
-    duracao_slot_minutos: 90;
+    duracao_slot_minutos: number;
+    ativo?: boolean;
   }
 ) {
   const response = await api.post(`/quadras/${quadraId}/horarios`, data);
+  return getData(response);
+}
+
+export async function atualizarHorarioQuadra(
+  horarioId: string,
+  data: {
+    dia_semana?: number;
+    abre_as?: string;
+    fecha_as?: string;
+    duracao_slot_minutos?: number;
+    ativo?: boolean;
+  }
+) {
+  const response = await api.put(`/horarios-quadra/${horarioId}`, data);
+  return getData(response);
+}
+
+export async function removerHorarioQuadra(horarioId: string) {
+  const response = await api.delete(`/horarios-quadra/${horarioId}`);
   return getData(response);
 }
 
@@ -149,4 +169,3 @@ export type HorarioQuadraAdmin = {
   fecha_as: string;
   duracao_slot_minutos?: number;
 };
-

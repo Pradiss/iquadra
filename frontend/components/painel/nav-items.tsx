@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   CalendarDays,
   CircleUserRound,
-  Clock,
   LayoutGrid,
   Settings,
   Trophy,
@@ -24,7 +23,6 @@ export const painelJogadorNavItems: PainelNavItem[] = [
 export const painelAdminNavItems: PainelNavItem[] = [
   { href: "/painel/admin", label: "Dashboard", icon: LayoutGrid },
   { href: "/painel/admin/quadras", label: "Quadras", icon: Volleyball },
-  { href: "/painel/admin/horarios", label: "Horários", icon: Clock },
   { href: "/painel/admin/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/painel/admin/configuracoes", label: "Configurações", icon: Settings },
 ];

@@ -10,6 +10,7 @@ export type TipoJogoAgenda = "SIMPLES" | "DUPLA";
 export type QuadraAgenda = {
   id: string;
   nome: string;
+  modalidade?: string | null;
   tipo_piso?: string | null;
   coberta?: boolean | null;
 };
@@ -74,9 +75,87 @@ export type AgendaAdmin = {
   eventos: AgendaEventoAdmin[];
 };
 
+export type DisponibilidadeAdmin = {
+  academia?: {
+    id: string;
+    nome: string;
+    slug?: string;
+  };
+  data: string;
+  quadras: Array<{
+    quadra?: {
+      id: string;
+      nome: string;
+      modalidade?: string | null;
+      tipo_piso?: string | null;
+      capacidade_minima?: number;
+      capacidade_maxima?: number;
+      permite_simples?: boolean;
+      permite_dupla?: boolean;
+    };
+    aberta?: boolean;
+    motivo?: string | null;
+    abre_as?: string | null;
+    fecha_as?: string | null;
+    duracao_slot_minutos?: number | null;
+    slots?: Array<{
+      inicio: string;
+      fim: string;
+      disponivel: boolean;
+      motivo: "JOGO" | "AULA" | "BLOQUEADO" | null;
+      jogo?: AgendaJogo | null;
+      aula?: {
+        id: string;
+        observacoes?: string | null;
+        cliente?: { id: string; nome: string } | null;
+        professor?: { id: string; nome: string } | null;
+      } | null;
+      bloqueio?: {
+        id: string;
+        motivo: string;
+        tipo_bloqueio: string;
+      } | null;
+    }>;
+    eventos_ocupados?: Array<{
+      tipo: "JOGO" | "AULA" | "BLOQUEIO";
+      id: string;
+      inicio: string;
+      fim: string;
+      jogo?: AgendaJogo | null;
+      aula?: {
+        id: string;
+        observacoes?: string | null;
+        cliente?: { id: string; nome: string } | null;
+        professor?: { id: string; nome: string } | null;
+      } | null;
+      bloqueio?: {
+        id: string;
+        motivo: string;
+        tipo_bloqueio: string;
+      } | null;
+    }>;
+  }>;
+};
+
 export async function listarQuadrasAdminAgenda(academiaId: string) {
   const response = await api.get(`/academias/${academiaId}/quadras`);
   return getData<QuadraAgenda[]>(response);
+}
+
+export async function buscarDisponibilidadeAdmin(params: {
+  academiaId: string;
+  data: string;
+}) {
+  const response = await api.get(
+    `/academias/${params.academiaId}/disponibilidade`,
+    {
+      params: {
+        data: params.data,
+      },
+    }
+  );
+
+  return getData<DisponibilidadeAdmin>(response);
 }
 
 export async function buscarAgendaAdmin(params: {
@@ -139,6 +218,30 @@ export async function criarAgendamentoAdmin(data: {
   return jogo;
 }
 
+export async function criarAulaAdmin(data: {
+  academia_id: string;
+  quadra_id: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  professor_id?: string;
+  cliente_id?: string;
+  observacoes?: string;
+}) {
+  const response = await api.post("/aulas", {
+    academia_id: data.academia_id,
+    quadra_id: data.quadra_id,
+    data: data.data,
+    hora_inicio: data.hora_inicio,
+    hora_fim: data.hora_fim,
+    ...(data.professor_id ? { professor_id: data.professor_id } : {}),
+    ...(data.cliente_id ? { cliente_id: data.cliente_id } : {}),
+    ...(data.observacoes ? { observacoes: data.observacoes } : {}),
+  });
+
+  return getData(response);
+}
+
 export async function editarAgendamentoAdmin(
   jogoId: string,
   data: {
@@ -158,5 +261,34 @@ export async function editarAgendamentoAdmin(
 
 export async function cancelarAgendamentoAdmin(jogoId: string) {
   const response = await api.patch(`/jogos/${jogoId}/cancelar`);
+  return getData(response);
+}
+
+export async function cancelarAulaAdmin(aulaId: string) {
+  const response = await api.patch(`/aulas/${aulaId}/cancelar`);
+  return getData(response);
+}
+
+export async function removerBloqueioAdmin(bloqueioId: string) {
+  const response = await api.delete(`/bloqueios/${bloqueioId}`);
+  return getData(response);
+}
+
+export async function criarEventoAdmin(data: {
+  quadra_id: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  motivo: string;
+  tipo_bloqueio?: "MANUTENCAO" | "EVENTO" | "FERIADO" | "PARTICULAR" | "OUTRO";
+}) {
+  const response = await api.post(`/quadras/${data.quadra_id}/bloqueios`, {
+    data: data.data,
+    hora_inicio: data.hora_inicio,
+    hora_fim: data.hora_fim,
+    motivo: data.motivo,
+    tipo_bloqueio: data.tipo_bloqueio ?? "EVENTO",
+  });
+
   return getData(response);
 }
