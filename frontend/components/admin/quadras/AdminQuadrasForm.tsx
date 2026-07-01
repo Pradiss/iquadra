@@ -18,6 +18,7 @@ import {
 
 import { AdminFeedback } from "@/components/admin/AdminFeedback";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,11 +140,12 @@ function getDiaSemanaLabel(value: number) {
 }
 
 function getDuracaoFromHorarios(horarios: HorarioQuadraAdmin[]) {
-  const duracao = horarios.find((horario) => horario.duracao_slot_minutos)
-    ?.duracao_slot_minutos;
+  const duracao = horarios.find(
+    (horario) => horario.duracao_slot_minutos,
+  )?.duracao_slot_minutos;
 
   return duracao === 60 || duracao === 90 || duracao === 120
-    ? String(duracao) as DuracaoReserva
+    ? (String(duracao) as DuracaoReserva)
     : "90";
 }
 
@@ -207,15 +209,31 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-1 text-xs font-bold text-zinc-500">
+    <label className="grid min-w-0 gap-1 text-xs font-bold text-zinc-500">
       {label}
+
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 outline-none transition focus:border-zinc-400"
+        className="h-12 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 outline-none transition focus:border-zinc-400"
       >
         {children}
       </select>
+    </label>
+  );
+}
+
+function FormField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="grid min-w-0 gap-2 text-sm font-bold text-zinc-700">
+      {label}
+      {children}
     </label>
   );
 }
@@ -272,8 +290,7 @@ export function AdminQuadrasForm() {
       const passaBusca =
         termo.length === 0 || quadra.nome.toLowerCase().includes(termo);
       const passaModalidade =
-        modalidadeFiltro === "TODAS" ||
-        quadra.modalidade === modalidadeFiltro;
+        modalidadeFiltro === "TODAS" || quadra.modalidade === modalidadeFiltro;
       const passaStatus =
         statusFiltro === "TODAS" ||
         (statusFiltro === "ATIVAS" && quadra.ativa) ||
@@ -294,7 +311,10 @@ export function AdminQuadrasForm() {
     } catch (error) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(error, "Não foi possível carregar as quadras."),
+        message: getErrorMessage(
+          error,
+          "Não foi possível carregar as quadras.",
+        ),
       });
     } finally {
       setLoading(false);
@@ -337,7 +357,7 @@ export function AdminQuadrasForm() {
     try {
       const horarios = await listarHorariosQuadra(quadra.id);
       const horariosArray = Array.isArray(horarios)
-        ? horarios as HorarioQuadraAdmin[]
+        ? (horarios as HorarioQuadraAdmin[])
         : [];
 
       setForm({
@@ -531,7 +551,7 @@ export function AdminQuadrasForm() {
       await sincronizarHorariosQuadra(
         quadraId,
         Array.isArray(horariosExistentes)
-          ? horariosExistentes as HorarioQuadraAdmin[]
+          ? (horariosExistentes as HorarioQuadraAdmin[])
           : [],
       );
 
@@ -631,7 +651,7 @@ export function AdminQuadrasForm() {
 
   if (modo === "form") {
     return (
-      <section className="grid gap-4">
+      <section className="grid min-w-0 gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="grid gap-3">
             <Button
@@ -667,17 +687,16 @@ export function AdminQuadrasForm() {
 
         <AdminFeedback feedback={feedback} />
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-4 xl:grid-cols-[1fr_1.18fr]">
-            <section className="rounded-xl bg-white p-5 shadow-sm">
+        <form onSubmit={handleSubmit} className="grid min-w-0 gap-4">
+          <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <section className="min-w-0 rounded-xl bg-white p-4 shadow-sm sm:p-5">
               <h3 className="text-lg font-black text-zinc-950">
                 Dados da quadra
               </h3>
 
-              <div className="mt-5 grid gap-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Nome da quadra *
+              <div className="mt-5 grid min-w-0 gap-4">
+                <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                  <FormField label="Nome da quadra *">
                     <Input
                       value={form.nome}
                       onChange={(event) =>
@@ -687,12 +706,11 @@ export function AdminQuadrasForm() {
                         }))
                       }
                       placeholder="Ex: Quadra 1"
-                      className="h-12 rounded-lg bg-zinc-50"
+                      className="h-12 w-full rounded-lg bg-zinc-50"
                     />
-                  </label>
+                  </FormField>
 
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Descrição curta
+                  <FormField label="Descrição curta">
                     <Textarea
                       value={form.descricao}
                       onChange={(event) =>
@@ -702,14 +720,13 @@ export function AdminQuadrasForm() {
                         }))
                       }
                       placeholder="Ex: Quadra de beach tennis com areia fofa"
-                      className="min-h-24 rounded-lg bg-zinc-50"
+                      className="min-h-24 w-full rounded-lg bg-zinc-50"
                     />
-                  </label>
+                  </FormField>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Tipo de piso *
+                <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                  <FormField label="Tipo de piso *">
                     <select
                       value={form.tipo_piso}
                       onChange={(event) =>
@@ -718,7 +735,7 @@ export function AdminQuadrasForm() {
                           tipo_piso: event.target.value as TipoPiso | "",
                         }))
                       }
-                      className="h-12 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
+                      className="h-12 w-full min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
                     >
                       <option value="">Selecione o tipo de piso</option>
                       {tiposPiso.map((tipo) => (
@@ -727,19 +744,20 @@ export function AdminQuadrasForm() {
                         </option>
                       ))}
                     </select>
-                  </label>
+                  </FormField>
 
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Modalidade *
+                  <FormField label="Modalidade *">
                     <select
                       value={form.modalidade}
                       onChange={(event) =>
                         setForm((current) => ({
                           ...current,
-                          modalidade: event.target.value as ModalidadeQuadra | "",
+                          modalidade: event.target.value as
+                            | ModalidadeQuadra
+                            | "",
                         }))
                       }
-                      className="h-12 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
+                      className="h-12 w-full min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
                     >
                       <option value="">Selecione a modalidade</option>
                       {modalidades.map((modalidade) => (
@@ -748,13 +766,12 @@ export function AdminQuadrasForm() {
                         </option>
                       ))}
                     </select>
-                  </label>
+                  </FormField>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Valor da quadra (R$) *
-                    <div className="relative">
+                <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <FormField label="Valor da quadra (R$) *">
+                    <div className="relative min-w-0">
                       <Input
                         type="number"
                         min={0}
@@ -767,16 +784,15 @@ export function AdminQuadrasForm() {
                           }))
                         }
                         placeholder="Ex: 80,00"
-                        className="h-12 rounded-lg bg-zinc-50 pr-12"
+                        className="h-12 w-full rounded-lg bg-zinc-50 pr-12"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-500">
                         R$
                       </span>
                     </div>
-                  </label>
+                  </FormField>
 
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Capacidade mínima *
+                  <FormField label="Capacidade mínima *">
                     <Input
                       type="number"
                       min={2}
@@ -788,12 +804,11 @@ export function AdminQuadrasForm() {
                           capacidade_minima: event.target.value,
                         }))
                       }
-                      className="h-12 rounded-lg bg-zinc-50"
+                      className="h-12 w-full rounded-lg bg-zinc-50"
                     />
-                  </label>
+                  </FormField>
 
-                  <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                    Capacidade máxima *
+                  <FormField label="Capacidade máxima *">
                     <Input
                       type="number"
                       min={2}
@@ -805,23 +820,22 @@ export function AdminQuadrasForm() {
                           capacidade_maxima: event.target.value,
                         }))
                       }
-                      className="h-12 rounded-lg bg-zinc-50"
+                      className="h-12 w-full rounded-lg bg-zinc-50"
                     />
-                  </label>
+                  </FormField>
                 </div>
 
-                <div className="grid gap-4">
+                <div className="grid gap-4 rounded-2xl bg-zinc-50 p-4">
                   <label className="flex items-start gap-3 text-sm font-bold text-zinc-800">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={form.coberta}
-                      onChange={(event) =>
+                      onCheckedChange={(checked) =>
                         setForm((current) => ({
                           ...current,
-                          coberta: event.target.checked,
+                          coberta: checked === true,
                         }))
                       }
-                      className="mt-1 h-4 w-4 accent-green-700"
+                      className="mt-1"
                     />
                     <span>
                       Quadra coberta
@@ -832,16 +846,15 @@ export function AdminQuadrasForm() {
                   </label>
 
                   <label className="flex items-start gap-3 text-sm font-bold text-zinc-800">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={form.permite_simples}
-                      onChange={(event) =>
+                      onCheckedChange={(checked) =>
                         setForm((current) => ({
                           ...current,
-                          permite_simples: event.target.checked,
+                          permite_simples: checked === true,
                         }))
                       }
-                      className="mt-1 h-4 w-4 accent-green-700"
+                      className="mt-1"
                     />
                     <span>
                       Permite simples
@@ -852,16 +865,15 @@ export function AdminQuadrasForm() {
                   </label>
 
                   <label className="flex items-start gap-3 text-sm font-bold text-zinc-800">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={form.permite_dupla}
-                      onChange={(event) =>
+                      onCheckedChange={(checked) =>
                         setForm((current) => ({
                           ...current,
-                          permite_dupla: event.target.checked,
+                          permite_dupla: checked === true,
                         }))
                       }
-                      className="mt-1 h-4 w-4 accent-green-700"
+                      className="mt-1"
                     />
                     <span>
                       Permite dupla
@@ -872,16 +884,15 @@ export function AdminQuadrasForm() {
                   </label>
 
                   <label className="flex items-start gap-3 text-sm font-bold text-zinc-800">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={form.ativa}
-                      onChange={(event) =>
+                      onCheckedChange={(checked) =>
                         setForm((current) => ({
                           ...current,
-                          ativa: event.target.checked,
+                          ativa: checked === true,
                         }))
                       }
-                      className="mt-1 h-4 w-4 accent-green-700"
+                      className="mt-1"
                     />
                     <span>
                       Ativa
@@ -894,7 +905,7 @@ export function AdminQuadrasForm() {
               </div>
             </section>
 
-            <section className="rounded-xl bg-white p-5 shadow-sm">
+            <section className="min-w-0 rounded-xl bg-white p-4 shadow-sm sm:p-5">
               <h3 className="text-lg font-black text-zinc-950">
                 Disponibilidade semanal
               </h3>
@@ -902,41 +913,40 @@ export function AdminQuadrasForm() {
                 Configure os horários de funcionamento da quadra.
               </p>
 
-              <div className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-                <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                  Tempo de reserva
+              <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-[1fr_1fr_auto]">
+                <FormField label="Tempo de reserva">
                   <select
                     value={form.duracao_slot_minutos}
                     onChange={(event) =>
                       setForm((current) => ({
                         ...current,
-                        duracao_slot_minutos: event.target.value as DuracaoReserva,
+                        duracao_slot_minutos: event.target
+                          .value as DuracaoReserva,
                       }))
                     }
-                    className="h-12 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
+                    className="h-12 w-full min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
                   >
                     <option value="60">60 min</option>
                     <option value="90">90 min</option>
                     <option value="120">120 min</option>
                   </select>
-                </label>
+                </FormField>
 
-                <label className="grid gap-2 text-sm font-bold text-zinc-700">
-                  Copiar horário
+                <FormField label="Copiar horário">
                   <select
                     value="ativos"
                     onChange={() => undefined}
-                    className="h-12 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
+                    className="h-12 w-full min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-700"
                   >
                     <option value="ativos">Para dias selecionados</option>
                   </select>
-                </label>
+                </FormField>
 
                 <Button
                   type="button"
                   variant="outline"
                   onClick={copiarHorarioParaDiasAtivos}
-                  className="mt-auto h-12 gap-2 rounded-lg bg-white"
+                  className="h-12 gap-2 rounded-lg bg-white lg:mt-auto"
                 >
                   <Copy className="h-4 w-4" />
                   Copiar
@@ -944,7 +954,7 @@ export function AdminQuadrasForm() {
               </div>
 
               <div className="mt-5 overflow-x-auto">
-                <div className="min-w-[600px]">
+                <div className="min-w-[720px] lg:min-w-0">
                   <div className="grid grid-cols-[1.2fr_0.7fr_1fr_1fr] border-b border-zinc-100 px-1 pb-3 text-xs font-black text-zinc-500">
                     <span>Dia da semana</span>
                     <span>Ativa</span>
@@ -1006,7 +1016,7 @@ export function AdminQuadrasForm() {
             </section>
           </div>
 
-          <section className="flex flex-col gap-3 rounded-xl bg-white p-5 shadow-sm md:flex-row">
+          <section className="flex flex-col gap-3 rounded-xl bg-white p-4 shadow-sm sm:p-5 md:flex-row">
             <Button
               disabled={saving}
               className="h-12 flex-1 gap-2 rounded-lg bg-slate-950 text-white hover:bg-slate-800 md:max-w-[420px]"
@@ -1031,7 +1041,7 @@ export function AdminQuadrasForm() {
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-green-700">Admin</p>
@@ -1054,16 +1064,16 @@ export function AdminQuadrasForm() {
       <AdminFeedback feedback={feedback} />
 
       <section className="rounded-xl bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[1.3fr_1fr_1fr]">
-          <label className="grid gap-1 text-xs font-bold text-zinc-500">
+        <div className="grid min-w-0 gap-3 lg:grid-cols-[1.3fr_1fr_1fr]">
+          <label className="grid min-w-0 gap-1 text-xs font-bold text-zinc-500">
             Buscar
-            <div className="relative">
+            <div className="relative min-w-0">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
               <Input
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
                 placeholder="Buscar por nome da quadra"
-                className="h-12 rounded-lg bg-zinc-50 pl-11"
+                className="h-12 w-full rounded-lg bg-zinc-50 pl-11"
               />
             </div>
           </label>
@@ -1104,15 +1114,16 @@ export function AdminQuadrasForm() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[780px] w-full border-collapse text-sm">
+            <table className="w-full min-w-[780px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-zinc-100 text-left text-xs font-black text-zinc-600">
                   <th className="px-5 py-4">Quadra</th>
                   <th className="px-5 py-4">Modalidade</th>
                   <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4">Ações</th>
+                  <th className="px-5 py-4 text-center ">Ações</th>
                 </tr>
               </thead>
+
               <tbody>
                 {quadrasFiltradas.map((quadra) => (
                   <tr
@@ -1126,9 +1137,11 @@ export function AdminQuadrasForm() {
                         {quadra.coberta ? " - Coberta" : ""}
                       </p>
                     </td>
+
                     <td className="px-5 py-3 font-semibold text-zinc-700">
                       {getModalidadeLabel(quadra.modalidade)}
                     </td>
+
                     <td className="px-5 py-3">
                       <span
                         className={[
@@ -1139,13 +1152,16 @@ export function AdminQuadrasForm() {
                         {quadra.ativa ? "Ativa" : "Inativa"}
                       </span>
                     </td>
+
                     <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           type="button"
                           variant="outline"
                           disabled={acaoQuadraId === quadra.id}
-                          onClick={() => void preencherFormularioParaEditar(quadra)}
+                          onClick={() =>
+                            void preencherFormularioParaEditar(quadra)
+                          }
                           className="h-9 gap-2 rounded-lg bg-white"
                         >
                           <Pencil className="h-4 w-4" />
@@ -1157,7 +1173,12 @@ export function AdminQuadrasForm() {
                           variant="outline"
                           disabled={acaoQuadraId === quadra.id}
                           onClick={() => void toggleStatus(quadra)}
-                          className="h-9 gap-2 rounded-lg bg-white"
+                          className={[
+                            "h-9 gap-2 rounded-lg border font-bold",
+                            quadra.ativa
+                              ? "border-red-100 bg-red-50 text-red-700 hover:bg-red-100"
+                              : "border-green-100 bg-green-50 text-green-700 hover:bg-green-100",
+                          ].join(" ")}
                         >
                           {quadra.ativa ? (
                             <Ban className="h-4 w-4" />
@@ -1167,28 +1188,7 @@ export function AdminQuadrasForm() {
                           {quadra.ativa ? "Inativar" : "Ativar"}
                         </Button>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              disabled={acaoQuadraId === quadra.id}
-                              className="h-9 w-9 rounded-full"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => void excluirQuadraSelecionada(quadra)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                       
                       </div>
                     </td>
                   </tr>

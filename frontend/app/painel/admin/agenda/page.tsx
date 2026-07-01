@@ -6,7 +6,7 @@ import { AddEventDialog } from "@/components/admin/agenda/components/AddEventDia
 import { AgendaSection } from "@/components/admin/agenda/components/AgendaSection";
 import { AgendaToolbar } from "@/components/admin/agenda/components/AgendaToolbar";
 import { WeekSelector } from "@/components/admin/agenda/components/WeekSelector";
-import { useAdminAgenda } from "@/components/admin/hooks/useAdminAgenda";
+import { useAdminAgenda } from "@/components/admin/agenda/hooks/useAdminAgenda";
 
 export default function AdminAgendaPage() {
   const agenda = useAdminAgenda();

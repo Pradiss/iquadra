@@ -1,4 +1,4 @@
-import { AdminQuadrasForm } from "@/components/admin/AdminQuadrasForm";
+import { AdminQuadrasForm } from "@/components/admin/quadras/AdminQuadrasForm";
 
 export default function AdminQuadrasPage() {
   return (
