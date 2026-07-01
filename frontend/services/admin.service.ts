@@ -35,13 +35,6 @@ export type QuadraAdmin = {
   permite_dupla?: boolean;
 };
 
-export type DashboardAdmin = {
-  total_quadras: number;
-  horarios_cadastrados: number;
-  bloqueios_ativos: number;
-  agendamentos_hoje: number;
-};
-
 export async function listarQuadras(academiaId: string) {
   const response = await api.get(`/academias/${academiaId}/quadras`, {
     params: { incluir_inativas: true },

@@ -1,5 +1,5 @@
 import { AdminPage } from "@/components/admin/AdminPage";
-import { ConfigAdmin } from "@/components/configuracoes/config-admin";
+import { ConfigAdmin } from "@/components/painel/admin/config";
 
 export default function AdminConfiguracoesPage() {
   return (

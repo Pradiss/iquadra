@@ -27,7 +27,7 @@ import {
 export type LayoutPainelRole = "admin" | "jogador";
 
 function getHomeHref(role: LayoutPainelRole) {
-  return role === "admin" ? "/painel/admin" : "/painel/jogador";
+  return role === "admin" ? "/painel/admin/quadras" : "/painel/jogador";
 }
 
 export function LayoutPainel({

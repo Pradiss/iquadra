@@ -32,7 +32,7 @@ function getFirstName(nome?: string) {
 }
 
 function getHomeHref(role: PainelHeaderProps["role"]) {
-  return role === "admin" ? "/painel/admin" : "/painel/jogador";
+  return role === "admin" ? "/painel/admin/quadras" : "/painel/jogador";
 }
 
 function getPainelLabel(role: PainelHeaderProps["role"]) {

@@ -27,7 +27,7 @@ export function getAdminAcademias(usuario: Usuario | null) {
 }
 
 export function getPainelHomeByRole(role: PainelRole) {
-  if (role === "admin") return "/painel/admin";
+  if (role === "admin") return "/painel/admin/quadras";
   if (role === "professor") return "/painel/professor";
   return "/painel/jogador";
 }
