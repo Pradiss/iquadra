@@ -1,5 +1,5 @@
 import { AdminPage } from "@/components/admin/AdminPage";
-import { AdminHorariosForm } from "@/components/admin/AdminHorariosForm";
+import { AdminHorariosForm } from "@/components/admin/quadras/AdminHorariosForm";
 
 export default function AdminHorariosPage() {
   return (
