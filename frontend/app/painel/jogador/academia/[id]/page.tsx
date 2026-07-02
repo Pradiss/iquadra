@@ -18,6 +18,8 @@ import { AgendaList } from "@/components/jogador/painel/agenda-list";
 import { AgendarJogoDialog } from "@/components/jogador/painel/agendar-jogo-dialog";
 import { AgendaCalendar } from "@/components/jogador/painel/agenda-calendar";
 
+import { Loader2 } from "lucide-react";
+
 import {
   listarAcademias,
   obterDisponibilidadeAcademia,
@@ -203,11 +205,7 @@ function getAgoraAgenda(): AgoraAgenda {
   };
 }
 
-function horarioAindaNaoPassou(
-  data: string,
-  hora: string,
-  agora: AgoraAgenda,
-) {
+function horarioAindaNaoPassou(data: string, hora: string, agora: AgoraAgenda) {
   if (data !== agora.data) return true;
 
   return hora >= agora.hora;
@@ -349,7 +347,10 @@ function getDuracaoPreferida(
   duracoes: DuracaoReserva[],
   duracaoPreferida?: number | null,
 ) {
-  if (duracaoPreferida && duracoes.includes(duracaoPreferida as DuracaoReserva)) {
+  if (
+    duracaoPreferida &&
+    duracoes.includes(duracaoPreferida as DuracaoReserva)
+  ) {
     return duracaoPreferida as DuracaoReserva;
   }
 
@@ -477,11 +478,7 @@ function montarHorarioSlot(
     timeToMinutes(slot.fim) - timeToMinutes(slot.inicio),
     0,
   );
-  const inicioPermitido = getInicioPermitidoParaSlot(
-    quadra,
-    data,
-    slot.inicio,
-  );
+  const inicioPermitido = getInicioPermitidoParaSlot(quadra, data, slot.inicio);
   const duracoesValidas = getDuracoesValidasParaInicio(
     quadra,
     data,
@@ -534,15 +531,15 @@ function montarHorarioSlot(
     capacidadeMaxima,
     permiteSimples: Boolean(
       slot.permite_simples ??
-        response.quadra?.permite_simples ??
-        quadra.permite_simples ??
-        true,
+      response.quadra?.permite_simples ??
+      quadra.permite_simples ??
+      true,
     ),
     permiteDupla: Boolean(
       slot.permite_dupla ??
-        response.quadra?.permite_dupla ??
-        quadra.permite_dupla ??
-        true,
+      response.quadra?.permite_dupla ??
+      quadra.permite_dupla ??
+      true,
     ),
     jogadoresConfirmados,
     vagasDisponiveis: Number(
@@ -687,7 +684,10 @@ function formatarAcademiaAtual(academia?: Academia | null) {
   return local ? `${academia.nome} • ${local}` : academia.nome;
 }
 
-function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse, data: string) {
+function montarAgenda(
+  disponibilidade: DisponibilidadeAcademiaResponse,
+  data: string,
+) {
   const quadrasDisponibilidade = Array.isArray(disponibilidade.quadras)
     ? disponibilidade.quadras
     : [];
@@ -698,32 +698,32 @@ function montarAgenda(disponibilidade: DisponibilidadeAcademiaResponse, data: st
       const quadra = item.quadra;
 
       return {
-      id: String(quadra?.id ?? ""),
-      nome: String(quadra?.nome ?? "Quadra"),
-      tipo_piso: quadra?.tipo_piso ?? null,
-      modalidade: quadra?.modalidade ?? null,
-      valor_hora: quadra?.valor_hora ?? null,
-      coberta: quadra?.coberta ?? null,
-      capacidade_minima: quadra?.capacidade_minima,
-      capacidade_maxima: quadra?.capacidade_maxima,
-      permite_simples: quadra?.permite_simples,
-      permite_dupla: quadra?.permite_dupla,
-      aberta: item.aberta ?? false,
-      motivo: item.motivo ?? null,
-      abre_as: item.abre_as ?? null,
-      fecha_as: item.fecha_as ?? null,
-      intervalo_entre_reservas_minutos:
-        item.intervalo_entre_reservas_minutos ?? INTERVALO_PADRAO_MINUTOS,
-      granularidade_agendamento_minutos:
-        item.granularidade_agendamento_minutos ??
-        GRANULARIDADE_PADRAO_MINUTOS,
-      duracoes_reserva_minutos: normalizarDuracoes(
-        item.duracoes_reserva_minutos,
-      ),
-      duracao_slot_minutos: item.duracao_slot_minutos ?? null,
-      eventos_ocupados: Array.isArray(item.eventos_ocupados)
-        ? item.eventos_ocupados
-        : [],
+        id: String(quadra?.id ?? ""),
+        nome: String(quadra?.nome ?? "Quadra"),
+        tipo_piso: quadra?.tipo_piso ?? null,
+        modalidade: quadra?.modalidade ?? null,
+        valor_hora: quadra?.valor_hora ?? null,
+        coberta: quadra?.coberta ?? null,
+        capacidade_minima: quadra?.capacidade_minima,
+        capacidade_maxima: quadra?.capacidade_maxima,
+        permite_simples: quadra?.permite_simples,
+        permite_dupla: quadra?.permite_dupla,
+        aberta: item.aberta ?? false,
+        motivo: item.motivo ?? null,
+        abre_as: item.abre_as ?? null,
+        fecha_as: item.fecha_as ?? null,
+        intervalo_entre_reservas_minutos:
+          item.intervalo_entre_reservas_minutos ?? INTERVALO_PADRAO_MINUTOS,
+        granularidade_agendamento_minutos:
+          item.granularidade_agendamento_minutos ??
+          GRANULARIDADE_PADRAO_MINUTOS,
+        duracoes_reserva_minutos: normalizarDuracoes(
+          item.duracoes_reserva_minutos,
+        ),
+        duracao_slot_minutos: item.duracao_slot_minutos ?? null,
+        eventos_ocupados: Array.isArray(item.eventos_ocupados)
+          ? item.eventos_ocupados
+          : [],
       };
     })
     .filter((quadra) => Boolean(quadra.id)) as Quadra[];
@@ -779,7 +779,8 @@ export default function AcademiaAgendaPage() {
   const quadrasFiltradas = useMemo(() => {
     return quadras.filter((quadra) => {
       const filtroPiso =
-        filtrosQuadra.piso === "TODOS" || quadra.tipo_piso === filtrosQuadra.piso;
+        filtrosQuadra.piso === "TODOS" ||
+        quadra.tipo_piso === filtrosQuadra.piso;
 
       const filtroCobertura =
         filtrosQuadra.cobertura === "TODAS" ||
@@ -939,13 +940,13 @@ export default function AcademiaAgendaPage() {
     [academiaId, dataSelecionada],
   );
 
- useEffect(() => {
-  const timeoutId = window.setTimeout(() => {
-    void carregarAgenda();
-  }, 0);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void carregarAgenda();
+    }, 0);
 
-  return () => window.clearTimeout(timeoutId);
-}, [carregarAgenda]);
+    return () => window.clearTimeout(timeoutId);
+  }, [carregarAgenda]);
 
   const handleAgendaMutationSuccess = useCallback(async () => {
     await carregarAgenda({ force: true });
@@ -1041,7 +1042,10 @@ export default function AcademiaAgendaPage() {
           )}
 
           {loading ? (
-            <p className="text-sm text-zinc-500">Carregando agenda...</p>
+            <div className="flex items-center gap-2 rounded-xl bg-white p-4 text-sm font-semibold text-zinc-600">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Carregando agenda...</span>
+            </div>
           ) : horariosFiltrados.length === 0 ? (
             <p className="rounded-2xl bg-zinc-50 p-4 text-sm text-zinc-500">
               Nenhum horário encontrado para os filtros selecionados.
