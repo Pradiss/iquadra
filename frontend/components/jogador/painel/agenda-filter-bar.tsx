@@ -178,6 +178,48 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
         </div>
       </FilterChip>
 
+      <FilterChip label="Modalidade" active={filtros.modalidade !== "TODAS"}>
+        <FiltroGrupo title="Modalidade">
+          {modalidades.map((item) => (
+            <FiltroOpcao
+              key={item.value}
+              active={filtros.modalidade === item.value}
+              onClick={() => atualizar("modalidade", item.value)}
+            >
+              {item.label}
+            </FiltroOpcao>
+          ))}
+        </FiltroGrupo>
+      </FilterChip>
+
+      <FilterChip label="Preço" active={filtros.preco !== "TODOS"}>
+        <FiltroGrupo title="Preço">
+          {precos.map((item) => (
+            <FiltroOpcao
+              key={item.value}
+              active={filtros.preco === item.value}
+              onClick={() => atualizar("preco", item.value)}
+            >
+              {item.label}
+            </FiltroOpcao>
+          ))}
+        </FiltroGrupo>
+      </FilterChip>
+
+       <FilterChip label="Piso" active={filtros.piso !== "TODOS"}>
+        <FiltroGrupo title="Piso">
+          {pisos.map((item) => (
+            <FiltroOpcao
+              key={item.value}
+              active={filtros.piso === item.value}
+              onClick={() => atualizar("piso", item.value)}
+            >
+              {item.label}
+            </FiltroOpcao>
+          ))}
+        </FiltroGrupo>
+      </FilterChip>
+
       <FilterChip label="Status" active={filtros.status !== "TODOS"}>
         <FiltroGrupo title="Status">
           {statusOptions.map((item) => (
@@ -206,19 +248,7 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
         </FiltroGrupo>
       </FilterChip>
 
-      <FilterChip label="Piso" active={filtros.piso !== "TODOS"}>
-        <FiltroGrupo title="Piso">
-          {pisos.map((item) => (
-            <FiltroOpcao
-              key={item.value}
-              active={filtros.piso === item.value}
-              onClick={() => atualizar("piso", item.value)}
-            >
-              {item.label}
-            </FiltroOpcao>
-          ))}
-        </FiltroGrupo>
-      </FilterChip>
+     
 
       <FilterChip label="Cobertura" active={filtros.cobertura !== "TODAS"}>
         <FiltroGrupo title="Cobertura">
@@ -241,34 +271,6 @@ export function AgendaFilterBar({ filtros, onChange }: Props) {
               key={item.value}
               active={filtros.jogadores === item.value}
               onClick={() => atualizar("jogadores", item.value)}
-            >
-              {item.label}
-            </FiltroOpcao>
-          ))}
-        </FiltroGrupo>
-      </FilterChip>
-
-      <FilterChip label="Preço" active={filtros.preco !== "TODOS"}>
-        <FiltroGrupo title="Preço">
-          {precos.map((item) => (
-            <FiltroOpcao
-              key={item.value}
-              active={filtros.preco === item.value}
-              onClick={() => atualizar("preco", item.value)}
-            >
-              {item.label}
-            </FiltroOpcao>
-          ))}
-        </FiltroGrupo>
-      </FilterChip>
-
-      <FilterChip label="Modalidade" active={filtros.modalidade !== "TODAS"}>
-        <FiltroGrupo title="Modalidade">
-          {modalidades.map((item) => (
-            <FiltroOpcao
-              key={item.value}
-              active={filtros.modalidade === item.value}
-              onClick={() => atualizar("modalidade", item.value)}
             >
               {item.label}
             </FiltroOpcao>
